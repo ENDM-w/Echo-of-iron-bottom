@@ -2717,7 +2717,7 @@ export function PlatformPortal({ onClose }: Props) {
                         鱼雷订单不指定目标：航迹与任何未沉没舰船重合时，规则核心会对重合的每条船分别进行命中裁决，不区分敌我。同一发射器可写入多条独立订单，累计枚数不能超过当前装载量（本发射器剩余 {selectedLauncherRemaining} 枚）。
                         {launchPositions.length > 0
                           ? " 发射格和舰首航向由规则核心从本回合移动草稿投影后自动带出；提交时仍会整体严格校验。"
-                          : " 本阶段移动计划尚未封存，引擎暂时给不出合法 MF 列表：请按你自己的移动计划填写发射 MF（0–8），此处先收集数据；合法性与发射格将在裁判端确定移动计划后核对，如有偏差由裁判修正（提交时若报错，可用下方「忽略校验报错提交」）。"}
+                          : " 当前还拿不到合法 MF 列表（本席位尚未填写或无法解析移动草稿，或预览暂不可用）：请按你自己的移动计划填写发射 MF（0–8），此处先收集数据；合法性与发射格将在裁判端确定移动计划后核对，如有偏差由裁判修正（提交时若报错，可用下方「忽略校验报错提交」）。"}
                         {selectedTorpedoCandidate?.blocked_reason ? ` 引擎当前判定：${selectedTorpedoCandidate.blocked_reason}。` : ""}
                       </p>
                       <button onClick={writeTorpedoOrder} disabled={!selectedActionShip || captainCommandLost || !selectedLauncherCandidate || selectedLauncherRemaining <= 0 || !selectedLaunchSide || !selectedLaunchAngle}>

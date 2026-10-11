@@ -1263,7 +1263,7 @@
 
 ## 2026-10-11 玩家端鱼雷申报改为"先收集、后校验"（纯前端）
 
-状态：完成（已热更新上线，服务未重启）。
+状态：完成（已热更新上线，服务未重启）。后续上游 `2a0ec70` 增加了草稿预览接口，本条的数值兜底作为预览不可用时的备用路径保留。
 
 背景（查实）：平台整回合订单只在 `REINFORCEMENT` 阶段收集（`service.py:1181`）；引擎 `_torpedo_candidates` 的 `launch_positions` 依赖 `sealed_orders[f"{turn}:movement_planning"]`，而平台唯一的封存写在一份深拷贝上（`service.py:1285` 注释明确"never mutate or advance the live game while drafting"），真正封存只在引擎 `advance()`。因此收集阶段 `launch_positions` 恒为空，玩家端「发射 MF」下拉恒空，**当前流程下无法申报鱼雷**。
 
@@ -1274,3 +1274,12 @@
 3. 写单按钮：不再要求必须存在候选位置。
 4. 复用既有的「忽略校验报错提交」通路（`submitOrder(true)`）与裁判端「⚠ N 项报错」展示，形成"先收、后校验、必要时裁判改"的闭环。
 5. 验证：`tsc -b` 与 `vite build --base=/tiedi/` 通过；原子切换热更新，不重启 `tiedi`。
+
+## 2026-10-11 整合上游鱼雷 MF 草稿预览并上线（含后端重启）
+
+状态：完成。
+
+1. rebase 本地 7 个提交到上游 `2a0ec70`（"preview torpedo MF from movement draft"）之上，**零冲突**；语义合并：候选以草稿预览接口为主，本地"先收集、后校验"的数值 MF 兜底保留（预览不可用/未填移动草稿时仍可写单）。
+2. 兜底提示文案改准：不再断言"移动计划尚未封存"，改为"本席位尚未填写或无法解析移动草稿，或预览暂不可用"，避免误导。
+3. 本次含后端改动，按预案执行 `rsync` + 前端 `--base=/tiedi/` 重建 + **`systemctl restart tiedi`**；重启前核对 0 个未决裁决、4 局均在 collecting、库中仅 1 条订单，属重启代价最小窗口。
+4. 验证：`tests/test_platform.py`（含上游新增预览测试）通过；`POST /platform/matches/{id}/seats/{seat}/torpedo-candidates` 未带 token 返回 401（端点存在且鉴权）；首页 200、`/api/scenarios` 200、算子图 200、未登录 `/platform/matches/*` 401、旧 `/games/{id}?debug=true` 404；`integrity_check: ok`，31 用户/4 局/78 席位/39 船未变；**域名未变**（`cloudflared-tiedi` 重启次数仍为 0）。
