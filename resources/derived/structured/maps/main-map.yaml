@@ -1,0 +1,44 @@
+id: IBS-M-MAIN
+title: 铁底湾主地图
+source: resources/originals/assets/images/铁底湾-地图.jpg
+status: verified_source
+columns:
+  first: A
+  last: HH
+  count: 34
+  labels: [A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, AA, BB, CC, DD, EE, FF, GG, HH]
+rows: {first: 1, last: 27, count: 27}
+play_area:
+  policy_id: IBS-R-MAP-01
+  status: tested
+  kind: fixed_expanded_sea_buffer
+  columns: {first: A, last: TT, count: 46}
+  rows: {first: 1, last: 39, count: 39}
+  printed_map_columns: {first: A, last: HH, count: 34}
+  printed_map_rows: {first: 1, last: 27, count: 27}
+  buffer_terrain: sea
+  world_shift_enabled: false
+  final_edge_behavior: stop_without_coordinate_translation
+  authority_note: 用户要求的项目稳定性扩展；不是原版印刷地图规则。
+layout: flat_top_odd_q
+heading_compass:
+  source: "IBS-M-MAIN lower-left printed compass, visually verified 2026-08-24"
+  directions: {1: north_east, 2: south_east, 3: south, 4: south_west, 5: north_west, 6: north}
+hex_scale: {yards: 600}
+terrain_default: sea
+direction_headings:
+  1: north_east
+  2: south_east
+  3: south
+  4: south_west
+  5: north_west
+  6: north
+overlays:
+  island_xy:
+    source: resources/originals/assets/images/岛屿.jpg
+    anchors: [X, Y]
+    status: verified_source_geometry_pending
+  coast_z:
+    source: resources/originals/assets/images/海岸.jpg
+    anchors: [Z]
+    status: verified_source_geometry_pending

@@ -1,0 +1,18 @@
+.telegram-judge-panel,.telegram-player-panel{grid-column:1/-1}
+.telegram-player-panel .wide-label textarea{min-height:96px;font:inherit;line-height:1.5}
+.telegram-compose-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px}
+.telegram-compose-footer>span{color:#c3c9bd;font-size:.72rem}
+.telegram-inbox,.telegram-judge-list{display:grid;gap:8px;margin-top:14px}
+.telegram-inbox h3{margin:0;color:#e0bc63;font:1rem Georgia,serif}
+.telegram-inbox article,.telegram-judge-list article{display:grid;gap:6px;padding:10px 12px;background:#122022;border:1px solid #344b47}
+.telegram-inbox article.failed{border-left:2px solid #9b5449}
+.telegram-inbox article.delivered{border-left:2px solid #87a86c}
+.telegram-inbox header,.telegram-judge-list header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.telegram-inbox header b,.telegram-judge-list header b{font-size:.75rem;color:#e0d4ad}
+.telegram-inbox header span,.telegram-judge-list header span,.telegram-judge-list small{font-size:.68rem;color:#9eaaa6}
+.telegram-inbox article p,.telegram-judge-list article p{margin:0;color:#e3e7da;font-size:.78rem;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.telegram-judge-list{grid-template-columns:repeat(auto-fill,minmax(290px,1fr));max-height:420px;overflow:auto}
+.telegram-judge-results{display:grid;gap:4px}
+.telegram-judge-results span{font-size:.68rem;color:#cad4c7}
+.telegram-judge-results .failed{color:#e3a69b}
+.telegram-judge-results .delivered{color:#b4d5a9}

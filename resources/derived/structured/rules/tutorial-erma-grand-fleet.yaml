@@ -1,0 +1,34 @@
+schema_version: 1
+authority: project_tutorial_extension
+namespace: IBS-TUT-EM
+notice: 本文件不是原版规则或想定特例，只在明确选择二马大舰队教学时生效。
+tutorial:
+  id: erma_grand_fleet
+  scenario_id: IBS-S-EM-01
+  requires: {mode: tutorial, realistic_command: true}
+events:
+  - id: IBS-TUT-EM-01
+    title: 远程炮战教学部署
+    checkpoint: reset
+    once_flag: erma_close_action_deployment
+    effect:
+      axis_translation: {columns: 4, rows: 5}
+      allies_translation: {columns: -4, rows: -5}
+    purpose: 让双方主力舰在首轮炮击处于想定能见度与合法炮程内。
+    execution: iron_bottom_sound.tutorials.prepare_tutorial_state
+    status: tested
+  - id: IBS-TUT-EM-05
+    title: 共同航速危机
+    checkpoint: after_turn_1_fire
+    once_flag: erma_speed_crisis_staged
+    target_ship_id: IBS-U-IJN-ERMA-ISHIKARI
+    effect: {turn_2_max_speed: 3}
+    player_choices: [reduce, detach]
+    execution: iron_bottom_sound.tutorials.apply_checkpoint
+    suggestion: iron_bottom_sound.tutorials.coach_suggested_orders
+    status: tested
+    tests:
+      - test_erma_tutorial_stages_replayable_speed_crisis_only_after_first_fire_end
+      - test_formal_erma_game_never_receives_tutorial_script_damage
+      - test_erma_tutorial_coach_exposes_an_explicit_editable_reduce_choice
+      - test_erma_tutorial_script_rejects_wrong_scenario_or_non_tutorial_mode

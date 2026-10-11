@@ -1,0 +1,12 @@
+.judge-downloads{display:grid;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #344644}
+.judge-download-heading,.turn-archive-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.judge-download-heading h3{margin:0;color:#e0bc63;font:1rem Georgia,serif}
+.turn-archive-heading{padding-top:8px}
+.turn-archive-heading>div{display:grid;gap:3px}
+.turn-archive-heading b{font-size:.8rem}
+.turn-archive-heading span{color:#9eaaa6;font-size:.68rem}
+.turn-archive-list{display:grid;gap:5px;max-height:180px;overflow:auto}
+.turn-archive-list>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px;border-left:2px solid #8f9a74;background:#1c3030}
+.turn-archive-list span{color:#c4cec7;font-size:.72rem}
+.turn-archive-list button{flex:none}
+.platform-map-notice{margin:0 0 10px;padding:8px 10px;border-left:2px solid #c6a766;background:#241f16;color:#d8c79a;font-size:.72rem;line-height:1.5}

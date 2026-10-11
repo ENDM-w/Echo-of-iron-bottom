@@ -1,0 +1,61 @@
+schema_version: 1
+source: {document: player-aid-tables-zh.pdf, pdf_pages: [2, 3, 4], status: verified_source}
+range_modifier:
+  gunnery:
+    - {min: 1, max: 1, value: -24}
+    - {min: 2, max: 2, value: -15}
+    - {min: 3, max: 5, value: -12}
+    - {min: 6, max: 9, value: -6}
+    - {min: 10, max: 15, value: 0}
+    - {min: 16, max: 20, value: 2}
+    - {min: 21, max: 999, value: 4}
+  torpedo:
+    - {min: 1, max: 2, value: 5}
+    - {min: 3, max: 4, value: 3}
+    - {min: 5, max: 6, value: 1}
+    - {min: 7, max: 10, value: 0}
+    - {min: 11, max: 15, value: 0, non_japanese_additional: -1}
+    - {min: 16, max: 999, value: -1}
+target_speed_modifier:
+  gunnery: {0: -18, 1: -9, "2-3": -4, "4+": 0}
+  torpedo: {0: 4, 1: 4, 2: 2, 3: 1, "4+": 0}
+longitudinal_modifier:
+  - {min: 1, max: 1, value: -8}
+  - {min: 2, max: 2, value: -8}
+  - {min: 3, max: 5, value: -8}
+  - {min: 6, max: 9, value: -6}
+  - {min: 10, max: 15, value: -4}
+  - {min: 16, max: 20, value: -1}
+  - {min: 21, max: 999, value: 0}
+target_aspect_modifier:
+  gunnery_bow_stern: -6
+  torpedo_bow_stern: -8
+other:
+  target_on_fire: -2
+  each_additional_attacker: 1
+  each_additional_target: 6
+  mfc_destroyed: 3
+  searchlight_target: -3
+  searchlight_user: -3
+optional:
+  star_shell_or_radar_illumination: 3
+  target_searchlit: -3
+  searchlight_user: -3
+  through_smoke: 6
+gunnery_caliber_target_modifier:
+  columns: [BB_BC, CA, CL_AV, DD_APD]
+  rows:
+    11-18: [0, -3, -3, 3]
+    7.5-8: [6, 0, 0, 0]
+    5.25-6.1: [12, 0, 0, 0]
+    3-5.1: [18, 6, 6, 0]
+torpedo_hit:
+  broadside: {2-10: 0, 11-12: 1, 13+: 2}
+  bow_stern: {2-12: 0, 13+: 1}
+collision_modifier:
+  columns: [wreck, DD_APD, CA_CL_AV, BB_BC]
+  rows:
+    BB_BC: [-4, -5, -4, -3]
+    CA_CL_AV: [-4, -4, -3, -2]
+    DD_APD: [-4, -3, -2, -1]
+  both_moved_2mf_or_less: -1
