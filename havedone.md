@@ -995,3 +995,11 @@
 - 按目标服务器暂时没有域名的现状，部署手册改为支持公网 IP 下的 `/tiedi/` 临时验收；增加独立 Nginx HTTP 配置，保留后续绑定域名后迁移到 HTTPS 的流程。
 - 明确 HTTP 传输不加密，IP 阶段只使用临时测试账密/测试数据，开放 SSH 与 80，不向公网开放后端 8001；上传命令改为填写实际服务器公网 IP。
 - 验证：`git diff --check` 通过（仅仓库已有 LF/CRLF 提示）。当前环境无 Nginx 可执行文件，未能运行 `nginx -t`；未连接或上传云端。
+
+
+# 2026-10-11 批量导入 39 艘法意与工作簿舰船
+
+- 从用户提供的工作簿与热那亚剧本/VASSAL 船表整理 39 条可执行舰艇记录，保存 YAML、原始来源、舰艇图片、法意鱼雷与穿甲数据；新增离线校验及本机 SQLite 导入脚本。按用户确认将 Excel 总船体与总速力均分三轨；炮位方向为左端舰首、上方左舷。数据库仍为本地忽略文件。
+- 修复舰艇加载器默认数据库文件名与 API 实际数据库文件名不一致的问题；本机数据库导入后有 39 条导入记录、SQLite integrity_check 为 ok，运行时舰艇记录总数 219。
+- 验证：`py -3.12 -m pytest tests/test_rules.py tests/test_ship_records.py tests/test_engine.py -q` 通过；`py -3.12 -m py_compile backend/src/iron_bottom_sound/engine.py backend/scripts/import_ship_bundle.py` 通过；导入器 `--check-only` 通过；`git diff --cached --check` 通过。开放问题 IBS-Q-009 记录意大利 DD 中置零火力照明弹尚不能由当前自动裁决表示。
+- 实施提交：`dbee188`。未推送。
