@@ -998,7 +998,7 @@ export function PlatformPortal({ onClose }: Props) {
       change(batch);
       setOrderText(pretty(batch));
       setOrderValidationErrors([]);
-      if (view && summary && selectedSeatId && view.phase !== "gunnery") {
+      if (view && summary && selectedSeatId) {
         const draft: JsonRecord = {};
         for (const field of orderDraftFields) draft[field] = batch[field] ?? [];
         try {
@@ -1023,6 +1023,12 @@ export function PlatformPortal({ onClose }: Props) {
       return null;
     }
   }, [orderText]);
+  const draftCommands = orderDraftFields.flatMap((field) => {
+    const rows = orderDraft?.[field];
+    return Array.isArray(rows)
+      ? rows.map((value, index) => ({ field, value, index }))
+      : [];
+  });
   const judgeShips = useMemo(
     () => (judgeView?.ships as unknown as Ship[] | undefined) ?? [],
     [judgeView],
@@ -1053,6 +1059,37 @@ export function PlatformPortal({ onClose }: Props) {
   const draftTargetName = (targetId: unknown) => {
     const target = visibleTargets.find((ship) => ship.id === String(targetId ?? ""));
     return target ? targetLabel(target) : String(targetId ?? "目标待刷新");
+  };
+  const draftCommandLabels: Record<string, string> = {
+    reinforcements: "增援",
+    movement: "移动",
+    gunnery: "炮击",
+    torpedoes: "鱼雷",
+    smoke_ships: "烟幕",
+    smoke: "烟幕",
+    illumination: "照明弹",
+    searchlights: "探照灯",
+    formation_setup: "编队设置",
+    formation_movement: "编队移动",
+    formation_speed_decisions: "编队速度",
+  };
+  const draftCommandDescription = (field: string, value: unknown) => {
+    const row = value && typeof value === "object" ? value as JsonRecord : { ship_id: value };
+    const ship = draftShipName(row.ship_id);
+    switch (field) {
+      case "reinforcements": return `${ship} · ${positionLabel(row.entry_hex ?? row.position)}`;
+      case "movement": return `${ship} · ${String(row.plan ?? "未设航路")}${row.speed == null ? "" : ` · ${String(row.speed)} MF`}`;
+      case "gunnery": return `${ship} → ${draftTargetName(row.primary_target)} · ${Array.isArray(row.mounts) ? row.mounts.length : 0} 个炮位`;
+      case "torpedoes": return `${ship} · ${String(row.launcher_id ?? "发射器未指定")} · ${String(row.count ?? 1)} 枚 · MF ${String(row.launch_at_mf ?? "?")}`;
+      case "illumination": return `${ship} · ${String(row.mount_id ?? "自动炮位")} → ${positionLabel(row.target_hex)}`;
+      case "searchlights": return `${ship} → ${draftTargetName(row.target_id)}`;
+      case "smoke": return `${ship} · ${row.deploy === false ? "停止施放" : "施放"}`;
+      case "smoke_ships": return ship;
+      case "formation_setup":
+      case "formation_movement":
+      case "formation_speed_decisions": return String(row.name ?? row.formation_id ?? row.ship_id ?? "编队行动");
+      default: return ship;
+    }
   };
   const draftSummarySections = view ? [
     {
@@ -2281,6 +2318,24 @@ export function PlatformPortal({ onClose }: Props) {
                     </div>
                   )}
                 </section>
+                {draftCommands.length > 0 && (
+                  <section className="player-draft-commands" aria-label="已写入命令">
+                    <header>
+                      <b>已写入命令 · {draftCommands.length}</b>
+                      <span>可逐条取消；取消后再次提交，才会更新已交订单</span>
+                    </header>
+                    <div>
+                      {draftCommands.map(({ field, value, index }) => (
+                        <div className="player-draft-command" key={`${field}-${index}`}>
+                          <span><b>{draftCommandLabels[field]}</b>{draftCommandDescription(field, value)}</span>
+                          <button type="button" className="quiet" onClick={() => removeOrderRow(field, index)} aria-label={`取消${draftCommandLabels[field]}命令`}>
+                            取消
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
                 {view.stage === "awaiting_publication" && (
                   <div className="review-readiness" role="status">
                     裁判正在审理本回合结果。此处仍显示上一次已发布状态；裁判发布后地图、舰船状态和电报会自动更新。
@@ -2450,7 +2505,7 @@ export function PlatformPortal({ onClose }: Props) {
                             onClick={writeIlluminationOrder}
                             disabled={captainCommandLost || (view.phase !== "gunnery" && view.phase !== "reinforcement") || !view.optional_rules?.star_shells || !selectedActionShip || !illuminationMountChoice || !parseMapHexLabel(illuminationHexLabel)}
                           >
-                            写入照明弹
+                            {illuminationDrafts.some((order) => order.ship_id === selectedActionShip?.id) ? "再加入一发照明弹" : "写入第一发照明弹"}
                           </button>
                           <button
                             onClick={writeSearchlightOrder}
@@ -2460,7 +2515,8 @@ export function PlatformPortal({ onClose }: Props) {
                           </button>
                         </div>
                         <div className="illumination-draft-list">
-                          <b>本回合照明弹草稿（{illuminationDrafts.length}）</b>
+                          <b>本回合照明弹草稿（{illuminationDrafts.length} 发）</b>
+                          <span className="field-hint">每次写入一发，系统会自动分配下一组未占用炮位；下方逐发列出并可取消。</span>
                           {illuminationDrafts.length ? illuminationDrafts.map((order, index) => (
                             <div className="illumination-draft-row" key={`${String(order.ship_id)}-${String(order.mount_id)}-${index}`}>
                               <span>
