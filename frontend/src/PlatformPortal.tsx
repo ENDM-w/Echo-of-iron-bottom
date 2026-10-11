@@ -987,6 +987,19 @@ export function PlatformPortal({ onClose }: Props) {
   ) ?? launchPositions[0];
   const launchSides = selectedLauncherCandidate?.sides ?? [];
   const launchAngles = selectedLauncherCandidate?.angles ?? [];
+  // 发射器下拉必须列出全部可用发射器：引擎候选优先，候选缺失时回落到舰船自身状态。
+  // 历史 bug：候选存在时只渲染当前那一个 option，玩家因此只能"选"第一个发射器。
+  const launcherOptions = selectedTorpedoCandidate?.launchers.length
+    ? selectedTorpedoCandidate.launchers.map((candidate) => ({
+        id: candidate.launcher_id,
+        label: `${candidate.launcher_id} · 可用 ${candidate.loaded} 枚`,
+      }))
+    : (selectedActionShip?.torpedo_launchers ?? [])
+        .filter((launcher) => !launcher.destroyed && launcher.loaded > 0)
+        .map((launcher) => ({
+          id: launcher.id,
+          label: `${launcher.id} · 可用 ${launcher.loaded} 枚${launcher.reload_turns_remaining ? " · 再装填中" : ""}`,
+        }));
   const selectedLaunchSide = torpedoLaunchSide || launchSides[0] || "";
   const selectedLaunchAngle = torpedoLaunchAngle || launchAngles[0] || "";
   const selectedSettingIndex = torpedoSettingIndex === ""
@@ -2561,6 +2574,10 @@ export function PlatformPortal({ onClose }: Props) {
                               const ship = ownShips.find((item) => item.id === event.target.value);
                               setActionShipId(event.target.value);
                               setTorpedoLauncherId(ship?.torpedo_launchers.find((launcher) => !launcher.destroyed && launcher.loaded > 0)?.id ?? "");
+                              // 换舰船时清空发射器相关选择，避免沿用上一艘舰的舷侧/发射角/枚数。
+                              setTorpedoLaunchSide("");
+                              setTorpedoLaunchAngle("");
+                              setTorpedoCount("1");
                             }}
                           >
                             {ownShips.filter((ship) => ship.torpedo_launchers.some((launcher) => !launcher.destroyed && launcher.loaded > 0)).map((ship) => (
@@ -2572,14 +2589,31 @@ export function PlatformPortal({ onClose }: Props) {
                         </label>
                         <label>
                           发射器
-                          <select value={selectedLauncher?.id ?? ""} onChange={(event) => setTorpedoLauncherId(event.target.value)}>
-                            {selectedLauncherCandidate ? (
-                              <option value={selectedLauncherCandidate.launcher_id}>
-                                {selectedLauncherCandidate.launcher_id} · 可用 {selectedLauncherCandidate.loaded} 枚
-                              </option>
-                            ) : selectedActionShip?.torpedo_launchers.filter((launcher) => !launcher.destroyed && launcher.loaded > 0).map((launcher) => (
-                              <option key={launcher.id} value={launcher.id}>
-                                {launcher.id} · 可用 {launcher.loaded} 枚
+                          <select
+                            value={selectedLauncher?.id ?? ""}
+                            onChange={(event) => {
+                              const nextId = event.target.value;
+                              setTorpedoLauncherId(nextId);
+                              // 换发射器后按新发射器的合法值重置依赖字段：舷侧与发射角随发射器变化，
+                              // 枚数不能超过新发射器的装载量；发射 MF 属舰级（随航路），保持不变。
+                              const nextCandidate = selectedTorpedoCandidate?.launchers.find(
+                                (candidate) => candidate.launcher_id === nextId,
+                              );
+                              const nextLauncher = selectedActionShip?.torpedo_launchers.find(
+                                (launcher) => launcher.id === nextId,
+                              );
+                              const nextSides = nextCandidate?.sides.length
+                                ? nextCandidate.sides
+                                : (nextLauncher?.arcs ?? []).filter((arc) => arc === "port" || arc === "starboard");
+                              setTorpedoLaunchSide(nextSides[0] ?? "");
+                              setTorpedoLaunchAngle(nextCandidate?.angles[0] ?? "");
+                              const nextLoaded = Math.max(1, nextCandidate?.loaded ?? nextLauncher?.loaded ?? 1);
+                              setTorpedoCount(String(Math.min(Math.max(1, Number(torpedoCount) || 1), nextLoaded)));
+                            }}
+                          >
+                            {launcherOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
