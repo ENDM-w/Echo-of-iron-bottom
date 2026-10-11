@@ -1081,3 +1081,11 @@
 - 修复：新增 `launcherOptions`（引擎候选优先，候选缺失时回落到舰船自身未损毁且已装填的发射器）并全部渲染为 option；换发射器或换舰船时重置**发射器级**依赖字段——舷侧取新发射器 `sides[0]`（候选缺失时取 `arcs` 里的 port/starboard）、发射角取 `angles[0]`、枚数夹到新发射器 `loaded`；发射 MF 属舰级（随航路），保持不变。
 - 验证：`tsc -b` 通过；`vite build --base=/tiedi/ --outDir dist-new`（`NODE_OPTIONS=--max-old-space-size=384` + `nice -n 19`）后原子切换 `dist`，**`tiedi` 的 `MainPID` 构建前后均为 631**（未重启、未踢下线）；线上 `index.html` 已引用新产物 `index-D4gzjHBh.js`，首页 200、未登录 `/platform/matches/*` 401。渲染结果需玩家席位在鱼雷阶段用多发射器舰（如 IJN 重雷装舰）实测确认，未做浏览器端验收。
 - 本批次提交：`5e9d7ef1f89ea8ffdd15347ad0b1bd752184376e`。
+
+# 2026-10-11 玩家端鱼雷申报改为"先收集、后校验"（热更新，未重启服务）
+
+- 查实的结构性缺陷：平台整回合订单只在 `REINFORCEMENT` 阶段收集（`platform/service.py:1181`），而引擎 `_torpedo_candidates` 的 `launch_positions` 依赖 `state.sealed_orders[f"{turn}:movement_planning"]`（`engine.py:1102-1169`）；平台唯一写 `sealed_orders` 的位置在 `_validate_turn_future_orders` 内，而该函数操作的是深拷贝（`service.py:1285`，注释明确"never mutate or advance the live game while drafting"），真正封存只发生在引擎 `advance()`（`engine.py:1879`）。因此收集阶段 `launch_positions` 恒为空，玩家端「发射 MF」下拉恒空，**该流程下玩家无法申报鱼雷**；线上 4 局处于 `reinforcement/collecting` 且 `sealed_orders` 为空，与推断一致（唯一有封存键的对局是已审定过前两回合的那局）。
+- 按用户决定**不改后端**：收集阶段只收数据、不做当场引擎校验，合法性在裁判端确定移动计划后核对、有误由裁判修正。依据是引擎 `_assist_launch_from_dict`（`engine.py:1359`）已支持"只取 `launch_at_mf`/发射器/舷侧/发射角/装订，从已封存移动计划还原 `launch_hex` 与舰首"；且 `TorpedoOrder.launch_hex/bearing` 本就可选，`launch_at_mf` 限 0–8。
+- 改动（纯前端 `PlatformPortal.tsx`）：① `launch_positions` 为空时，「发射 MF」由空下拉改为数值输入（0–8，`inputMode=numeric`）；② `writeTorpedoOrder` 无候选位置时采用填写的 MF、`launch_hex`/`bearing` 置空，不再因缺候选拒绝写单；③ 写单按钮不再要求必须存在候选位置；④ 提示文案改写为"先按自己的移动计划填写、合法性由裁判端核对（报错可用『忽略校验报错提交』）"，并保留引擎 `blocked_reason` 的展示。复用既有 `submitOrder(true)` 与裁判端"⚠ N 项报错"展示构成闭环。
+- 验证：`tsc -b` 通过；`vite build --base=/tiedi/ --outDir dist-new`（`NODE_OPTIONS=--max-old-space-size=384` + `nice -n 19`）后原子切换，**`tiedi` 的 `MainPID` 构建前后均为 631**（未重启、未踢下线）；线上 `index.html` 已引用 `index-CtBXWzND.js`，首页 200、未登录 `/platform/matches/*` 401。真机交互（填 MF → 写单 → 校验报错 → 忽略提交 → 裁判端见报错并修正）需在浏览器实测。
+- 本批次提交：`451dc36412924f0fe760c603fbb21376a8a00736`。
