@@ -1,15 +1,48 @@
 schema_version: 1
 source:
-  description: User-provided 2026-10-11 workbook and Genoa VASSAL ship tables; workbook source rows and VASSAL page/row provenance
+  description: User-provided 2026-10-11 workbook, named per-ship counter PNGs, and Genoa VASSAL ship tables; workbook source rows and VASSAL page/row provenance
     are in catalog. Workbook hull and speed totals follow the user-approved equal split; VASSAL grids and tracks are transcribed
     from the ship cards.
   files:
-  - resources/originals/ship-imports/genoa-2026/workbooks/eng.xlsx
-  - resources/originals/ship-imports/genoa-2026/workbooks/engre.xlsx
-  - resources/originals/ship-imports/genoa-2026/workbooks/ShipData.xlsx
-  - resources/originals/ship-imports/genoa-2026/scenario/船表：热那亚截击战.pdf
-  - resources/originals/ship-imports/genoa-2026/scenario/剧本：热那亚截击战.pdf
-  - resources/originals/ship-imports/genoa-2026/workbooks/使用文档(ai写的还没校对.docx
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/信天翁.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/杜布雷.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/猎鹰.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/福旭.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/秃鹫.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/科尔贝尔.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/阿尔及利亚.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/france/鹰.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/italy/戈里齐亚.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/italy/扎拉.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/italy/民兵.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/italy/炮兵.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/italy/阜姆.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/italy/阿布鲁齐公爵.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/italy/黑衫军.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-决心.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-勇士.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-布列塔尼.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-敦刻尔克.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-斯特拉斯堡.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-普罗旺斯.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/BC-胡德.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/CL-林仙.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/CL-进取.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-不屈.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-伏尔塔.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-凯旋.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-弗雷斯特.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-摔跤手.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-无恐.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-沃蒂根.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-猎狐犬.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-猞猁.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-福克诺.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-维德特.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-莫加多尔.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-虎.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-远见.png
+  - resources/originals/ship-imports/genoa-2026/operator-art/workbook/av-泰斯特指挥官.png
 records:
   IBS-U-RN-HOOD:
     catalog:
@@ -155,7 +188,7 @@ records:
       radar: true
       vp: 41
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Hood.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/BC-胡德.png
   IBS-U-RN-VALIANT:
     catalog:
       name: 勇士
@@ -305,7 +338,7 @@ records:
       radar: false
       vp: 28
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Valiant.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-勇士.png
   IBS-U-RN-RESOLUTION:
     catalog:
       name: 决心
@@ -439,7 +472,7 @@ records:
       radar: false
       vp: 25
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Resolution.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-决心.png
   IBS-U-RN-ARETHUSA:
     catalog:
       name: 林仙
@@ -554,7 +587,7 @@ records:
       radar: false
       vp: 9
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Arethusa.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/CL-林仙.png
   IBS-U-RN-ENTERPRISE:
     catalog:
       name: 进取
@@ -667,7 +700,7 @@ records:
       radar: false
       vp: 8
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Enterprise.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/CL-进取.png
   IBS-U-RN-FAULKNOR:
     catalog:
       name: 福克诺
@@ -785,7 +818,7 @@ records:
       radar: false
       vp: 4
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Faulknor.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-福克诺.png
   IBS-U-RN-FOXHOUND:
     catalog:
       name: 猎狐犬
@@ -894,7 +927,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Foxhound.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-猎狐犬.png
   IBS-U-RN-FEARLESS:
     catalog:
       name: 无恐
@@ -1003,7 +1036,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Fearless.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-无恐.png
   IBS-U-RN-FORESIGHT:
     catalog:
       name: 远见
@@ -1112,7 +1145,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Foresight.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-远见.png
   IBS-U-RN-FORESTER:
     catalog:
       name: 弗雷斯特
@@ -1221,7 +1254,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Forester.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-弗雷斯特.png
   IBS-U-RN-WRESTLER:
     catalog:
       name: 摔跤手
@@ -1329,7 +1362,7 @@ records:
       radar: false
       vp: 2
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Wrestler.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-摔跤手.png
   IBS-U-RN-VIDETTE:
     catalog:
       name: 维德特
@@ -1437,7 +1470,7 @@ records:
       radar: false
       vp: 2
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Vidette.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-维德特.png
   IBS-U-RN-VORTIGERN:
     catalog:
       name: 沃蒂根
@@ -1545,7 +1578,7 @@ records:
       radar: false
       vp: 2
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/RN-Vortigern.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-沃蒂根.png
   IBS-U-FRN-DUNKERQUE:
     catalog:
       name: 敦刻尔克
@@ -1647,7 +1680,7 @@ records:
       radar: false
       vp: 33
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Dunkerque.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-敦刻尔克.png
   IBS-U-FRN-STRASBOURG:
     catalog:
       name: 斯特拉斯堡
@@ -1749,7 +1782,7 @@ records:
       radar: false
       vp: 32
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Strasbourg.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-斯特拉斯堡.png
   IBS-U-FRN-BRETAGNE:
     catalog:
       name: 布列塔尼
@@ -1891,7 +1924,7 @@ records:
       radar: false
       vp: 25
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Bretagne.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-布列塔尼.png
   IBS-U-FRN-PROVENCE:
     catalog:
       name: 普罗旺斯
@@ -2033,7 +2066,7 @@ records:
       radar: false
       vp: 25
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Provence.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-普罗旺斯.png
   IBS-U-FRN-MOGADOR:
     catalog:
       name: 莫加多尔
@@ -2140,7 +2173,7 @@ records:
       radar: false
       vp: 5
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Mogador.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-莫加多尔.png
   IBS-U-FRN-VOLTA:
     catalog:
       name: 伏尔塔
@@ -2247,7 +2280,7 @@ records:
       radar: false
       vp: 5
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Volta.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-伏尔塔.png
   IBS-U-FRN-LYNX:
     catalog:
       name: 猞猁
@@ -2365,7 +2398,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Lynx.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-猞猁.png
   IBS-U-FRN-TIGRE:
     catalog:
       name: 虎
@@ -2483,7 +2516,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Tigre.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-虎.png
   IBS-U-FRN-LE-TRIOMPHANT:
     catalog:
       name: 凯旋
@@ -2601,7 +2634,7 @@ records:
       radar: false
       vp: 4
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Le-Triomphant.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-凯旋.png
   IBS-U-FRN-L-INDOMPTABLE:
     catalog:
       name: 不屈
@@ -2719,7 +2752,7 @@ records:
       radar: false
       vp: 4
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-L-Indomptable.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-不屈.png
   IBS-U-FRN-COMMANDANT-TESTE:
     catalog:
       name: 泰斯特指挥官
@@ -2825,7 +2858,7 @@ records:
       radar: false
       vp: 7
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Commandant-Teste.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/workbook/av-泰斯特指挥官.png
   IBS-U-FRN-ALGERIE:
     catalog:
       name: 阿尔及利亚
@@ -2964,7 +2997,7 @@ records:
       radar: false
       vp: 13
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Algeria-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/阿尔及利亚.png
   IBS-U-FRN-COLBERT:
     catalog:
       name: 科尔贝尔
@@ -3087,7 +3120,7 @@ records:
       radar: false
       vp: 10
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Colbert-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/科尔贝尔.png
   IBS-U-FRN-FOCH:
     catalog:
       name: 福煦
@@ -3210,7 +3243,7 @@ records:
       radar: false
       vp: 10
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Foch-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/福旭.png
   IBS-U-FRN-DUPLEIX:
     catalog:
       name: 杜布雷
@@ -3334,7 +3367,7 @@ records:
       radar: false
       vp: 10
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Dupleix-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/杜布雷.png
   IBS-U-FRN-AIGLE:
     catalog:
       name: 鹰
@@ -3431,7 +3464,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Aigle-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/鹰.png
   IBS-U-FRN-ALBATROS:
     catalog:
       name: 信天翁
@@ -3528,7 +3561,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Albatros-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/信天翁.png
   IBS-U-FRN-GERFAUT:
     catalog:
       name: 猎鹰
@@ -3625,7 +3658,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Gerfaut-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/猎鹰.png
   IBS-U-FRN-VAUTOUR:
     catalog:
       name: 秃鹫
@@ -3722,7 +3755,7 @@ records:
       radar: false
       vp: 3
       source_page: 1
-    artwork: resources/derived/structured/ships/import-assets/FR-Vautour-vmod.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/france/秃鹫.png
   IBS-U-IT-ZARA:
     catalog:
       name: 扎拉
@@ -3841,7 +3874,7 @@ records:
       radar: false
       vp: 12
       source_page: 2
-    artwork: resources/derived/structured/ships/import-assets/IT-Zara.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/italy/扎拉.png
   IBS-U-IT-FIUME:
     catalog:
       name: 阜姆
@@ -3959,7 +3992,7 @@ records:
       radar: false
       vp: 11
       source_page: 2
-    artwork: resources/derived/structured/ships/import-assets/IT-Fiume.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/italy/阜姆.png
   IBS-U-IT-GORIZIA:
     catalog:
       name: 戈里齐亚
@@ -4077,7 +4110,7 @@ records:
       radar: false
       vp: 11
       source_page: 2
-    artwork: resources/derived/structured/ships/import-assets/IT-Gorizia.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/italy/戈里齐亚.png
   IBS-U-IT-ABRUZZI:
     catalog:
       name: 阿布鲁齐公爵
@@ -4201,7 +4234,7 @@ records:
       radar: false
       vp: 12
       source_page: 2
-    artwork: resources/derived/structured/ships/import-assets/IT-Duca-degli-Abruzzi.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/italy/阿布鲁齐公爵.png
   IBS-U-IT-CAMICIA:
     catalog:
       name: 黑衫军
@@ -4274,7 +4307,7 @@ records:
       special_rules:
       - genoa_illuminating_shells_optional_not_auto_resolved
       source_page: 2
-    artwork: resources/derived/structured/ships/import-assets/IT-Camicia-Nera.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/italy/黑衫军.png
   IBS-U-IT-ALPINO:
     catalog:
       name: 民兵
@@ -4347,7 +4380,7 @@ records:
       special_rules:
       - genoa_illuminating_shells_optional_not_auto_resolved
       source_page: 2
-    artwork: resources/derived/structured/ships/import-assets/IT-Alpino.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/italy/民兵.png
   IBS-U-IT-ARTIGLIERE:
     catalog:
       name: 炮兵
@@ -4420,4 +4453,4 @@ records:
       special_rules:
       - genoa_illuminating_shells_optional_not_auto_resolved
       source_page: 2
-    artwork: resources/derived/structured/ships/import-assets/IT-Artigliere.png
+    artwork: resources/originals/ship-imports/genoa-2026/operator-art/italy/炮兵.png

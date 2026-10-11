@@ -5,12 +5,12 @@
 - `workbooks/eng.xlsx`、`engre.xlsx`、`ShipData.xlsx`：英国 13 艘、法国 11 艘；目录行号记录在导入包的 `catalog.source_row`。 `workbooks/使用文档(ai写的还没校对.docx` 是用户提供的未校对字段格式说明，仅供解释工作簿列，不作为舰船数值来源。
 - `scenario/船表：热那亚截击战.pdf`：VASSAL 模组法/意舰卡，法国第 1 页、意大利第 2 页。
 - `scenario/剧本：热那亚截击战.pdf`：热那亚剧本和法/意火炮穿深、鱼雷参数，第 2 页。
-- `source-art/`：对应工作簿合成舰卡、增援舰卡和 15 艘模组算子图。
-- `resources/derived/structured/ships/import-assets/`：逐舰裁切后的可复现导入素材。离线导入器会验证舰卡图并标准化为应用使用的透明 PNG。
+- `source-art/`：英国/法国工作簿舰队图，以及热那亚模组 15 艘法/意舰的原始算子图。
+- `operator-art/workbook/`：工作簿目录中按“舰种-名称”命名的 24 张单舰算子；`operator-art/france/` 和 `operator-art/italy/`：热那亚目录提供的 8 张法国、7 张意大利单舰算子。导入包只把这 39 张单舰算子关联为游戏图片，船表切图仅用于核对数据；离线导入器会验证并标准化算子图。
 
 用户确认工作簿中总船体平均分配到三行、总速力平均分配到三条速度轨，余数由舰首向舰尾分配；每条轨按项目现有记录逐格递减至 1。用户确认热那亚剧本中意大利速度 9 的单档按 `[9, 9, 9]` 表示，法/意鱼雷伤害修正均为 0。法国工作簿舰炮表未覆盖的口径，按用户确认的规则使用最接近的更大口径表；同一口径有多个国家数据时，逐射程取穿深最大值。映射明细记在 `armour-penetration-table.csv` 的 `source_basis` 列。
 
-本机 SQLite 仍由 `.gitignore` 排除；请用离线脚本重建 `imported_ship_records` 表数据，不要把运行时数据库加入 Git。
+本机 SQLite 仍由 `.gitignore` 排除；请用离线脚本从导入包中引用的实际算子图重建 `imported_ship_records` 表数据，不要把运行时数据库加入 Git。
 
 
 ## 船表转录约定

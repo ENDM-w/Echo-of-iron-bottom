@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "source_root": "D:\\desktop\\铁底湾",
-  "canonical_file_count": 340,
-  "source_path_count": 341,
-  "total_bytes": 105167559,
+  "canonical_file_count": 403,
+  "source_path_count": 404,
+  "total_bytes": 107078198,
   "files": [
     {
       "path": "resources/originals/assets/images/1.png",
@@ -2516,9 +2516,513 @@
       "pages": 15
     },
     {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/av-泰斯特指挥官.png",
+      "bytes": 24708,
+      "sha256": "fa68c170a679078d415117872b105c7bd75008828a97425baae149ecf653a81d",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\av-泰斯特指挥官.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/BB-决心.png",
+      "bytes": 18402,
+      "sha256": "a70d606af5b480c3eb499a9cf22f26d2c73ca532b0f870f2f3027eb691fa3ba3",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\BB-决心.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/BB-勇士.png",
+      "bytes": 16363,
+      "sha256": "8bdaa6cff3f30006431010d3141acbd02fc22bf4fa1d87104c3a0006320302ba",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\BB-勇士.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/BB-布列塔尼.png",
+      "bytes": 21931,
+      "sha256": "169a98246b53dfd18144506d528305d88d448443c18ba4565f28770ec1673901",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\BB-布列塔尼.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/BB-敦刻尔克.png",
+      "bytes": 18569,
+      "sha256": "34793cc3a0e45ee07242c0301221160ef2618b767227143b57e1c27ba9e94a4a",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\BB-敦刻尔克.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/BB-斯特拉斯堡.png",
+      "bytes": 20261,
+      "sha256": "53fea34af283e341548a4d2f28ecb484d3e28a49f68d88022a5cbea6adff8c70",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\BB-斯特拉斯堡.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/BB-普罗旺斯.png",
+      "bytes": 21841,
+      "sha256": "61286b718d7294d9d9cd3c1e008c7efd516d12ba31e50707f2d796f3a4b84faf",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\BB-普罗旺斯.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/BC-胡德.png",
+      "bytes": 17047,
+      "sha256": "e164b26da66efc9f94d5d2ab6b29e0f1d8e5cb564553abf25c1f4972c28ba895",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\BC-胡德.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/CL-林仙.png",
+      "bytes": 19652,
+      "sha256": "37089e713661683506e5e2b310054eb73bfe0e481f2fa5766eb811c42dbef915",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\CL-林仙.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/CL-进取.png",
+      "bytes": 20153,
+      "sha256": "7078b69cc42afefdf242a80c4e3c0a9ebfda9f2e8dd711d51cfd15512d20514a",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\CL-进取.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-不屈.png",
+      "bytes": 14590,
+      "sha256": "dd10376938e92039425b994ea15b8aeb10475c9340bb0daa6afabc86fe386cb2",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-不屈.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-伏尔塔.png",
+      "bytes": 17130,
+      "sha256": "2245cbcc741d5412bc3597e1270aa04ea6bb8e869c09bd523158013fce1f984d",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-伏尔塔.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-凯旋.png",
+      "bytes": 15175,
+      "sha256": "3c141c754e73113fc5ff811330e24f394faeb64d221046ada7d91a266404ad42",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-凯旋.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-弗雷斯特.png",
+      "bytes": 19949,
+      "sha256": "a16c02a1c8dd36a804ac0092d161035800a9bcf279a09af5793a6695f6ee045c",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-弗雷斯特.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-摔跤手.png",
+      "bytes": 18686,
+      "sha256": "fe292c4396fc599dfe8c99bae5ddb8d0bf8936c9e18ebec6a824fec3db4c8a63",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-摔跤手.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-无恐.png",
+      "bytes": 17702,
+      "sha256": "f2d48f50ffd3067beee89aa1d2f06e5e0b29ee5bd364c992c2c6ebbb5c1dedc0",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-无恐.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-沃蒂根.png",
+      "bytes": 18771,
+      "sha256": "f42318d4f9650203f19321e11974af3983468964c35755709eb63ce90bdc17e7",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-沃蒂根.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-猎狐犬.png",
+      "bytes": 18852,
+      "sha256": "2b2ebd81d68cf181c031b200560d8b23e38bbe30afcef10ef07e562198189d1a",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-猎狐犬.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-猞猁.png",
+      "bytes": 16824,
+      "sha256": "3b220fa25676f9ba2cd09b3147342d424f47d0414f4a1d409d133f92ab4b56e7",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-猞猁.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-福克诺.png",
+      "bytes": 19263,
+      "sha256": "2dd1af078cb83b8b29b995c3d5aae14c7d63edebac259da54a6570c27d799f1e",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-福克诺.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-维德特.png",
+      "bytes": 19311,
+      "sha256": "9a2028e694939add5db3002a7584c529a81d387988a232d06c324df98e2b41f0",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-维德特.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-莫加多尔.png",
+      "bytes": 17855,
+      "sha256": "b6f41d5646a938370e12056b033e500d4880a248d49bf9f002ad758e569d37e9",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-莫加多尔.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-虎.png",
+      "bytes": 15077,
+      "sha256": "ddfc37d5341e6c5a5a27e040b921e68621021b5761ae3b41f6a6dc176b236064",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-虎.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/DD-远见.png",
+      "bytes": 17540,
+      "sha256": "f4347a4e6bbac541d31850ebef570fea1645f63d01162ef24749c5b9c7947f87",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\DD-远见.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/信天翁.png",
+      "bytes": 35790,
+      "sha256": "268e90e42b10411f5677a6531ff7cf2f1191baed9711ab3894b4f0a6a8f161fc",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\信天翁.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/杜布雷.png",
+      "bytes": 72474,
+      "sha256": "cdaba3966f9ee5b5f1a8f9293361b4abaf039db36612889e77a4aac6d4f30918",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\杜布雷.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/猎鹰.png",
+      "bytes": 35137,
+      "sha256": "7ea589d0e0a56e9d4bf9d8f5a22815ea7000c58d95b9ab6d21888d2aed924867",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\猎鹰.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/福旭.png",
+      "bytes": 71966,
+      "sha256": "642ed62cae71ce66465519e2e68a279af1b99abf5a679db999bc42695580ffce",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\福旭.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/秃鹫.png",
+      "bytes": 35139,
+      "sha256": "f89df1ea66ead090e46c770f2e6df465b003f5ee1711e452338e3301b8816113",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\秃鹫.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/科尔贝尔.png",
+      "bytes": 72097,
+      "sha256": "4cdc3ed2c42091883ed640b799be286f690126e793e029ea36fde988d815405a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\科尔贝尔.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/阿尔及利亚.png",
+      "bytes": 33591,
+      "sha256": "c0a398d5fb76077903b9a0f967a37675c0d0a2110c5f28b6e446b188f6f8f811",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\阿尔及利亚.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/france/鹰.png",
+      "bytes": 30542,
+      "sha256": "4d410f09e30112863cfb67bf71c505ae9062a454f6bff3453af2a54eaddd11b3",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\法国算子\\鹰.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/italy/戈里齐亚.png",
+      "bytes": 72989,
+      "sha256": "3d7e69d7603602c29f812bc39d1f8f6c3ae0fd676b76fc2b836950908b1d8198",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\意大利算子\\戈里齐亚.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/italy/扎拉.png",
+      "bytes": 60202,
+      "sha256": "cafa4c17099148e4597a1480056ca3c23d4d2409c33119831d0f450d2be56d99",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\意大利算子\\扎拉.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/italy/民兵.png",
+      "bytes": 124780,
+      "sha256": "a09e6eb48e5fde448077f14ff81f827bd48cf9715b23cc6e32b1ae25d9f0470b",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\意大利算子\\民兵.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/italy/炮兵.png",
+      "bytes": 124879,
+      "sha256": "9864da8fbf3e4ff9c819cf76b905eb82d58c67ab89b8c0d304717bb550a5515a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\意大利算子\\炮兵.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/italy/阜姆.png",
+      "bytes": 74841,
+      "sha256": "529f96e9ab364fc8405aca276a052c634e0fca586e7159dd79ebc158449cff24",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\意大利算子\\阜姆.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/italy/阿布鲁齐公爵.png",
+      "bytes": 49667,
+      "sha256": "0f791299a373e6d0082f6de61e12209e2f02a79df11503426b548cacb1274c82",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\意大利算子\\阿布鲁齐公爵.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/italy/黑衫军.png",
+      "bytes": 125069,
+      "sha256": "c6788d92875c67262c8c3d14f7239c6055ff3e59957f769054ec69c1b26a56e8",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\意大利算子\\黑衫军.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/av-泰斯特指挥官.png",
+      "bytes": 24708,
+      "sha256": "fa68c170a679078d415117872b105c7bd75008828a97425baae149ecf653a81d",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\av-泰斯特指挥官.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-决心.png",
+      "bytes": 18402,
+      "sha256": "a70d606af5b480c3eb499a9cf22f26d2c73ca532b0f870f2f3027eb691fa3ba3",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\BB-决心.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-勇士.png",
+      "bytes": 16363,
+      "sha256": "8bdaa6cff3f30006431010d3141acbd02fc22bf4fa1d87104c3a0006320302ba",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\BB-勇士.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-布列塔尼.png",
+      "bytes": 21931,
+      "sha256": "169a98246b53dfd18144506d528305d88d448443c18ba4565f28770ec1673901",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\BB-布列塔尼.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-敦刻尔克.png",
+      "bytes": 18569,
+      "sha256": "34793cc3a0e45ee07242c0301221160ef2618b767227143b57e1c27ba9e94a4a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\BB-敦刻尔克.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-斯特拉斯堡.png",
+      "bytes": 20261,
+      "sha256": "53fea34af283e341548a4d2f28ecb484d3e28a49f68d88022a5cbea6adff8c70",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\BB-斯特拉斯堡.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/BB-普罗旺斯.png",
+      "bytes": 21841,
+      "sha256": "61286b718d7294d9d9cd3c1e008c7efd516d12ba31e50707f2d796f3a4b84faf",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\BB-普罗旺斯.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/BC-胡德.png",
+      "bytes": 17047,
+      "sha256": "e164b26da66efc9f94d5d2ab6b29e0f1d8e5cb564553abf25c1f4972c28ba895",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\BC-胡德.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/CL-林仙.png",
+      "bytes": 19652,
+      "sha256": "37089e713661683506e5e2b310054eb73bfe0e481f2fa5766eb811c42dbef915",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\CL-林仙.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/CL-进取.png",
+      "bytes": 20153,
+      "sha256": "7078b69cc42afefdf242a80c4e3c0a9ebfda9f2e8dd711d51cfd15512d20514a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\CL-进取.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-不屈.png",
+      "bytes": 14590,
+      "sha256": "dd10376938e92039425b994ea15b8aeb10475c9340bb0daa6afabc86fe386cb2",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-不屈.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-伏尔塔.png",
+      "bytes": 17130,
+      "sha256": "2245cbcc741d5412bc3597e1270aa04ea6bb8e869c09bd523158013fce1f984d",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-伏尔塔.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-凯旋.png",
+      "bytes": 15175,
+      "sha256": "3c141c754e73113fc5ff811330e24f394faeb64d221046ada7d91a266404ad42",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-凯旋.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-弗雷斯特.png",
+      "bytes": 19949,
+      "sha256": "a16c02a1c8dd36a804ac0092d161035800a9bcf279a09af5793a6695f6ee045c",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-弗雷斯特.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-摔跤手.png",
+      "bytes": 18686,
+      "sha256": "fe292c4396fc599dfe8c99bae5ddb8d0bf8936c9e18ebec6a824fec3db4c8a63",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-摔跤手.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-无恐.png",
+      "bytes": 17702,
+      "sha256": "f2d48f50ffd3067beee89aa1d2f06e5e0b29ee5bd364c992c2c6ebbb5c1dedc0",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-无恐.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-沃蒂根.png",
+      "bytes": 18771,
+      "sha256": "f42318d4f9650203f19321e11974af3983468964c35755709eb63ce90bdc17e7",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-沃蒂根.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-猎狐犬.png",
+      "bytes": 18852,
+      "sha256": "2b2ebd81d68cf181c031b200560d8b23e38bbe30afcef10ef07e562198189d1a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-猎狐犬.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-猞猁.png",
+      "bytes": 16824,
+      "sha256": "3b220fa25676f9ba2cd09b3147342d424f47d0414f4a1d409d133f92ab4b56e7",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-猞猁.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-福克诺.png",
+      "bytes": 19263,
+      "sha256": "2dd1af078cb83b8b29b995c3d5aae14c7d63edebac259da54a6570c27d799f1e",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-福克诺.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-维德特.png",
+      "bytes": 19311,
+      "sha256": "9a2028e694939add5db3002a7584c529a81d387988a232d06c324df98e2b41f0",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-维德特.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-莫加多尔.png",
+      "bytes": 17855,
+      "sha256": "b6f41d5646a938370e12056b033e500d4880a248d49bf9f002ad758e569d37e9",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-莫加多尔.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-虎.png",
+      "bytes": 15077,
+      "sha256": "ddfc37d5341e6c5a5a27e040b921e68621021b5761ae3b41f6a6dc176b236064",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-虎.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/operator-art/workbook/DD-远见.png",
+      "bytes": 17540,
+      "sha256": "f4347a4e6bbac541d31850ebef570fea1645f63d01162ef24749c5b9c7947f87",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\DD-远见.png"
+      ]
+    },
+    {
       "path": "resources/originals/ship-imports/genoa-2026/README.md",
-      "bytes": 2541,
-      "sha256": "179179241cd7ce5511e8df5ef10dca17e9c52b2b05a5c1c8424abc16a18bf9db",
+      "bytes": 2713,
+      "sha256": "fc6c3c8447eba8e80fb674499094d66c058eeed0ce8b9156865f2dcb69740ea2",
       "original_paths": [
         "D:\\desktop\\铁底湾\\README.md"
       ]

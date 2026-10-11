@@ -31,6 +31,12 @@ def original_paths(relative: str, filename: str) -> list[str]:
         return [rf"E:\铁底湾在线网推\新的船的资料\{filename}"]
     if relative.startswith("resources/originals/ship-imports/genoa-2026/scenario/"):
         return [rf"E:\铁底湾在线网推\新的船的资料\热那亚截击战-简略\热那亚截击战\{filename}"]
+    if relative.startswith("resources/originals/ship-imports/genoa-2026/operator-art/workbook/"):
+        return [rf"E:\铁底湾在线网推\新的船的资料\弩炮行动-算子+基数表\弩炮行动-算子+基数表\{filename}"]
+    if relative.startswith("resources/originals/ship-imports/genoa-2026/operator-art/france/"):
+        return [rf"E:\铁底湾在线网推\新的船的资料\热那亚截击战-简略\热那亚截击战\法国算子\{filename}"]
+    if relative.startswith("resources/originals/ship-imports/genoa-2026/operator-art/italy/"):
+        return [rf"E:\铁底湾在线网推\新的船的资料\热那亚截击战-简略\热那亚截击战\意大利算子\{filename}"]
     if relative.startswith("resources/originals/ship-imports/genoa-2026/source-art/"):
         if filename == "FR-fleet.png":
             return [r"E:\铁底湾在线网推\新的船的资料\弩炮行动-算子+基数表\弩炮行动-算子+基数表\法-舰队.png"]

@@ -1048,3 +1048,10 @@
 
 - 玩家/裁判战术海图与剧本工坊部署海图的手动缩放上限统一从 4×提高至 8×，上限由 `hexGeometry` 单一常量提供。初始聚焦、交战区聚焦和全图视图保持原缩放策略；放大按钮 tooltip 标注最大 8×。
 - 验证：`frontend` 下 `npm run build` 通过；浏览器核验裁判和玩家标签页的地图缩放控件及 tooltip；`git diff --check` 通过（仅仓库既有 LF/CRLF 提示）。未创建提交。
+
+
+# 2026-10-11 修正 39 艘舰船算子图片
+
+- 将工作簿 24 艘的舰种-名称 PNG，以及热那亚目录中的法国 8 艘、意大利 7 艘算子图对应到导入记录；不再把船表/舰卡裁图当作算子。来源原图归档到 `resources/originals/ship-imports/genoa-2026/operator-art/`，船表图继续仅作转录来源。
+- 重新写入本机 SQLite：39 条舰船均有算子图片，数据库完整性检查通过。Git 移除错误的 `import-assets` 卡面缩略图。
+- 验证：`py -3.12 backend/scripts/import_ship_bundle.py --check-only`、`py -3.12 -m pytest tests/test_ship_records.py -q` 与 `git diff --check` 通过；来源清单已重建。
