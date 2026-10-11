@@ -1223,3 +1223,12 @@
 2. 审核当前工作树，排除本地 SQLite、环境密钥、构建产物和运行报告；确认二进制素材由 Git LFS 管理。
 3. 因本地仓库是浅克隆，以当前工作树建立新的根快照，避免向新仓库推送不完整的上游历史。
 4. 运行部署安全测试与前端构建，提交并推送；确认 GitHub 上主分支和 LFS 文件可访问。
+
+## 2026-10-11 云端公网部署与移动端整页滚动修复
+
+状态：完成（部署与滚动修复均已上线；移动端滚动需真机复核）。
+
+1. 按 `deploy/README.md` 在阿里云服务器（cn-shanghai，2 vCPU / 1.67G）落地部署：非 root `tiedi` 系统用户、代码 `/opt/tiedi`、数据 `/var/lib/tiedi`、systemd 单 worker uvicorn（127.0.0.1:8001）、nginx `/tiedi/` 反代与登录限速、前端 `--base=/tiedi/` 子路径构建。
+2. 公网入口暂用 Cloudflare 临时隧道（quick tunnel，无域名、免安全组变更），完成预案验收清单：首页 200、资源前缀、`/api/scenarios` 200、棋子图 200、未登录 `/platform/matches/*` 与 `POST /platform/users` 401、旧 `/api/games` 列表不含网推局、旧 `/games/{id}` debug 视图 404。
+3. 修复移动端整页无法滚动：`@media(max-width:1100px)` 中 `html,body,#root{overflow:hidden}` 锁死文档滚动，而 `.start-screen`（560px 以下为 `height:auto`，`overflow:auto` 不触发）、`.platform-shell`、`.landing`、`.custom-editor`、`.handoff` 均未成为受约束的滚动容器，内容被裁切后无法下滑。为这些整页增加 `max-height:100dvh` + `overflow:auto`，不改动 `.game` 对局布局与三栏桌面布局。
+4. 验证：前端 `tsc -b` 与生产构建通过，重新部署后经公网隧道核对首页与平台页资源、`/tiedi/` 路径与既有验收项不回归；用窄视口静态断言核对滚动容器规则存在于产物 CSS。
