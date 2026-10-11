@@ -7,7 +7,7 @@
 - 对照原始舰船记录第 9 页，华盛顿卡的武器表包含 5 英寸副炮，规则数据此前只录入了六个 16 英寸主炮组，导致玩家炮击订单没有副炮可选。
 - 为华盛顿/南达科他共用舰级档案补录左右舷 S1/S2 副炮组（每组 GF1、5 英寸），并补齐副炮装甲 2；南达科他覆盖项也明确保留副炮装甲。
 - 测试覆盖记录中的六个主炮组（每组 GF3）、左右副炮及 `make_ship` 生成的实际炮位/单舷火力。
-- 验收：`py -3.12 -m pytest tests/test_ship_records.py tests/test_engine.py tests/test_custom_scenarios.py -q`（72 项通过）、`git diff --check` 通过。未修改现存对局状态/订单。工作区未提交；提交哈希：无。
+- 验收：`py -3.12 -m pytest tests/test_ship_records.py tests/test_engine.py tests/test_custom_scenarios.py -q`（72 项通过）、`git diff --check` 通过。未修改现存对局状态/订单。代码提交：`08b8afa`。
 
 ## 2026-10-11：修复可见起火目标误报炮位射界外
 
