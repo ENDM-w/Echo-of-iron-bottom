@@ -1100,3 +1100,11 @@
 - 改动（纯前端 `PlatformPortal.tsx`）：① `launch_positions` 为空时，「发射 MF」由空下拉改为数值输入（0–8，`inputMode=numeric`）；② `writeTorpedoOrder` 无候选位置时采用填写的 MF、`launch_hex`/`bearing` 置空，不再因缺候选拒绝写单；③ 写单按钮不再要求必须存在候选位置；④ 提示文案改写为"先按自己的移动计划填写、合法性由裁判端核对（报错可用『忽略校验报错提交』）"，并保留引擎 `blocked_reason` 的展示。复用既有 `submitOrder(true)` 与裁判端"⚠ N 项报错"展示构成闭环。
 - 验证：`tsc -b` 通过；`vite build --base=/tiedi/ --outDir dist-new`（`NODE_OPTIONS=--max-old-space-size=384` + `nice -n 19`）后原子切换，**`tiedi` 的 `MainPID` 构建前后均为 631**（未重启、未踢下线）；线上 `index.html` 已引用 `index-CtBXWzND.js`，首页 200、未登录 `/platform/matches/*` 401。真机交互（填 MF → 写单 → 校验报错 → 忽略提交 → 裁判端见报错并修正）需在浏览器实测。
 - 本批次提交：`451dc36412924f0fe760c603fbb21376a8a00736`。
+
+# 2026-10-11 整合上游鱼雷 MF 草稿预览并上线（后端重启，域名未变）
+
+- 上游新增 `2a0ec70 feat(platform): preview torpedo MF from movement draft` + `63cf1a1` 记录：新增 `POST /platform/matches/{id}/seats/{seat}/torpedo-candidates`，把**草稿移动**应用到玩家状态深拷贝上临时封存后再算 `_torpedo_candidates`（含席位归属与受控舰船校验）；前端以 180ms 防抖在编辑移动草稿时调用它，`torpedoCandidates` 优先取草稿预览。这取代了"收集阶段拿不到合法 MF"的根因。
+- 本地 7 个提交 rebase 到上游之上**零冲突**；按语义合并：**上游草稿预览为主路径，本地"先收集、后校验"的数值 MF 兜底保留**（预览不可用/未填或无法解析移动草稿时仍能写单，`launch_hex`/`bearing` 置空交由引擎 `_assist_launch_from_dict` 从已封存计划还原）。兜底提示文案改为"本席位尚未填写或无法解析移动草稿，或预览暂不可用"，不再断言"移动计划尚未封存"。
+- 本次含后端改动，故执行 `rsync` + 前端 `--base=/tiedi/` 重建 + **`systemctl restart tiedi`**。重启前核对：未决裁决 0、4 局均在 `collecting`、库中仅 1 条订单——重启代价最小的窗口。**域名未变**（`cloudflared-tiedi` 未触碰，`NRestarts` 仍为 0）；代价是平台会话 token 在进程内存中，用户需重新登录。
+- 验证：`pytest tests/test_platform.py -q` 通过（含上游新增的预览接口测试）；`tsc -b` 与 `vite build --base=/tiedi/ --outDir dist-new` 通过后原子切换（线上 `index-BTEnqNTd.js`）；`POST .../torpedo-candidates` 未带 token 返回 401（端点存在且鉴权生效）；首页 200、`/api/scenarios` 200、棋子图 200、未登录 `/platform/matches/*` 401、旧 `/games/{id}?debug=true` 404；`integrity_check: ok`，31 用户 / 4 局 / 78 席位 / 1 订单 / 39 艘导入舰未变；nginx/tiedi/cloudflared-tiedi 三者 active。
+- 本批次提交：`ec742e5bc237673178d15d77c1ec54ae2ee04467`。
