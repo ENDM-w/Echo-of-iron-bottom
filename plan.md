@@ -1283,3 +1283,14 @@
 2. 兜底提示文案改准：不再断言"移动计划尚未封存"，改为"本席位尚未填写或无法解析移动草稿，或预览暂不可用"，避免误导。
 3. 本次含后端改动，按预案执行 `rsync` + 前端 `--base=/tiedi/` 重建 + **`systemctl restart tiedi`**；重启前核对 0 个未决裁决、4 局均在 collecting、库中仅 1 条订单，属重启代价最小窗口。
 4. 验证：`tests/test_platform.py`（含上游新增预览测试）通过；`POST /platform/matches/{id}/seats/{seat}/torpedo-candidates` 未带 token 返回 401（端点存在且鉴权）；首页 200、`/api/scenarios` 200、算子图 200、未登录 `/platform/matches/*` 401、旧 `/games/{id}?debug=true` 404；`integrity_check: ok`，31 用户/4 局/78 席位/39 船未变；**域名未变**（`cloudflared-tiedi` 重启次数仍为 0）。
+
+## 2026-10-11 修复鱼雷行 launch_hex 失配报错（纯前端）
+
+状态：完成（已热更新上线，服务未重启）。
+
+根因（自查实）：本地"先收集、后校验"的数值兜底会写出 `launch_hex: null` 的鱼雷行（`writeTorpedoOrder` 的 `position ? position.hex : null`），而引擎校验器 `engine.py:1801` 对"缺失 hex"与"hex 不符"报同一句 `launch_hex does not match its MF position`，且该兜底在"本席位移动草稿为空"时是常态路径（预览 effect 在 `movement.length === 0` 时置 `undefined`，回落到收集阶段本就为空的 `view.torpedo_candidates`）——于是玩家从未见过"发射格"控件却被报发射格错。上游 `2a0ec70` 的草稿预览接口已使该兜底失去意义。
+
+1. 撤掉数值兜底：`launchPositions` 为空时不再允许写鱼雷，改为明确的阻塞提示（"请先在本席位移动草稿里写出该舰的移动计划，MF 列表会随草稿自动出现"）；`writeTorpedoOrder` 重新要求存在候选位置。
+2. 提交前用当前移动草稿现取一次预览，把每条鱼雷行的 `launch_hex`/`bearing` 校正到其 `launch_at_mf` 对应位置（消除"预览后又改移动草稿"造成的陈旧 hex）。
+3. 鱼雷草稿列表里，对"MF 不在当前航路上"的行给出醒目提示，指明可用 MF。
+4. 验证：`tsc -b` 与 `vite build --base=/tiedi/` 通过；原子切换热更新，不重启 `tiedi`。

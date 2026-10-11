@@ -546,6 +546,41 @@ export function PlatformPortal({ onClose }: Props) {
       setMessage(`已下载第 ${turn} 回合存档`);
     });
   };
+  /**
+   * 提交前用「当前移动草稿」重取一次鱼雷候选，把每条鱼雷行的 launch_hex/bearing 校正到其
+   * launch_at_mf 对应的航路位置。避免"先用预览写单、之后又改移动草稿"留下的陈旧发射格被引擎拒绝
+   * （engine.py:1801 要求 launch_hex 等于该 MF 处的航路位置）。预览不可用时保持原样，不阻塞提交。
+   */
+  const resyncTorpedoLaunchHex = async (batch: JsonRecord) => {
+    if (!session || !summary || !selectedSeatId) return;
+    const rows = Array.isArray(batch.torpedoes) ? batch.torpedoes as JsonRecord[] : [];
+    const movement = Array.isArray(batch.movement) ? batch.movement : [];
+    if (!rows.length || !movement.length) return;
+    let candidates: PlatformTorpedoCandidate[];
+    try {
+      candidates = await platformTorpedoCandidatePreview(
+        session.token, summary.match.match_id, selectedSeatId, movement,
+      ) as unknown as PlatformTorpedoCandidate[];
+    } catch {
+      return;
+    }
+    const positionsByShip = new Map<string, Map<number, { hex: { q: number; r: number }; heading: number }>>();
+    for (const candidate of candidates) {
+      const positions = new Map<number, { hex: { q: number; r: number }; heading: number }>();
+      for (const position of candidate.launch_positions) {
+        positions.set(position.mf, { hex: position.hex, heading: position.heading });
+      }
+      positionsByShip.set(candidate.ship_id, positions);
+    }
+    for (const row of rows) {
+      const position = positionsByShip.get(String(row.ship_id ?? ""))?.get(Number(row.launch_at_mf));
+      if (position) {
+        row.launch_hex = position.hex;
+        row.bearing = position.heading;
+      }
+    }
+  };
+
   const submitOrder = (ignoreValidationErrors: boolean) => {
     if (!session || !summary || !view || !selectedSeatId) return;
     void run(async () => {
@@ -571,6 +606,7 @@ export function PlatformPortal({ onClose }: Props) {
               .filter((shipId) => !incapacitatedShipIds.has(shipId));
           }
         }
+        await resyncTorpedoLaunchHex(submittedBatch);
         next = await platformSubmitOrder(
           session.token,
           summary.match.match_id,
@@ -1395,22 +1431,18 @@ export function PlatformPortal({ onClose }: Props) {
     const ship = selectedActionShip;
     const launcher = selectedLauncher;
     const position = selectedLaunchPosition;
-    // 收集阶段移动计划尚未封存时，引擎不会给出合法发射 MF 列表（launch_positions 为空）。
-    // 按"先收集、后校验"处理：允许玩家按自己的移动计划填写数值 MF，只收数据；
-    // 合法性在裁判端确定移动计划后核对，发射格/舰首由规则核心从已封存移动计划还原
-    // （engine._assist_launch_from_dict），有偏差由裁判修正。
-    const declaredMfRaw = String(torpedoLaunchAtMf).trim();
-    const declaredMf = position?.mf
-      ?? (declaredMfRaw === "" ? 1 : Math.min(8, Math.max(0, Math.round(Number(declaredMfRaw) || 1))));
-    if (!ship || !launcher || !selectedLauncherCandidate || !selectedLaunchSide || !selectedLaunchAngle) return;
+    // 只接受"由移动草稿预览算出的合法 MF"：引擎校验要求 launch_hex 必须等于该 MF 处的航路位置
+    // （engine.py:1797-1802）。若允许手填 MF 而不给发射格，就会写出 launch_hex 为空的行，
+    // 提交时被引擎以"launch_hex does not match its MF position"拒绝——玩家从未见过发射格控件却报格错。
+    if (!ship || !launcher || !selectedLauncherCandidate || !position || !selectedLaunchSide || !selectedLaunchAngle) return;
     const order = {
       ship_id: ship.id,
       count: Math.max(1, Math.min(selectedLauncherRemaining, Number(torpedoCount) || 1)),
       speed: "fast",
       launcher_id: launcher.id,
-      launch_at_mf: declaredMf,
-      launch_hex: position ? position.hex : null,
-      bearing: position ? position.heading : null,
+      launch_at_mf: position.mf,
+      launch_hex: position.hex,
+      bearing: position.heading,
       launch_side: selectedLaunchSide,
       launch_angle: selectedLaunchAngle,
       setting_index: selectedSettingIndex,
@@ -2667,28 +2699,18 @@ export function PlatformPortal({ onClose }: Props) {
                         </label>
                         <label>
                           发射 MF
-                          {launchPositions.length > 0 ? (
-                            <select value={selectedLaunchPosition?.mf ?? ""} onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}>
-                              {launchPositions.map((position) => (
-                                <option key={position.mf} value={position.mf}>
-                                  MF {position.mf} · {position.heading} 舰首
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            // 移动计划尚未封存：引擎给不出合法 MF 列表。按"先收集、后校验"，
-                            // 玩家按自己的移动计划填数值，合法性留待裁判端确定移动计划后核对。
-                            <input
-                              type="number"
-                              min="0"
-                              max="8"
-                              step="1"
-                              inputMode="numeric"
-                              value={torpedoLaunchAtMf}
-                              placeholder="0-8"
-                              onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}
-                            />
-                          )}
+                          <select
+                            value={selectedLaunchPosition?.mf ?? ""}
+                            disabled={launchPositions.length === 0}
+                            onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}
+                          >
+                            {launchPositions.length === 0 && <option value="">请先在移动草稿里写出该舰航路</option>}
+                            {launchPositions.map((position) => (
+                              <option key={position.mf} value={position.mf}>
+                                MF {position.mf} · {position.heading} 舰首
+                              </option>
+                            ))}
+                          </select>
                         </label>
                         <label>
                           舷侧
@@ -2717,18 +2739,29 @@ export function PlatformPortal({ onClose }: Props) {
                         鱼雷订单不指定目标：航迹与任何未沉没舰船重合时，规则核心会对重合的每条船分别进行命中裁决，不区分敌我。同一发射器可写入多条独立订单，累计枚数不能超过当前装载量（本发射器剩余 {selectedLauncherRemaining} 枚）。
                         {launchPositions.length > 0
                           ? " 发射格和舰首航向由规则核心从本回合移动草稿投影后自动带出；提交时仍会整体严格校验。"
-                          : " 当前还拿不到合法 MF 列表（本席位尚未填写或无法解析移动草稿，或预览暂不可用）：请按你自己的移动计划填写发射 MF（0–8），此处先收集数据；合法性与发射格将在裁判端确定移动计划后核对，如有偏差由裁判修正（提交时若报错，可用下方「忽略校验报错提交」）。"}
+                          : " 当前拿不到合法 MF 列表：请先在本席位「移动草稿」里写出这艘舰的航路（计划与速度），MF 列表会随草稿自动出现。引擎要求鱼雷行的发射格必须等于该 MF 处的航路位置，所以这里不提供手填 MF——手填会产出没有发射格的行，提交时必然报 launch_hex 不符。"}
                         {selectedTorpedoCandidate?.blocked_reason ? ` 引擎当前判定：${selectedTorpedoCandidate.blocked_reason}。` : ""}
                       </p>
-                      <button onClick={writeTorpedoOrder} disabled={!selectedActionShip || captainCommandLost || !selectedLauncherCandidate || selectedLauncherRemaining <= 0 || !selectedLaunchSide || !selectedLaunchAngle}>
+                      <button onClick={writeTorpedoOrder} disabled={!selectedActionShip || captainCommandLost || !selectedLauncherCandidate || !selectedLaunchPosition || selectedLauncherRemaining <= 0 || !selectedLaunchSide || !selectedLaunchAngle}>
                         写入鱼雷草稿
                       </button>
-                      {torpedoDrafts.filter((item) => item.ship_id === selectedActionShip?.id).length > 0 && (
+                      {torpedoDrafts.filter((item) => item.ship_id === selectedActionShip?.id).length > 0 && (() => {
+                        // 当前移动草稿给出的合法 MF 集合：不在其中的行会被引擎以 launch_hex 不符拒绝，
+                        // 这里直接标出来，免得玩家提交时才看到那句看不懂的报错。
+                        const planMfs = new Set(launchPositions.map((position) => position.mf));
+                        return (
                         <div className="draft-order-list">
                           <strong>已写入发射</strong>
                           {torpedoDrafts.map((item, index) => item.ship_id === selectedActionShip?.id ? (
                             <div className="draft-order-row" key={`torpedo-draft-${index}`}>
-                              <span>{String(item.launcher_id)} · {Number(item.count ?? 0)} 枚 · MF {String(item.launch_at_mf ?? "?")} · {String(item.launch_side ?? "")} {String(item.launch_angle ?? "")}</span>
+                              <span>
+                                {String(item.launcher_id)} · {Number(item.count ?? 0)} 枚 · MF {String(item.launch_at_mf ?? "?")} · {String(item.launch_side ?? "")} {String(item.launch_angle ?? "")}
+                                {!planMfs.has(Number(item.launch_at_mf)) && (
+                                  <b className="draft-order-warning">
+                                    ⚠ 该 MF 不在当前移动草稿的航路上（可用：{launchPositions.length ? launchPositions.map((position) => position.mf).join("、") : "尚无，请先写该舰的移动草稿"}）；请移除后按可用 MF 重写，否则提交会被引擎拒绝。
+                                  </b>
+                                )}
+                              </span>
                               <button type="button" className="quiet" onClick={() => updateOrderDraft((batch) => {
                                 const rows = Array.isArray(batch.torpedoes) ? [...(batch.torpedoes as unknown[])] : [];
                                 rows.splice(index, 1);
@@ -2737,7 +2770,8 @@ export function PlatformPortal({ onClose }: Props) {
                             </div>
                           ) : null)}
                         </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   </section>
                 )}
