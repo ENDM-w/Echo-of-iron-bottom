@@ -1,0 +1,4423 @@
+schema_version: 1
+source:
+  description: User-provided 2026-10-11 workbook and Genoa VASSAL ship tables; workbook source rows and VASSAL page/row provenance
+    are in catalog. Workbook hull and speed totals follow the user-approved equal split; VASSAL grids and tracks are transcribed
+    from the ship cards.
+  files:
+  - resources/originals/ship-imports/genoa-2026/workbooks/eng.xlsx
+  - resources/originals/ship-imports/genoa-2026/workbooks/engre.xlsx
+  - resources/originals/ship-imports/genoa-2026/workbooks/ShipData.xlsx
+  - resources/originals/ship-imports/genoa-2026/scenario/船表：热那亚截击战.pdf
+  - resources/originals/ship-imports/genoa-2026/scenario/剧本：热那亚截击战.pdf
+  - resources/originals/ship-imports/genoa-2026/workbooks/使用文档(ai写的还没校对.docx
+records:
+  IBS-U-RN-HOOD:
+    catalog:
+      name: 胡德
+      english_name: Hood
+      class_name: 胡德（单舰）
+      ship_type: BC
+      source_table: 1
+      source_row: 2
+    record:
+      id: IBS-U-RN-HOOD
+      name: 胡德
+      ship_type: BC
+      displacement_band: G
+      hull_rows:
+      - 9
+      - 9
+      - 9
+      speed_damage_track:
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 17
+        caliber: 15.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - port
+      - id: SM1P2
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - port
+      - id: SM1P3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - starboard
+      - id: SM1S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - starboard
+      - id: SM1S3
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - starboard
+      - id: SS11
+        kind: secondary
+        position: stern
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS21
+        kind: primary
+        position: stern
+        firepower: 17
+        caliber: 15.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS22
+        kind: primary
+        position: stern
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M1-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour:
+        primary: 15.0
+        secondary: 1.0
+        belt: 12.0
+        bridge: 11.0
+      fire_control: true
+      aircraft: true
+      radar: true
+      vp: 41
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Hood.png
+  IBS-U-RN-VALIANT:
+    catalog:
+      name: 勇士
+      english_name: Valiant
+      class_name: 勇士（单舰）
+      ship_type: BB
+      source_table: 1
+      source_row: 3
+    record:
+      id: IBS-U-RN-VALIANT
+      name: 勇士
+      ship_type: BB
+      displacement_band: F
+      hull_rows:
+      - 7
+      - 7
+      - 6
+      speed_damage_track:
+      - - 4
+        - 3
+        - 2
+        - 1
+      - - 4
+        - 3
+        - 2
+        - 1
+      - - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 17
+        caliber: 15.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P2
+        kind: secondary
+        position: port
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P4
+        kind: secondary
+        position: port
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P5
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S2
+        kind: secondary
+        position: starboard
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S3
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S4
+        kind: secondary
+        position: starboard
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S5
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 17
+        caliber: 15.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 13.0
+        secondary: 1.0
+        belt: 13.0
+        bridge: 11.0
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 28
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Valiant.png
+  IBS-U-RN-RESOLUTION:
+    catalog:
+      name: 决心
+      english_name: Resolution
+      class_name: 决心（单舰）
+      ship_type: BB
+      source_table: 1
+      source_row: 4
+    record:
+      id: IBS-U-RN-RESOLUTION
+      name: 决心
+      ship_type: BB
+      displacement_band: F
+      hull_rows:
+      - 7
+      - 7
+      - 6
+      speed_damage_track:
+      - - 4
+        - 3
+        - 2
+        - 1
+      - - 3
+        - 2
+        - 1
+      - - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P2
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P4
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S3
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S4
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 16
+        caliber: 15.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 13.0
+        secondary: 6.0
+        belt: 13.0
+        bridge: 11.0
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 25
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Resolution.png
+  IBS-U-RN-ARETHUSA:
+    catalog:
+      name: 林仙
+      english_name: Arethusa
+      class_name: 林仙（单舰）
+      ship_type: CL
+      source_table: 1
+      source_row: 5
+    record:
+      id: IBS-U-RN-ARETHUSA
+      name: 林仙
+      ship_type: CL
+      displacement_band: B
+      hull_rows:
+      - 3
+      - 3
+      - 2
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 4
+        caliber: 6.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 3
+        caliber: 6.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1P2
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: SM1S2
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 4
+        caliber: 6.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour:
+        primary: 1.0
+        secondary: 0.0
+        belt: 2.2
+        bridge: 0.0
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 9
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Arethusa.png
+  IBS-U-RN-ENTERPRISE:
+    catalog:
+      name: 进取
+      english_name: Enterprise
+      class_name: 进取（单舰）
+      ship_type: CL
+      source_table: 1
+      source_row: 6
+    record:
+      id: IBS-U-RN-ENTERPRISE
+      name: 进取
+      ship_type: CL
+      displacement_band: B
+      hull_rows:
+      - 3
+      - 3
+      - 3
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 4
+        caliber: 6.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PM1P1
+        kind: primary
+        position: port
+        firepower: 2
+        caliber: 6.0
+        arcs:
+        - port
+      - id: PM1S1
+        kind: primary
+        position: starboard
+        firepower: 2
+        caliber: 6.0
+        arcs:
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 6.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 6.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 2
+        reloads: 2
+      - id: TT-M1-P2
+        position: port
+        arcs:
+        - port
+        torpedoes: 2
+        reloads: 2
+      - id: TT-M1-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 2
+        reloads: 2
+      - id: TT-M1-S2
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 2
+        reloads: 2
+      torpedo_type: uk-21-mk9
+      armour:
+        primary: 1.0
+        secondary: 0.0
+        belt: 3.0
+        bridge: 3.0
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 8
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Enterprise.png
+  IBS-U-RN-FAULKNOR:
+    catalog:
+      name: 福克诺
+      english_name: Faulknor
+      class_name: 福克诺（单舰）
+      ship_type: DD
+      source_table: 1
+      source_row: 7
+    record:
+      id: IBS-U-RN-FAULKNOR
+      name: 福克诺
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PM11
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 4
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Faulknor.png
+  IBS-U-RN-FOXHOUND:
+    catalog:
+      name: 猎狐犬
+      english_name: Foxhound
+      class_name: 猎狐犬（单舰）
+      ship_type: DD
+      source_table: 1
+      source_row: 8
+    record:
+      id: IBS-U-RN-FOXHOUND
+      name: 猎狐犬
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Foxhound.png
+  IBS-U-RN-FEARLESS:
+    catalog:
+      name: 无恐
+      english_name: Fearless
+      class_name: 无恐（单舰）
+      ship_type: DD
+      source_table: 1
+      source_row: 9
+    record:
+      id: IBS-U-RN-FEARLESS
+      name: 无恐
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Fearless.png
+  IBS-U-RN-FORESIGHT:
+    catalog:
+      name: 远见
+      english_name: Foresight
+      class_name: 远见（单舰）
+      ship_type: DD
+      source_table: 1
+      source_row: 10
+    record:
+      id: IBS-U-RN-FORESIGHT
+      name: 远见
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Foresight.png
+  IBS-U-RN-FORESTER:
+    catalog:
+      name: 弗雷斯特
+      english_name: Forester
+      class_name: 弗雷斯特（单舰）
+      ship_type: DD
+      source_table: 1
+      source_row: 11
+    record:
+      id: IBS-U-RN-FORESTER
+      name: 弗雷斯特
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Forester.png
+  IBS-U-RN-WRESTLER:
+    catalog:
+      name: 摔跤手
+      english_name: Wrestler
+      class_name: 摔跤手（单舰）
+      ship_type: DD
+      source_table: 2
+      source_row: 2
+    record:
+      id: IBS-U-RN-WRESTLER
+      name: 摔跤手
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 1
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 2
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Wrestler.png
+  IBS-U-RN-VIDETTE:
+    catalog:
+      name: 维德特
+      english_name: Vidette
+      class_name: 维德特（单舰）
+      ship_type: DD
+      source_table: 2
+      source_row: 3
+    record:
+      id: IBS-U-RN-VIDETTE
+      name: 维德特
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 1
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 2
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Vidette.png
+  IBS-U-RN-VORTIGERN:
+    catalog:
+      name: 沃蒂根
+      english_name: Vortigern
+      class_name: 沃蒂根（单舰）
+      ship_type: DD
+      source_table: 2
+      source_row: 4
+    record:
+      id: IBS-U-RN-VORTIGERN
+      name: 沃蒂根
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 1
+      - 1
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 4.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 4.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 4.0
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: uk-21-mk9
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 2
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/RN-Vortigern.png
+  IBS-U-FRN-DUNKERQUE:
+    catalog:
+      name: 敦刻尔克
+      english_name: Dunkerque
+      class_name: 敦刻尔克（单舰）
+      ship_type: BB
+      source_table: 3
+      source_row: 2
+    record:
+      id: IBS-U-FRN-DUNKERQUE
+      name: 敦刻尔克
+      ship_type: BB
+      displacement_band: F
+      hull_rows:
+      - 7
+      - 7
+      - 7
+      speed_damage_track:
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 28
+        caliber: 13.3
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 28
+        caliber: 13.3
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: SS11
+        kind: secondary
+        position: stern
+        firepower: 6
+        caliber: 5.1
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: SS2P1
+        kind: secondary
+        position: port
+        firepower: 5
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SS2S1
+        kind: secondary
+        position: starboard
+        firepower: 5
+        caliber: 5.1
+        arcs:
+        - starboard
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 13.0
+        secondary: 5.0
+        belt: 9.0
+        bridge: 10.0
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 33
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Dunkerque.png
+  IBS-U-FRN-STRASBOURG:
+    catalog:
+      name: 斯特拉斯堡
+      english_name: Strasbourg
+      class_name: 斯特拉斯堡（单舰）
+      ship_type: BB
+      source_table: 3
+      source_row: 3
+    record:
+      id: IBS-U-FRN-STRASBOURG
+      name: 斯特拉斯堡
+      ship_type: BB
+      displacement_band: F
+      hull_rows:
+      - 7
+      - 7
+      - 7
+      speed_damage_track:
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 28
+        caliber: 13.3
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 28
+        caliber: 13.3
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: SS11
+        kind: secondary
+        position: stern
+        firepower: 6
+        caliber: 5.1
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: SS2P1
+        kind: secondary
+        position: port
+        firepower: 5
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SS2S1
+        kind: secondary
+        position: starboard
+        firepower: 5
+        caliber: 5.1
+        arcs:
+        - starboard
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 14.0
+        secondary: 5.0
+        belt: 11.0
+        bridge: 10.0
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 32
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Strasbourg.png
+  IBS-U-FRN-BRETAGNE:
+    catalog:
+      name: 布列塔尼
+      english_name: Bretagne
+      class_name: 布列塔尼（单舰）
+      ship_type: BB
+      source_table: 3
+      source_row: 4
+    record:
+      id: IBS-U-FRN-BRETAGNE
+      name: 布列塔尼
+      ship_type: BB
+      displacement_band: E
+      hull_rows:
+      - 6
+      - 6
+      - 5
+      speed_damage_track:
+      - - 4
+        - 3
+        - 2
+        - 1
+      - - 3
+        - 2
+        - 1
+      - - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM1P2
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: SM1S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: PM21
+        kind: primary
+        position: midships
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - port
+        - starboard
+      - id: SM3P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM3P2
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM3S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: SM3S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 10.6
+        secondary: 6.6
+        belt: 10.6
+        bridge: 10.0
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 25
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Bretagne.png
+  IBS-U-FRN-PROVENCE:
+    catalog:
+      name: 普罗旺斯
+      english_name: Provence
+      class_name: 普罗旺斯（单舰）
+      ship_type: BB
+      source_table: 3
+      source_row: 5
+    record:
+      id: IBS-U-FRN-PROVENCE
+      name: 普罗旺斯
+      ship_type: BB
+      displacement_band: E
+      hull_rows:
+      - 6
+      - 6
+      - 5
+      speed_damage_track:
+      - - 4
+        - 3
+        - 2
+        - 1
+      - - 3
+        - 2
+        - 1
+      - - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: SM1P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM1P2
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM1S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: SM1S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: PM21
+        kind: primary
+        position: midships
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - port
+        - starboard
+      - id: SM3P1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM3P2
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - port
+      - id: SM3S1
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: SM3S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 5.1
+        arcs:
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 12
+        caliber: 13.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 10.6
+        secondary: 6.6
+        belt: 10.6
+        bridge: 10.0
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 25
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Provence.png
+  IBS-U-FRN-MOGADOR:
+    catalog:
+      name: 莫加多尔
+      english_name: Mogador
+      class_name: 莫加多尔（单舰）
+      ship_type: DD
+      source_table: 3
+      source_row: 6
+    record:
+      id: IBS-U-FRN-MOGADOR
+      name: 莫加多尔
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 3
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 3
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 4
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 4
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 3
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 5
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Mogador.png
+  IBS-U-FRN-VOLTA:
+    catalog:
+      name: 伏尔塔
+      english_name: Volta
+      class_name: 伏尔塔（单舰）
+      ship_type: DD
+      source_table: 3
+      source_row: 7
+    record:
+      id: IBS-U-FRN-VOLTA
+      name: 伏尔塔
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 3
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 3
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 4
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 4
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 3
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 5
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Volta.png
+  IBS-U-FRN-LYNX:
+    catalog:
+      name: 猞猁
+      english_name: Lynx
+      class_name: 猞猁（单舰）
+      ship_type: DD
+      source_table: 3
+      source_row: 8
+    record:
+      id: IBS-U-FRN-LYNX
+      name: 猞猁
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 2
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PM31
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Lynx.png
+  IBS-U-FRN-TIGRE:
+    catalog:
+      name: 虎
+      english_name: Tigre
+      class_name: 虎（单舰）
+      ship_type: DD
+      source_table: 3
+      source_row: 9
+    record:
+      id: IBS-U-FRN-TIGRE
+      name: 虎
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 2
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PM31
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Tigre.png
+  IBS-U-FRN-LE-TRIOMPHANT:
+    catalog:
+      name: 凯旋
+      english_name: Le Triomphant
+      class_name: 凯旋（单舰）
+      ship_type: DD
+      source_table: 3
+      source_row: 10
+    record:
+      id: IBS-U-FRN-LE-TRIOMPHANT
+      name: 凯旋
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PM31
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 4
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Le-Triomphant.png
+  IBS-U-FRN-L-INDOMPTABLE:
+    catalog:
+      name: 不屈
+      english_name: L'Indomptable
+      class_name: 不屈（单舰）
+      ship_type: DD
+      source_table: 3
+      source_row: 11
+    record:
+      id: IBS-U-FRN-L-INDOMPTABLE
+      name: 不屈
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB12
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PM31
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+      - id: PS11
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: PS12
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.5
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M1-P1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M1-S1
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      - id: TT-M2-P1
+        position: port
+        arcs:
+        - port
+        torpedoes: 2
+        reloads: 0
+      - id: TT-M2-S1
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 2
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 4
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-L-Indomptable.png
+  IBS-U-FRN-COMMANDANT-TESTE:
+    catalog:
+      name: 泰斯特指挥官
+      english_name: Commandant Teste
+      class_name: 泰斯特指挥官（单舰）
+      ship_type: AV
+      source_table: 3
+      source_row: 12
+    record:
+      id: IBS-U-FRN-COMMANDANT-TESTE
+      name: 泰斯特指挥官
+      ship_type: AV
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 3
+      - 3
+      speed_damage_track:
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: PB11
+        kind: primary
+        position: bow
+        firepower: 1
+        caliber: 3.9
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: PB2P1
+        kind: primary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: PB2S1
+        kind: primary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: PM1P1
+        kind: primary
+        position: port
+        firepower: 1
+        caliber: 3.9
+        arcs:
+        - port
+      - id: PM1S1
+        kind: primary
+        position: starboard
+        firepower: 1
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: PS1P1
+        kind: primary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: PS1S1
+        kind: primary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: PS21
+        kind: primary
+        position: stern
+        firepower: 1
+        caliber: 3.9
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 1.0
+        secondary: 0.0
+        belt: 2.0
+        bridge: 3.1
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 7
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Commandant-Teste.png
+  IBS-U-FRN-ALGERIE:
+    catalog:
+      name: 阿尔及利亚
+      english_name: Algérie
+      class_name: 阿尔及利亚（单舰）
+      ship_type: CA
+      source_table: 4
+      source_row: 1
+    record:
+      id: IBS-U-FRN-ALGERIE
+      name: 阿尔及利亚
+      ship_type: CA
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 6
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 6
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S5
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S6
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      torpedo_launchers:
+      - id: TT-P
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-S
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour:
+        primary: 4
+        secondary: 1
+        belt: 4.3
+        bridge: 3.9
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 13
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Algeria-vmod.png
+  IBS-U-FRN-COLBERT:
+    catalog:
+      name: 科尔贝尔
+      english_name: Colbert
+      class_name: 科尔贝尔（单舰）
+      ship_type: CA
+      source_table: 4
+      source_row: 2
+    record:
+      id: IBS-U-FRN-COLBERT
+      name: 科尔贝尔
+      ship_type: CA
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 6
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 6
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - starboard
+      torpedo_launchers:
+      - id: TT-P
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-S
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour:
+        primary: 1.2
+        belt: 2
+        bridge: 1.2
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 10
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Colbert-vmod.png
+  IBS-U-FRN-FOCH:
+    catalog:
+      name: 福煦
+      english_name: Foch
+      class_name: 福煦（单舰）
+      ship_type: CA
+      source_table: 4
+      source_row: 3
+    record:
+      id: IBS-U-FRN-FOCH
+      name: 福煦
+      ship_type: CA
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 6
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 6
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - starboard
+      torpedo_launchers:
+      - id: TT-P
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-S
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour:
+        primary: 1.2
+        belt: 2.1
+        bridge: 1.2
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 10
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Foch-vmod.png
+  IBS-U-FRN-DUPLEIX:
+    catalog:
+      name: 杜布雷
+      english_name: Dupleix
+      class_name: 杜布雷（单舰）
+      ship_type: CA
+      source_table: 4
+      source_row: 4
+    record:
+      id: IBS-U-FRN-DUPLEIX
+      name: 杜布雷
+      ship_type: CA
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 6
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 6
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 1
+        caliber: 3.5
+        arcs:
+        - starboard
+      torpedo_launchers:
+      - id: TT-P
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-S
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour:
+        primary: 1.2
+        secondary: 1
+        belt: 2.3
+        bridge: 1.2
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 10
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Dupleix-vmod.png
+  IBS-U-FRN-AIGLE:
+    catalog:
+      name: 鹰
+      english_name: Aigle
+      class_name: 鹰（单舰）
+      ship_type: DD
+      source_table: 4
+      source_row: 5
+    record:
+      id: IBS-U-FRN-AIGLE
+      name: 鹰
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-M1
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 3
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Aigle-vmod.png
+  IBS-U-FRN-ALBATROS:
+    catalog:
+      name: 信天翁
+      english_name: Albatros
+      class_name: 信天翁（单舰）
+      ship_type: DD
+      source_table: 4
+      source_row: 6
+    record:
+      id: IBS-U-FRN-ALBATROS
+      name: 信天翁
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-M1
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 3
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Albatros-vmod.png
+  IBS-U-FRN-GERFAUT:
+    catalog:
+      name: 猎鹰
+      english_name: Gerfaut
+      class_name: 猎鹰（单舰）
+      ship_type: DD
+      source_table: 4
+      source_row: 7
+    record:
+      id: IBS-U-FRN-GERFAUT
+      name: 猎鹰
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-M1
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 3
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Gerfaut-vmod.png
+  IBS-U-FRN-VAUTOUR:
+    catalog:
+      name: 秃鹫
+      english_name: Vautour
+      class_name: 秃鹫（单舰）
+      ship_type: DD
+      source_table: 4
+      source_row: 8
+    record:
+      id: IBS-U-FRN-VAUTOUR
+      name: 秃鹫
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-M1
+        kind: primary
+        position: midships
+        firepower: 1
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 2
+        caliber: 5.4
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 3
+        reloads: 0
+      torpedo_type: fr-21-6
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 3
+      source_page: 1
+    artwork: resources/derived/structured/ships/import-assets/FR-Vautour-vmod.png
+  IBS-U-IT-ZARA:
+    catalog:
+      name: 扎拉
+      english_name: Zara
+      class_name: 扎拉（单舰）
+      ship_type: CA
+      source_table: 5
+      source_row: 1
+    record:
+      id: IBS-U-IT-ZARA
+      name: 扎拉
+      ship_type: CA
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - &id001
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - *id001
+      - *id001
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 6
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 6
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S5
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S6
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 5.9
+        secondary: 1
+        belt: 5.9
+        bridge: 5.9
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 12
+      source_page: 2
+    artwork: resources/derived/structured/ships/import-assets/IT-Zara.png
+  IBS-U-IT-FIUME:
+    catalog:
+      name: 阜姆
+      english_name: Fiume
+      class_name: 阜姆（单舰）
+      ship_type: CA
+      source_table: 5
+      source_row: 2
+    record:
+      id: IBS-U-IT-FIUME
+      name: 阜姆
+      ship_type: CA
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - &id002
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - *id002
+      - *id002
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 6
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 6
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S5
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S6
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 5.9
+        secondary: 1
+        belt: 5.9
+        bridge: 5.9
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 11
+      source_page: 2
+    artwork: resources/derived/structured/ships/import-assets/IT-Fiume.png
+  IBS-U-IT-GORIZIA:
+    catalog:
+      name: 戈里齐亚
+      english_name: Gorizia
+      class_name: 戈里齐亚（单舰）
+      ship_type: CA
+      source_table: 5
+      source_row: 3
+    record:
+      id: IBS-U-IT-GORIZIA
+      name: 戈里齐亚
+      ship_type: CA
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - &id003
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - *id003
+      - *id003
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 6
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 8
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 6
+        caliber: 8
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S5
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S6
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      torpedo_launchers: []
+      torpedo_type: null
+      armour:
+        primary: 5.9
+        secondary: 1
+        belt: 5.9
+        bridge: 5.9
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 11
+      source_page: 2
+    artwork: resources/derived/structured/ships/import-assets/IT-Gorizia.png
+  IBS-U-IT-ABRUZZI:
+    catalog:
+      name: 阿布鲁齐公爵
+      english_name: Duca degli Abruzzi
+      class_name: 阿布鲁齐公爵（单舰）
+      ship_type: CL
+      source_table: 5
+      source_row: 4
+    record:
+      id: IBS-U-IT-ABRUZZI
+      name: 阿布鲁齐公爵
+      ship_type: CL
+      displacement_band: C
+      hull_rows:
+      - 4
+      - 4
+      - 4
+      speed_damage_track:
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 5
+        caliber: 6
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-B2
+        kind: primary
+        position: bow
+        firepower: 7
+        caliber: 6
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 7
+        caliber: 6
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: P-S2
+        kind: primary
+        position: stern
+        firepower: 5
+        caliber: 6
+        arcs:
+        - port
+        - starboard
+        - stern
+      - id: S1
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S2
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      - id: S3
+        kind: secondary
+        position: port
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - port
+      - id: S4
+        kind: secondary
+        position: starboard
+        firepower: 2
+        caliber: 3.9
+        arcs:
+        - starboard
+      torpedo_launchers:
+      - id: TT-P
+        position: port
+        arcs:
+        - port
+        torpedoes: 1
+        reloads: 0
+      - id: TT-S
+        position: starboard
+        arcs:
+        - starboard
+        torpedoes: 1
+        reloads: 0
+      torpedo_type: it-21
+      armour:
+        primary: 5.3
+        secondary: 1
+        belt: 5
+        bridge: 5.5
+      fire_control: true
+      aircraft: true
+      radar: false
+      vp: 12
+      source_page: 2
+    artwork: resources/derived/structured/ships/import-assets/IT-Duca-degli-Abruzzi.png
+  IBS-U-IT-CAMICIA:
+    catalog:
+      name: 黑衫军
+      english_name: Camicia Nera
+      class_name: 黑衫军（单舰）
+      ship_type: DD
+      source_table: 5
+      source_row: 5
+    record:
+      id: IBS-U-IT-CAMICIA
+      name: 黑衫军
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 3
+        reloads: 0
+      torpedo_type: it-21
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 2
+      special_rules:
+      - genoa_illuminating_shells_optional_not_auto_resolved
+      source_page: 2
+    artwork: resources/derived/structured/ships/import-assets/IT-Camicia-Nera.png
+  IBS-U-IT-ALPINO:
+    catalog:
+      name: 民兵
+      english_name: Alpino
+      class_name: 民兵（单舰）
+      ship_type: DD
+      source_table: 5
+      source_row: 6
+    record:
+      id: IBS-U-IT-ALPINO
+      name: 民兵
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 3
+        reloads: 0
+      torpedo_type: it-21
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 2
+      special_rules:
+      - genoa_illuminating_shells_optional_not_auto_resolved
+      source_page: 2
+    artwork: resources/derived/structured/ships/import-assets/IT-Alpino.png
+  IBS-U-IT-ARTIGLIERE:
+    catalog:
+      name: 炮兵
+      english_name: Artigliere
+      class_name: 炮兵（单舰）
+      ship_type: DD
+      source_table: 5
+      source_row: 7
+    record:
+      id: IBS-U-IT-ARTIGLIERE
+      name: 炮兵
+      ship_type: DD
+      displacement_band: A
+      hull_rows:
+      - 2
+      - 2
+      speed_damage_track:
+      - - 7
+        - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      - - 6
+        - 5
+        - 4
+        - 3
+        - 2
+        - 1
+      guns:
+      - id: P-B1
+        kind: primary
+        position: bow
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - bow
+        - port
+        - starboard
+      - id: P-S1
+        kind: primary
+        position: stern
+        firepower: 3
+        caliber: 4.7
+        arcs:
+        - port
+        - starboard
+        - stern
+      torpedo_launchers:
+      - id: TT-M
+        position: midships
+        arcs:
+        - port
+        - starboard
+        torpedoes: 3
+        reloads: 0
+      torpedo_type: it-21
+      armour: {}
+      fire_control: true
+      aircraft: false
+      radar: false
+      vp: 2
+      special_rules:
+      - genoa_illuminating_shells_optional_not_auto_resolved
+      source_page: 2
+    artwork: resources/derived/structured/ships/import-assets/IT-Artigliere.png

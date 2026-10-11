@@ -13,7 +13,7 @@ from .models import ShipRecord
 
 
 def _imported_ship_rows() -> list[tuple[str, dict[str, Any], dict[str, Any]]]:
-    default_db = Path(__file__).resolve().parents[3] / "backend" / "iron_bottom_sound.sqlite3"
+    default_db = Path(__file__).resolve().parents[3] / "backend" / "iron-bottom-sound.sqlite3"
     path = Path(os.environ.get("IBS_DB_PATH", str(default_db)))
     if not path.exists():
         return []

@@ -4169,10 +4169,15 @@ class IronBottomEngine:
     ) -> bool:
         if armour <= 0:
             return True
-        nation = "JP" if attacker.id.startswith("IBS-U-IJN-") else (
-            "US" if attacker.id.startswith("IBS-U-USN-") else (
-                "UK" if attacker.id.startswith("IBS-U-RN-") else "DE"
-            )
+        nation = next(
+            (nation for prefix, nation in (
+                ("IBS-U-IJN-", "JP"),
+                ("IBS-U-USN-", "US"),
+                ("IBS-U-RN-", "UK"),
+                ("IBS-U-FRN-", "FR"),
+                ("IBS-U-IT-", "IT"),
+            ) if attacker.id.startswith(prefix)),
+            "DE",
         )
         effective_caliber = scenario_rules(state.scenario_id).penetration_caliber(
             attacker.id, caliber or attacker.primary.caliber

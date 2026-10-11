@@ -78,7 +78,7 @@ def test_every_mount_and_launcher_has_a_legal_source_arc() -> None:
 def test_torpedo_characteristics_table_matches_source_cells() -> None:
     data = yaml.safe_load((STRUCTURED / "rules" / "torpedoes.yaml").read_text(encoding="utf-8"))
     types = data["types"]
-    assert len(types) == 10
+    assert len(types) == 12
     assert types["us-21-mk15-1942"]["settings"][-1] == {"speed": [5, 4, 4], "range": 25}
     assert types["jp-24-type90"]["settings"] == [
         {"speed": [8, 7, 7], "range": 12},
@@ -88,6 +88,24 @@ def test_torpedo_characteristics_table_matches_source_cells() -> None:
     assert types["jp-24-type93"]["damage_modifier"] == 1
     assert types["jp-21"]["damage_modifier"] == -1
     assert types["de-nl-21"]["settings"][1] == {"speed": [7, 7, 7], "range": 14}
+    assert types["fr-21-6"] == {
+        "nation": "FR",
+        "caliber_in": 21.6,
+        "settings": [
+            {"speed": [7, 7, 6], "range": 18},
+            {"speed": [6, 6, 5], "range": 26},
+        ],
+        "damage_modifier": 0,
+    }
+    assert types["it-21"] == {
+        "nation": "IT",
+        "caliber_in": 21,
+        "settings": [
+            {"speed": [9, 9, 9], "range": 8},
+            {"speed": [5, 5, 5], "range": 24},
+        ],
+        "damage_modifier": 0,
+    }
     referenced = {record.torpedo_type for record in load_ship_records().values() if record.torpedo_type}
     assert referenced <= set(types)
 

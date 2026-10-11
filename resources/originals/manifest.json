@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "source_root": "D:\\desktop\\铁底湾",
-  "canonical_file_count": 311,
-  "source_path_count": 315,
-  "total_bytes": 98198936,
+  "canonical_file_count": 340,
+  "source_path_count": 341,
+  "total_bytes": 105167559,
   "files": [
     {
       "path": "resources/originals/assets/images/1.png",
@@ -46,6 +46,14 @@
       ]
     },
     {
+      "path": "resources/originals/assets/images/BB标记.png",
+      "bytes": 1257472,
+      "sha256": "3146a33dce5a282c99723302bd2950ee6100f5fed8c14f54b2df6aafa28c42be",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\BB标记.png"
+      ]
+    },
+    {
       "path": "resources/originals/assets/images/BB（日）.png",
       "bytes": 12039,
       "sha256": "792a491dc2d1d7949b60b046808aa4a9db91802e224832094c188af02597b2a1",
@@ -59,6 +67,14 @@
       "sha256": "f4956295d83aec4c52df68c5979d441cd9c936a226997336afb847650b442e6c",
       "original_paths": [
         "D:\\desktop\\铁底湾\\images\\BB（美）.png"
+      ]
+    },
+    {
+      "path": "resources/originals/assets/images/CA-CL标记.png",
+      "bytes": 1576960,
+      "sha256": "b778429a845819f54cf9daaadb17b9ecce1587bbf11ac5a1dde413debb83d6fe",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\CA-CL标记.png"
       ]
     },
     {
@@ -83,6 +99,14 @@
       "sha256": "775811ff04987f5ee8b0e93c60ddec74b3cea08f82a6db3f08ea2c8feafe30dd",
       "original_paths": [
         "D:\\desktop\\铁底湾\\images\\CA（英）.png"
+      ]
+    },
+    {
+      "path": "resources/originals/assets/images/DD标记.png",
+      "bytes": 1103872,
+      "sha256": "25806f7a62b8facb3924773c896313ccc36d7e8d254def4b3357fdeb1e0b4c6a",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\DD标记.png"
       ]
     },
     {
@@ -303,19 +327,19 @@
     },
     {
       "path": "resources/originals/assets/images/日本-BB-信浓.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-BB-信浓.png"
-      ],
       "bytes": 14467,
-      "sha256": "b1029de16df345dedfc0741061c066495a0a54ee8709ef83fe37f54a89a7cfbf"
+      "sha256": "b1029de16df345dedfc0741061c066495a0a54ee8709ef83fe37f54a89a7cfbf",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-BB-信浓.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-BB-大和-二马.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-BB-大和.png"
-      ],
       "bytes": 14785,
-      "sha256": "1077e29706ddfaf8f342448cba00b13da8fd9aee72b8eb4aa7f4de184dab8a29"
+      "sha256": "1077e29706ddfaf8f342448cba00b13da8fd9aee72b8eb4aa7f4de184dab8a29",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-BB-大和-二马.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-BB-大和.png",
@@ -327,11 +351,11 @@
     },
     {
       "path": "resources/originals/assets/images/日本-BB-武藏.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-BB-武藏.png"
-      ],
       "bytes": 14592,
-      "sha256": "63b003675c3444f006ad5ad913dec9b570d2cab70a4d31c39f29b18faffdc396"
+      "sha256": "63b003675c3444f006ad5ad913dec9b570d2cab70a4d31c39f29b18faffdc396",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-BB-武藏.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-BB-比叡.png",
@@ -391,11 +415,11 @@
     },
     {
       "path": "resources/originals/assets/images/日本-CA-伊吹.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-CA-伊吹.png"
-      ],
       "bytes": 15045,
-      "sha256": "d1e87499761f8d3eee7567a5f61afc870addd603d13e5421617ce00325600355"
+      "sha256": "d1e87499761f8d3eee7567a5f61afc870addd603d13e5421617ce00325600355",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-CA-伊吹.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-CA-加古1.png",
@@ -471,11 +495,11 @@
     },
     {
       "path": "resources/originals/assets/images/日本-CA-鞍马.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-CA-鞍马.png"
-      ],
       "bytes": 14798,
-      "sha256": "b829409d7c1809a3a258329b81c99c04da8fcb661f37818d5ce923a2f542aa25"
+      "sha256": "b829409d7c1809a3a258329b81c99c04da8fcb661f37818d5ce923a2f542aa25",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-CA-鞍马.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-CA-高雄.png",
@@ -495,27 +519,27 @@
     },
     {
       "path": "resources/originals/assets/images/日本-CB-吾妻.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-CB-吾妻.png"
-      ],
       "bytes": 12694,
-      "sha256": "67d2eeb5b5f0bc8fb3b9009189c6b9d938db7e578ea37bef37264a0c215880e4"
+      "sha256": "67d2eeb5b5f0bc8fb3b9009189c6b9d938db7e578ea37bef37264a0c215880e4",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-CB-吾妻.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-CB-石狩.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-CB-石狩.png"
-      ],
       "bytes": 12650,
-      "sha256": "4a6bb1b1457c4cde062f92763deacce04a78039fd385699f06e062fadbc0c02b"
+      "sha256": "4a6bb1b1457c4cde062f92763deacce04a78039fd385699f06e062fadbc0c02b",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-CB-石狩.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-CL-五濑.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-CL-五濑.png"
-      ],
       "bytes": 13453,
-      "sha256": "f5cb5c2650a39b288e3d9f9c8441c6ce0f7953c12c4c978f7de602d2b1caa687"
+      "sha256": "f5cb5c2650a39b288e3d9f9c8441c6ce0f7953c12c4c978f7de602d2b1caa687",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-CL-五濑.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-CL-夕张.png",
@@ -642,8 +666,7 @@
       "bytes": 15863,
       "sha256": "bda4c4ef9c1478387edb24f2f5bd4cfc776b43944129564c0db9319d07994902",
       "original_paths": [
-        "D:\\desktop\\铁底湾\\images\\日本-DD-卷波.png",
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-DD-卷波.png"
+        "D:\\desktop\\铁底湾\\images\\日本-DD-卷波.png"
       ]
     },
     {
@@ -736,11 +759,11 @@
     },
     {
       "path": "resources/originals/assets/images/日本-DD-岛风.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-DD-岛风.png"
-      ],
       "bytes": 12019,
-      "sha256": "ec6fdac3af02b93d087eb252cd31d7882916197c71cf11be10e9be8e5fc68b32"
+      "sha256": "ec6fdac3af02b93d087eb252cd31d7882916197c71cf11be10e9be8e5fc68b32",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\日本-DD-岛风.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/日本-DD-敷波.png",
@@ -963,8 +986,7 @@
       "bytes": 15167,
       "sha256": "e3e61009caaccd3411dd684cfb38defa4f815c0622f86ffe3da41bcfce8f3701",
       "original_paths": [
-        "D:\\desktop\\铁底湾\\images\\日本-DD-长波.png",
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-DD-长波.png"
+        "D:\\desktop\\铁底湾\\images\\日本-DD-长波.png"
       ]
     },
     {
@@ -996,8 +1018,7 @@
       "bytes": 15035,
       "sha256": "4093c932b726c6f1be45a8a0ce082cb682f078e09d6cd729bb54517e64f3fb14",
       "original_paths": [
-        "D:\\desktop\\铁底湾\\images\\日本-DD-风云.png",
-        "D:\\desktop\\铁底湾\\二马\\images\\日本-DD-风云.png"
+        "D:\\desktop\\铁底湾\\images\\日本-DD-风云.png"
       ]
     },
     {
@@ -1114,27 +1135,27 @@
     },
     {
       "path": "resources/originals/assets/images/美国-BB-威斯康星.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-BB-威斯康星.png"
-      ],
       "bytes": 15329,
-      "sha256": "170b65e8c13ea50c5da8f13cea56ca8f39bfbb7087ad10950a10886b73e657b0"
+      "sha256": "170b65e8c13ea50c5da8f13cea56ca8f39bfbb7087ad10950a10886b73e657b0",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-BB-威斯康星.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-BB-密苏里.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-BB-密苏里.png"
-      ],
       "bytes": 14670,
-      "sha256": "98c13c98be435e5d2e8aa734f412ef3b1f8be848c1e33a0a2235bcdd9edb8c94"
+      "sha256": "98c13c98be435e5d2e8aa734f412ef3b1f8be848c1e33a0a2235bcdd9edb8c94",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-BB-密苏里.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-BB-新泽西.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-BB-新泽西.png"
-      ],
       "bytes": 14658,
-      "sha256": "486eb3f56fe0647a21fd1bd378830b133c6970bfffb6201c336fa8dc597ebb49"
+      "sha256": "486eb3f56fe0647a21fd1bd378830b133c6970bfffb6201c336fa8dc597ebb49",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-BB-新泽西.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-BB-科罗拉多.png",
@@ -1146,11 +1167,11 @@
     },
     {
       "path": "resources/originals/assets/images/美国-BB-衣阿华.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-BB-衣阿华.png"
-      ],
       "bytes": 14273,
-      "sha256": "5b431cd7bc1f0fa76b453af345e14e52352956cac9f08dc65d88165514d8b000"
+      "sha256": "5b431cd7bc1f0fa76b453af345e14e52352956cac9f08dc65d88165514d8b000",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-BB-衣阿华.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-BB-西弗吉尼亚.png",
@@ -1202,11 +1223,11 @@
     },
     {
       "path": "resources/originals/assets/images/美国-CA-塞勒姆.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-CA-塞勒姆.png"
-      ],
       "bytes": 16185,
-      "sha256": "a74d30c1c541ca177c74ec4e20b9396dad1e4191abb203ad980fdb5e29938b18"
+      "sha256": "a74d30c1c541ca177c74ec4e20b9396dad1e4191abb203ad980fdb5e29938b18",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-CA-塞勒姆.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-CA-彭萨科拉.png",
@@ -1218,11 +1239,11 @@
     },
     {
       "path": "resources/originals/assets/images/美国-CA-得梅因.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-CA-得梅因.png"
-      ],
       "bytes": 16038,
-      "sha256": "50a8985b11c28f8a48354b875a0df1241b81568fa13ca1f8229fa2b1f9ee6a74"
+      "sha256": "50a8985b11c28f8a48354b875a0df1241b81568fa13ca1f8229fa2b1f9ee6a74",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-CA-得梅因.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-CA-文森斯.png",
@@ -1298,19 +1319,19 @@
     },
     {
       "path": "resources/originals/assets/images/美国-CB-关岛.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-CB-关岛.png"
-      ],
       "bytes": 13999,
-      "sha256": "d34ee9f203f1fdd5d9dd466f631f7ba47ec38658b0f2837e87cd3403b614bfe6"
+      "sha256": "d34ee9f203f1fdd5d9dd466f631f7ba47ec38658b0f2837e87cd3403b614bfe6",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-CB-关岛.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-CB-阿拉斯加.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-CB-阿拉斯加.png"
-      ],
       "bytes": 15143,
-      "sha256": "3f3610ecfb620ea00c38b0522341cd0d6dc3ceccc5472e5d29472bc8b8e02cc8"
+      "sha256": "3f3610ecfb620ea00c38b0522341cd0d6dc3ceccc5472e5d29472bc8b8e02cc8",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-CB-阿拉斯加.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-CL-丹佛.png",
@@ -1330,11 +1351,11 @@
     },
     {
       "path": "resources/originals/assets/images/美国-CL-伍斯特.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-CL-伍斯特.png"
-      ],
       "bytes": 14391,
-      "sha256": "03f61200bfbbb7bb569d222c5850935754b0e19cd5802a2e6b3b0fe91bac8917"
+      "sha256": "03f61200bfbbb7bb569d222c5850935754b0e19cd5802a2e6b3b0fe91bac8917",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-CL-伍斯特.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-CL-克利夫兰.png",
@@ -1562,11 +1583,11 @@
     },
     {
       "path": "resources/originals/assets/images/美国-DD-库珀.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-DD-库珀.png"
-      ],
       "bytes": 13387,
-      "sha256": "dd5e2c7f346d2a171ecc2b81c61e63bf1a54f31adb9f946546181087ec1fa0f6"
+      "sha256": "dd5e2c7f346d2a171ecc2b81c61e63bf1a54f31adb9f946546181087ec1fa0f6",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-DD-库珀.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-DD-康弗斯.png",
@@ -1770,19 +1791,19 @@
     },
     {
       "path": "resources/originals/assets/images/美国-DD-艾伦·M·萨姆纳.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-DD-艾伦·M·萨姆纳.png"
-      ],
       "bytes": 15509,
-      "sha256": "9ec9e84ee977a794d0bd8876ef5ccd505cd61ef3e4fca3a41954015b62a445b8"
+      "sha256": "9ec9e84ee977a794d0bd8876ef5ccd505cd61ef3e4fca3a41954015b62a445b8",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-DD-艾伦·M·萨姆纳.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-DD-英格拉罕.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\美国-DD-英格拉罕.png"
-      ],
       "bytes": 14751,
-      "sha256": "0d580621338cfa9f72bf91a4f4b855a864f9d065079ac6ebbe72e4c12580ec64"
+      "sha256": "0d580621338cfa9f72bf91a4f4b855a864f9d065079ac6ebbe72e4c12580ec64",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\images\\美国-DD-英格拉罕.png"
+      ]
     },
     {
       "path": "resources/originals/assets/images/美国-DD-莫里.png",
@@ -2410,44 +2431,52 @@
     },
     {
       "path": "resources/originals/extensions/erma/records/erma-ijn-ship-records.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\二马_日军船表.png"
-      ],
       "bytes": 734047,
-      "sha256": "0a98a2b3421377144b25f842039868a706269269f8944701bf284808cedc5571"
+      "sha256": "0a98a2b3421377144b25f842039868a706269269f8944701bf284808cedc5571",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\erma-ijn-ship-records.png"
+      ]
     },
     {
       "path": "resources/originals/extensions/erma/records/erma-ship-records-overview.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\二马_船表.png"
-      ],
       "bytes": 1471195,
-      "sha256": "03880d80621d8042fcb29333ada63a622eadf3d40950bc2feec074e3a87ab625"
+      "sha256": "03880d80621d8042fcb29333ada63a622eadf3d40950bc2feec074e3a87ab625",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\erma-ship-records-overview.png"
+      ]
     },
     {
       "path": "resources/originals/extensions/erma/records/erma-usn-ship-records.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\二马_美军船表.png"
-      ],
       "bytes": 738566,
-      "sha256": "dced8a44b07a10936ac3f0096c467418717161d80cabbe21f4e91a488f3a1ed0"
+      "sha256": "dced8a44b07a10936ac3f0096c467418717161d80cabbe21f4e91a488f3a1ed0",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\erma-usn-ship-records.png"
+      ]
     },
     {
       "path": "resources/originals/extensions/erma/scenario/erma-scenario-sheet.png",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\images\\二马_想定.png"
-      ],
       "bytes": 1068939,
-      "sha256": "42895b51f09f58d09985222692045fb4c0cbe5db8b6e9fdd98f97ebe2c1f06bc"
+      "sha256": "42895b51f09f58d09985222692045fb4c0cbe5db8b6e9fdd98f97ebe2c1f06bc",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\erma-scenario-sheet.png"
+      ]
     },
     {
       "path": "resources/originals/extensions/erma/scenario/second-battle-of-the-philippine-sea-zh.pdf",
-      "original_paths": [
-        "D:\\desktop\\铁底湾\\二马\\二马_想定.pdf"
-      ],
       "bytes": 525423,
       "sha256": "9830a3b75be89e306c71fba16feee0678bdfac9adb94474c2b05fa20a845ada8",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\second-battle-of-the-philippine-sea-zh.pdf"
+      ],
       "pages": 2
+    },
+    {
+      "path": "resources/originals/extensions/erma/source-manifest.yaml",
+      "bytes": 1506,
+      "sha256": "2cbd2820a0bf006086b6e4626e9366b986ebb4e883d00ec4f73a5bc5f0fc9d3a",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\source-manifest.yaml"
+      ]
     },
     {
       "path": "resources/originals/records/ship-record-manual-1.1-zh.pdf",
@@ -2485,6 +2514,208 @@
         "D:\\desktop\\铁底湾\\铁底湾的回响中文版 想定手册 (战鼓，kv)(1).pdf"
       ],
       "pages": 15
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/README.md",
+      "bytes": 2541,
+      "sha256": "179179241cd7ce5511e8df5ef10dca17e9c52b2b05a5c1c8424abc16a18bf9db",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\README.md"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/scenario/剧本：热那亚截击战.pdf",
+      "bytes": 147766,
+      "sha256": "e4ed9a1a72cd8e20d7c1f20d156b02c949132695dae7f26af59bf7e3c0a6aa09",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\剧本：热那亚截击战.pdf"
+      ],
+      "pages": 2
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/scenario/船表：热那亚截击战.pdf",
+      "bytes": 755281,
+      "sha256": "8fdf1c831bf0e75e56f409f1165152cb5f62c29f72f4464513b32d3f22a3db71",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战-简略\\热那亚截击战\\船表：热那亚截击战.pdf"
+      ],
+      "pages": 2
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-fleet.png",
+      "bytes": 544856,
+      "sha256": "1448da73b1e9f1993cd77e2555cc8acf7f107d3aa680cef6d56211ebdf0f0749",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\法-舰队.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-信天翁.png",
+      "bytes": 35790,
+      "sha256": "268e90e42b10411f5677a6531ff7cf2f1191baed9711ab3894b4f0a6a8f161fc",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-信天翁.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-杜布雷.png",
+      "bytes": 72474,
+      "sha256": "cdaba3966f9ee5b5f1a8f9293361b4abaf039db36612889e77a4aac6d4f30918",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-杜布雷.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-猎鹰.png",
+      "bytes": 35137,
+      "sha256": "7ea589d0e0a56e9d4bf9d8f5a22815ea7000c58d95b9ab6d21888d2aed924867",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-猎鹰.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-福旭.png",
+      "bytes": 71966,
+      "sha256": "642ed62cae71ce66465519e2e68a279af1b99abf5a679db999bc42695580ffce",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-福旭.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-秃鹫.png",
+      "bytes": 35139,
+      "sha256": "f89df1ea66ead090e46c770f2e6df465b003f5ee1711e452338e3301b8816113",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-秃鹫.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-科尔贝尔.png",
+      "bytes": 72097,
+      "sha256": "4cdc3ed2c42091883ed640b799be286f690126e793e029ea36fde988d815405a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-科尔贝尔.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-阿尔及利亚.png",
+      "bytes": 33591,
+      "sha256": "c0a398d5fb76077903b9a0f967a37675c0d0a2110c5f28b6e446b188f6f8f811",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-阿尔及利亚.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/FR-鹰.png",
+      "bytes": 30542,
+      "sha256": "4d410f09e30112863cfb67bf71c505ae9062a454f6bff3453af2a54eaddd11b3",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::FR-鹰.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/IT-戈里齐亚.png",
+      "bytes": 72989,
+      "sha256": "3d7e69d7603602c29f812bc39d1f8f6c3ae0fd676b76fc2b836950908b1d8198",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::IT-戈里齐亚.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/IT-扎拉.png",
+      "bytes": 60202,
+      "sha256": "cafa4c17099148e4597a1480056ca3c23d4d2409c33119831d0f450d2be56d99",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::IT-扎拉.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/IT-民兵.png",
+      "bytes": 124780,
+      "sha256": "a09e6eb48e5fde448077f14ff81f827bd48cf9715b23cc6e32b1ae25d9f0470b",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::IT-民兵.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/IT-炮兵.png",
+      "bytes": 124879,
+      "sha256": "9864da8fbf3e4ff9c819cf76b905eb82d58c67ab89b8c0d304717bb550a5515a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::IT-炮兵.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/IT-阜姆.png",
+      "bytes": 74841,
+      "sha256": "529f96e9ab364fc8405aca276a052c634e0fca586e7159dd79ebc158449cff24",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::IT-阜姆.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/IT-阿布鲁齐公爵.png",
+      "bytes": 49667,
+      "sha256": "0f791299a373e6d0082f6de61e12209e2f02a79df11503426b548cacb1274c82",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::IT-阿布鲁齐公爵.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/IT-黑衫军.png",
+      "bytes": 125069,
+      "sha256": "c6788d92875c67262c8c3d14f7239c6055ff3e59957f769054ec69c1b26a56e8",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\热那亚截击战.rar::IT-黑衫军.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/RN-H-fleet.png",
+      "bytes": 427274,
+      "sha256": "f90ef09167ae181ea8407fa7481afada43df2b2d902ebea27f86397ab62c5032",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\英-H舰队.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/source-art/RN-reinforcements.png",
+      "bytes": 81625,
+      "sha256": "1a5b2f4438faeb4c0c864bd31467f68fbe48287fdb95b9f4fba91dded0952790",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\弩炮行动-算子+基数表\\弩炮行动-算子+基数表\\英-增援舰队.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/workbooks/eng.xlsx",
+      "bytes": 11400,
+      "sha256": "35092ce5d3e13efd260fa89160001b25e8ad85b4029d0fd351b0ee7c1803123b",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\eng.xlsx"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/workbooks/engre.xlsx",
+      "bytes": 10405,
+      "sha256": "3022cd30582e4e350724a117e961cc05aca988b8cddc4e014e5732a86381bf8c",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\engre.xlsx"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/workbooks/ShipData.xlsx",
+      "bytes": 12426,
+      "sha256": "d1ecc9574ba2787f254c31d9a51a29e53e0f832acf834d2af1cb486e52a4b840",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\ShipData.xlsx"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/genoa-2026/workbooks/使用文档(ai写的还没校对.docx",
+      "bytes": 16076,
+      "sha256": "bbb4206ecb400be9afb6d9b226a1a1e80ed0772a5def5daaed4c317eda844049",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\使用文档(ai写的还没校对.docx"
+      ]
     },
     {
       "path": "resources/originals/tables/movement-attack-log-zh.xlsx",

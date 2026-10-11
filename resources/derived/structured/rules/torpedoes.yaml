@@ -54,3 +54,13 @@ types:
     caliber_in: 21
     settings: [{speed: [8, 8, 2], range: 10}, {speed: [7, 7, 7], range: 14}, {speed: [5, 5, 5], range: 25}]
     damage_modifier: 0
+  fr-21-6:
+    nation: FR
+    caliber_in: 21.6
+    settings: [{speed: [7, 7, 6], range: 18}, {speed: [6, 6, 5], range: 26}]
+    damage_modifier: 0
+  it-21:
+    nation: IT
+    caliber_in: 21
+    settings: [{speed: [9, 9, 9], range: 8}, {speed: [5, 5, 5], range: 24}]
+    damage_modifier: 0

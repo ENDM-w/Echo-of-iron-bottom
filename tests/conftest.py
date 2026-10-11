@@ -17,6 +17,8 @@ from iron_bottom_sound import api
 @pytest.fixture(autouse=True)
 def _guard_llm_and_reports(tmp_path):
     saved_key = os.environ.pop("DEEPSEEK_API_KEY", None)
+    saved_db_path = os.environ.get("IBS_DB_PATH")
+    os.environ["IBS_DB_PATH"] = str(tmp_path / "test-runtime.sqlite3")
     old_root = getattr(api, "reports_root", None)
     api.reports_root = tmp_path / "reports"
     try:
@@ -24,6 +26,10 @@ def _guard_llm_and_reports(tmp_path):
     finally:
         if saved_key is not None:
             os.environ["DEEPSEEK_API_KEY"] = saved_key
+        if saved_db_path is None:
+            os.environ.pop("IBS_DB_PATH", None)
+        else:
+            os.environ["IBS_DB_PATH"] = saved_db_path
         if old_root is not None:
             api.reports_root = old_root
         else:

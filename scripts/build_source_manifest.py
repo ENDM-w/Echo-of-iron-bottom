@@ -27,6 +27,18 @@ RENAMED = {
 
 
 def original_paths(relative: str, filename: str) -> list[str]:
+    if relative.startswith("resources/originals/ship-imports/genoa-2026/workbooks/"):
+        return [rf"E:\铁底湾在线网推\新的船的资料\{filename}"]
+    if relative.startswith("resources/originals/ship-imports/genoa-2026/scenario/"):
+        return [rf"E:\铁底湾在线网推\新的船的资料\热那亚截击战-简略\热那亚截击战\{filename}"]
+    if relative.startswith("resources/originals/ship-imports/genoa-2026/source-art/"):
+        if filename == "FR-fleet.png":
+            return [r"E:\铁底湾在线网推\新的船的资料\弩炮行动-算子+基数表\弩炮行动-算子+基数表\法-舰队.png"]
+        if filename == "RN-H-fleet.png":
+            return [r"E:\铁底湾在线网推\新的船的资料\弩炮行动-算子+基数表\弩炮行动-算子+基数表\英-H舰队.png"]
+        if filename == "RN-reinforcements.png":
+            return [r"E:\铁底湾在线网推\新的船的资料\弩炮行动-算子+基数表\弩炮行动-算子+基数表\英-增援舰队.png"]
+        return [rf"E:\铁底湾在线网推\新的船的资料\热那亚截击战.rar::{filename}"]
     if relative in ALIASES:
         return ALIASES[relative]
     if relative in RENAMED:
