@@ -1240,3 +1240,17 @@
 1. 修复玩家端「发射器」下拉在候选存在时只渲染单个 option 的问题（`PlatformPortal.tsx` 玩家鱼雷草稿卡）：改为列出引擎 `_torpedo_candidates` 给出的全部可用发射器；候选缺失时回落到舰船自身未损毁且已装填的发射器。
 2. 换发射器/换舰船时重置依赖字段：舷侧与发射角改为新发射器的合法值，枚数夹到新发射器装载量；发射 MF 属舰级（随航路），保持不变。
 3. 验证：`tsc -b` 与 `vite build --base=/tiedi/` 通过；走原子切换热更新（不重启 `tiedi`，`MainPID` 前后一致）；核对线上产物哈希更新。
+
+## 2026-10-11 玩家端鱼雷申报改为"先收集、后校验"（纯前端）
+
+状态：完成（已热更新上线，服务未重启）。
+
+背景（查实）：平台整回合订单只在 `REINFORCEMENT` 阶段收集（`service.py:1181`）；引擎 `_torpedo_candidates` 的 `launch_positions` 依赖 `sealed_orders[f"{turn}:movement_planning"]`，而平台唯一的封存写在一份深拷贝上（`service.py:1285` 注释明确"never mutate or advance the live game while drafting"），真正封存只在引擎 `advance()`。因此收集阶段 `launch_positions` 恒为空，玩家端「发射 MF」下拉恒空，**当前流程下无法申报鱼雷**。
+
+按用户决定不改后端：收集阶段只收数据，不对鱼雷做当场引擎校验；合法性在裁判端确定移动计划后核对，有误由裁判修正。引擎 `_assist_launch_from_dict` 已支持"只给 launch_at_mf/发射器/舷侧/发射角/装订，自动从已封存移动计划还原 launch_hex 与舰首"。
+
+1. 玩家端鱼雷卡：`launch_positions` 为空时，把「发射 MF」由空下拉改为数值输入（0–8），并在提示中说明"先按自己的移动计划填写，合法性由裁判端核对"。
+2. `writeTorpedoOrder`：无候选位置时用填写的 MF，`launch_hex`/`bearing` 置空（由引擎/裁判后补），不再因缺少候选而拒绝写单。
+3. 写单按钮：不再要求必须存在候选位置。
+4. 复用既有的「忽略校验报错提交」通路（`submitOrder(true)`）与裁判端「⚠ N 项报错」展示，形成"先收、后校验、必要时裁判改"的闭环。
+5. 验证：`tsc -b` 与 `vite build --base=/tiedi/` 通过；原子切换热更新，不重启 `tiedi`。

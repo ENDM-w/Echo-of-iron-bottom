@@ -1359,15 +1359,22 @@ export function PlatformPortal({ onClose }: Props) {
     const ship = selectedActionShip;
     const launcher = selectedLauncher;
     const position = selectedLaunchPosition;
-    if (!ship || !launcher || !selectedLauncherCandidate || !position || !selectedLaunchSide || !selectedLaunchAngle) return;
+    // 收集阶段移动计划尚未封存时，引擎不会给出合法发射 MF 列表（launch_positions 为空）。
+    // 按"先收集、后校验"处理：允许玩家按自己的移动计划填写数值 MF，只收数据；
+    // 合法性在裁判端确定移动计划后核对，发射格/舰首由规则核心从已封存移动计划还原
+    // （engine._assist_launch_from_dict），有偏差由裁判修正。
+    const declaredMfRaw = String(torpedoLaunchAtMf).trim();
+    const declaredMf = position?.mf
+      ?? (declaredMfRaw === "" ? 1 : Math.min(8, Math.max(0, Math.round(Number(declaredMfRaw) || 1))));
+    if (!ship || !launcher || !selectedLauncherCandidate || !selectedLaunchSide || !selectedLaunchAngle) return;
     const order = {
       ship_id: ship.id,
       count: Math.max(1, Math.min(selectedLauncherRemaining, Number(torpedoCount) || 1)),
       speed: "fast",
       launcher_id: launcher.id,
-      launch_at_mf: position.mf,
-      launch_hex: position.hex,
-      bearing: position.heading,
+      launch_at_mf: declaredMf,
+      launch_hex: position ? position.hex : null,
+      bearing: position ? position.heading : null,
       launch_side: selectedLaunchSide,
       launch_angle: selectedLaunchAngle,
       setting_index: selectedSettingIndex,
@@ -2624,13 +2631,28 @@ export function PlatformPortal({ onClose }: Props) {
                         </label>
                         <label>
                           发射 MF
-                          <select value={selectedLaunchPosition?.mf ?? ""} onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}>
-                            {launchPositions.map((position) => (
-                              <option key={position.mf} value={position.mf}>
-                                MF {position.mf} · {position.heading} 舰首
-                              </option>
-                            ))}
-                          </select>
+                          {launchPositions.length > 0 ? (
+                            <select value={selectedLaunchPosition?.mf ?? ""} onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}>
+                              {launchPositions.map((position) => (
+                                <option key={position.mf} value={position.mf}>
+                                  MF {position.mf} · {position.heading} 舰首
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            // 移动计划尚未封存：引擎给不出合法 MF 列表。按"先收集、后校验"，
+                            // 玩家按自己的移动计划填数值，合法性留待裁判端确定移动计划后核对。
+                            <input
+                              type="number"
+                              min="0"
+                              max="8"
+                              step="1"
+                              inputMode="numeric"
+                              value={torpedoLaunchAtMf}
+                              placeholder="0-8"
+                              onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}
+                            />
+                          )}
                         </label>
                         <label>
                           舷侧
@@ -2656,10 +2678,13 @@ export function PlatformPortal({ onClose }: Props) {
                         </label>
                       </div>
                       <p className="field-hint">
-                        鱼雷订单不指定目标：航迹与任何未沉没舰船重合时，规则核心会对重合的每条船分别进行命中裁决，不区分敌我。只有在移动计划已封存后才会出现合法发射 MF；发射格和舰首航向由规则核心从该 MF 自动带出。同一发射器可写入多条独立订单，累计枚数不能超过当前装载量（本发射器剩余 {selectedLauncherRemaining} 枚）。
-                        {selectedTorpedoCandidate?.blocked_reason ? ` 当前不可发射：${selectedTorpedoCandidate.blocked_reason}` : ""}
+                        鱼雷订单不指定目标：航迹与任何未沉没舰船重合时，规则核心会对重合的每条船分别进行命中裁决，不区分敌我。同一发射器可写入多条独立订单，累计枚数不能超过当前装载量（本发射器剩余 {selectedLauncherRemaining} 枚）。
+                        {launchPositions.length > 0
+                          ? " 发射格和舰首航向由规则核心从所选 MF 自动带出。"
+                          : " 本阶段移动计划尚未封存，引擎暂时给不出合法 MF 列表：请按你自己的移动计划填写发射 MF（0–8），此处先收集数据；合法性与发射格将在裁判端确定移动计划后核对，如有偏差由裁判修正（提交时若报错，可用下方「忽略校验报错提交」）。"}
+                        {selectedTorpedoCandidate?.blocked_reason ? ` 引擎当前判定：${selectedTorpedoCandidate.blocked_reason}。` : ""}
                       </p>
-                      <button onClick={writeTorpedoOrder} disabled={!selectedActionShip || captainCommandLost || !selectedLauncherCandidate || selectedLauncherRemaining <= 0 || !selectedLaunchPosition || !selectedLaunchSide || !selectedLaunchAngle}>
+                      <button onClick={writeTorpedoOrder} disabled={!selectedActionShip || captainCommandLost || !selectedLauncherCandidate || selectedLauncherRemaining <= 0 || !selectedLaunchSide || !selectedLaunchAngle}>
                         写入鱼雷草稿
                       </button>
                       {torpedoDrafts.filter((item) => item.ship_id === selectedActionShip?.id).length > 0 && (
