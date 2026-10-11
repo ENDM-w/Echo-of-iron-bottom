@@ -983,6 +983,13 @@
 - 最后运行 `pnpm run build` 并恢复本地忽略的 `frontend/dist` 为默认 `/` 根路径版本，避免干扰本机验收。
 - 当前 `HEAD` 为 `fc77a65e970e92cca429e6c87498b0c68a70bf1e`，工作树含本次及既有未提交改动；未创建提交。
 
+# 2026-10-11 发布到独立 GitHub 仓库
+
+- 用户确认仓库 `https://github.com/ENDM-w/Echo-of-iron-bottom` 保持公开。将原仓库 remote 改名为 `upstream`，新仓库配置为 `origin`；本地浅克隆以完整当前工作树创建新的根快照，未把不完整的上游提交历史带入新仓库。
+- 初始快照提交：`079c41e6ec109a9e96f5013d8cf3ca1d890aa201`，提交邮箱使用 GitHub noreply。GitHub `main` 推送成功并跟踪 `origin/main`；Git LFS 上传 314 个对象，约 102 MB。
+- 推送快照未包含运行对局数据库、`.env`、构建目录、`node_modules` 或后端报告；三张新棋子素材按既有 `.gitattributes` 使用 LFS。
+- 验证：`py -3.12 -m pytest tests/test_deployment_security.py tests/test_platform.py -q` 通过；`pnpm run build` 通过。推送后核对远端 `main` 提交哈希与本地一致。
+
 # 2026-10-10 无域名临时部署入口
 
 - 按目标服务器暂时没有域名的现状，部署手册改为支持公网 IP 下的 `/tiedi/` 临时验收；增加独立 Nginx HTTP 配置，保留后续绑定域名后迁移到 HTTPS 的流程。
