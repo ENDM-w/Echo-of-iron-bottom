@@ -1108,3 +1108,10 @@
 - 本次含后端改动，故执行 `rsync` + 前端 `--base=/tiedi/` 重建 + **`systemctl restart tiedi`**。重启前核对：未决裁决 0、4 局均在 `collecting`、库中仅 1 条订单——重启代价最小的窗口。**域名未变**（`cloudflared-tiedi` 未触碰，`NRestarts` 仍为 0）；代价是平台会话 token 在进程内存中，用户需重新登录。
 - 验证：`pytest tests/test_platform.py -q` 通过（含上游新增的预览接口测试）；`tsc -b` 与 `vite build --base=/tiedi/ --outDir dist-new` 通过后原子切换（线上 `index-BTEnqNTd.js`）；`POST .../torpedo-candidates` 未带 token 返回 401（端点存在且鉴权生效）；首页 200、`/api/scenarios` 200、棋子图 200、未登录 `/platform/matches/*` 401、旧 `/games/{id}?debug=true` 404；`integrity_check: ok`，31 用户 / 4 局 / 78 席位 / 1 订单 / 39 艘导入舰未变；nginx/tiedi/cloudflared-tiedi 三者 active。
 - 本批次提交：`ec742e5bc237673178d15d77c1ec54ae2ee04467`。
+
+# 2026-10-11 修复鱼雷行 launch_hex 失配报错（热更新，未重启服务）
+
+- 缺陷归属：**本仓库此前"先收集、后校验"的数值兜底自身引入**。`writeTorpedoOrder` 在无候选位置时写 `launch_hex: null`，而引擎校验器 `engine.py:1797-1802` 把"缺失 hex"与"hex 不符"合并为同一句报错；且该兜底在收集阶段是常态路径——上游草稿预览 effect 在 `movement.length === 0` 时置 `undefined`，回落到该阶段本就为空的 `view.torpedo_candidates`，于是玩家从未见过发射格控件却被报发射格错。上游 `2a0ec70` 的预览接口已使该兜底失去存在意义。
+- 修复（纯前端）：① 撤掉数值兜底——`launchPositions` 为空时 MF 下拉禁用并显示"请先在移动草稿里写出该舰航路"，写单按钮重新要求存在候选位置，`writeTorpedoOrder` 恢复 `position.hex/heading` 且不再接受无位置分支；② 新增 `resyncTorpedoLaunchHex`，在 `submitOrder` 里于提交前用当前移动草稿现取一次预览，把每条鱼雷行的 `launch_hex`/`bearing` 校正到其 `launch_at_mf` 对应位置（消除"写单后又改移动草稿"的陈旧格；预览失败则保持原样不阻塞）；③ 鱼雷草稿列表对"MF 不在当前航路"的行显示告警并列出可用 MF（新增最小样式 `.draft-order-warning`，不动既有列表外观）。
+- 验证（用线上真实对局状态 + 引擎校验复刻，`1d7b2a3a` / `IBS-U-RN-VIDETTE` / 移动草稿 `4P`）：预览给出 MF2 = `FF27`、舰首 5；以其为 `launch_hex` 提交 → `valid=True` **无报错**；`launch_hex=None` → `valid=False`，报错 **正是** `IBS-U-RN-VIDETTE: launch_hex does not match its MF position`（复现用户所见）；给错格 → 同句外加 bearing 报错。另：`tsc -b` 与 `vite build --base=/tiedi/` 通过后原子切换（线上 `index-taCEEnUs.js`），`tiedi` 的 `MainPID` 构建前后均为 8501（未重启）；首页 200、未登录 `/platform/matches/*` 401。
+- 本批次提交：`73c45f730a3bc31e0b9076b149e9b58cf7e48d21`。
