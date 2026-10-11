@@ -7,7 +7,7 @@ import type {Side} from "../types";
 import {counterAssetUrl} from "../assets";
 import {
  asternColumn,columnLabel,displayRowToAxial,fitMapViewport,getActiveMap,headingRotation,hexCenter,hexLabel,screenToHex,setActiveMapSize,walkHex,
- HEX_SIZE,MAP_COLUMNS,MAP_ROWS,
+ HEX_SIZE,MAP_COLUMNS,MAP_ROWS,MAX_MAP_ZOOM,
 } from "../hexGeometry";
 import type {Axial,MapSize,MapViewport} from "../hexGeometry";
 import {computeLayout,sideLabel,shipById} from "./scenario";
@@ -41,7 +41,7 @@ export function EditorDeploymentMap({state,onSetAnchor,mapSize}:{
  const [drag,setDrag]=useState<DragState|null>(null);
  const dragRef=useRef<{columnId:string|null;side:Side|null;grab:number;pointerId:number|null}>({columnId:null,side:null,grab:0,pointerId:null});
 
- const clampK=(value:number)=>Math.min(4,Math.max(0.5,value));
+ const clampK=(value:number)=>Math.min(MAX_MAP_ZOOM,Math.max(0.5,value));
  const zoomAt=(clientX:number,clientY:number,factor:number)=>{
   const svg=svgRef.current;if(!svg)return;
   const rect=svg.getBoundingClientRect();
@@ -202,12 +202,12 @@ export function EditorDeploymentMap({state,onSetAnchor,mapSize}:{
  </svg>
  <div className="map-zoom-controls" role="group" aria-label="地图缩放">
   <button title="缩小" onClick={()=>zoomCenter(Math.exp(-0.1))}>−</button>
-  <button title="放大" onClick={()=>zoomCenter(Math.exp(0.1))}>＋</button>
+  <button title={`放大（最大 ${MAX_MAP_ZOOM}×）`} onClick={()=>zoomCenter(Math.exp(0.1))}>＋</button>
   <button title="聚焦已部署区域" onClick={focusCombat}>交战区</button>
   <button title="查看完整海图" onClick={()=>setViewport({tx:0,ty:0,k:1})}>全图</button>
  </div>
  {drag&&drag.active&&drag.reason&&<div className="editor-drop-error">{drag.reason}</div>}
  {drag&&drag.active&&!drag.reason&&drag.anchor&&<div className="editor-drop-hint">松开放下：{hexLabel(drag.anchor)}，整队沿航向 {ghostHeading} 排成纵队</div>}
- <div className="map-area-legend">{hasBuffer?<><span>原印刷区 A–{columnLabel(printedColumns-1)} / 1–{printedRows}</span><span>浅色：扩展纯海缓冲区</span></>:<span>整图印刷海图 A–{columnLabel(mapColumns-1)} / 1–{mapRows}</span>}<b>拖动任意棋子整队平移 · ghost 预览</b></div>
+ <div className="map-area-legend">{map.infinite?<span>无限延伸海图 · 当前 {mapColumns}×{mapRows} · 动态扩图上限 256×256</span>:hasBuffer?<><span>原印刷区 A–{columnLabel(printedColumns-1)} / 1–{printedRows}</span><span>浅色：扩展纯海缓冲区</span></>:<span>整图印刷海图 A–{columnLabel(mapColumns-1)} / 1–{mapRows}</span>}<b>拖动任意棋子整队平移 · ghost 预览</b></div>
  </div>;
 }

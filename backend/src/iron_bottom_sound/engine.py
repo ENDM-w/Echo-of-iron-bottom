@@ -25,6 +25,8 @@ from .models import (
     HexCoord,
     MAP_COLUMNS,
     MAP_ROWS,
+    MAX_MAP_COLUMNS,
+    MAX_MAP_ROWS,
     LegalAction,
     MarkerState,
     MovementOrder,
@@ -391,6 +393,7 @@ class IronBottomEngine:
                 track, columns=state.map_columns, rows=state.map_rows
             )
         markers: list[MarkerState] = []
+        visible_ship_ids = {ship.id for ship in ships}
         for marker in state.markers:
             if marker.kind == "contact":
                 if marker.position is None and marker.secret_side != side and not debug:
@@ -399,6 +402,12 @@ class IronBottomEngine:
                 if marker.secret_side != side and not debug:
                     public_marker.contact_truth = None
                 markers.append(public_marker)
+            elif marker.kind == "gunfire":
+                # A firing marker is public only to observers who can currently
+                # observe its source hull. The platform may project it as a
+                # neutral signal farther out under hidden-contact rules.
+                if debug or marker.ship_id in visible_ship_ids:
+                    markers.append(marker.model_copy(deep=True))
             elif marker.secret_side in (None, side) or debug:
                 markers.append(marker.model_copy(deep=True))
         return PlayerObservation(
@@ -414,6 +423,7 @@ class IronBottomEngine:
             map_rows=state.map_rows,
             printed_columns=state.printed_columns,
             printed_rows=state.printed_rows,
+            map_infinite=state.map_infinite,
             ships=ships,
             torpedo_tracks=tracks,
             markers=markers,
@@ -3075,7 +3085,102 @@ class IronBottomEngine:
         )
         return track
 
+    @staticmethod
+    def _translate_order_batch(batch: OrderBatch, dq: int, dr: int) -> None:
+        def move(coord: HexCoord | None) -> HexCoord | None:
+            return HexCoord(q=coord.q + dq, r=coord.r + dr) if coord else None
+
+        for order in batch.reinforcements:
+            order.entry_hex = move(order.entry_hex)  # type: ignore[assignment]
+        for order in batch.contacts:
+            order.entry_hex = move(order.entry_hex)  # type: ignore[assignment]
+        for order in batch.illumination:
+            order.target_hex = move(order.target_hex)  # type: ignore[assignment]
+        for order in batch.torpedoes:
+            order.launch_hex = move(order.launch_hex)
+
+    def _expand_infinite_map_for_fleet(self, state: GameState, margin: int = 10) -> None:
+        if not state.map_infinite:
+            return
+        ships = [ship for ship in state.ships.values() if ship.position and not ship.sunk]
+        if not ships:
+            return
+        positions = [ship.position for ship in ships if ship.position]
+        rows = [position.r + (position.q - (position.q & 1)) // 2 for position in positions]
+        requested_west = max(0, margin - min(position.q for position in positions))
+        requested_west += requested_west % 2
+        requested_east = max(
+            0, max(position.q for position in positions) + margin + 1 - state.map_columns
+        )
+        requested_north = max(0, margin - min(rows))
+        requested_south = max(0, max(rows) + margin + 1 - state.map_rows)
+
+        column_room = max(0, MAX_MAP_COLUMNS - state.map_columns)
+        west = min(requested_west, column_room)
+        west -= west % 2
+        east = min(requested_east, column_room - west)
+        row_room = max(0, MAX_MAP_ROWS - state.map_rows)
+        north = min(requested_north, row_room)
+        south = min(requested_south, row_room - north)
+        if not any((west, east, north, south)):
+            return
+
+        dq = west
+        dr = north - west // 2
+
+        def move(coord: HexCoord | None) -> HexCoord | None:
+            return HexCoord(q=coord.q + dq, r=coord.r + dr) if coord else None
+
+        for ship in state.ships.values():
+            ship.position = move(ship.position)
+        for track in state.torpedo_tracks:
+            track.position = move(track.position)  # type: ignore[assignment]
+            track.launch_position = move(track.launch_position)
+            track.traversed_hexes = [move(position) for position in track.traversed_hexes]  # type: ignore[list-item]
+        for marker in state.markers:
+            marker.position = move(marker.position)
+        for wreck in state.wrecks:
+            wreck.position = move(wreck.position)  # type: ignore[assignment]
+        state.contact_reserve_positions = {
+            ship_id: move(position) for ship_id, position in state.contact_reserve_positions.items()
+        }  # type: ignore[assignment]
+        for formation in state.formations.values():
+            formation.guide_trail = [move(position) for position in formation.guide_trail]  # type: ignore[list-item]
+        state.reinforcement_entry_start = move(state.reinforcement_entry_start)
+        state.reinforcement_entry_end = move(state.reinforcement_entry_end)
+        state.last_turn_trajectories = {
+            ship_id: [move(position) for position in path]  # type: ignore[list-item]
+            for ship_id, path in state.last_turn_trajectories.items()
+        }
+        state.land_hexes = {move(HexCoord.from_label(label)).label for label in state.land_hexes}  # type: ignore[union-attr]
+        state.coast_hexes = {move(HexCoord.from_label(label)).label for label in state.coast_hexes}  # type: ignore[union-attr]
+        state.radar_blocking_hexes = {
+            move(HexCoord.from_label(label)).label for label in state.radar_blocking_hexes
+        }  # type: ignore[union-attr]
+        for batch in state.submitted_orders.values():
+            self._translate_order_batch(batch, dq, dr)
+        for side_batches in state.sealed_orders.values():
+            for batch in side_batches.values():
+                self._translate_order_batch(batch, dq, dr)
+
+        state.map_columns += west + east
+        state.map_rows += north + south
+        state.printed_columns = state.map_columns
+        state.printed_rows = state.map_rows
+        self._event(
+            state,
+            "map_expanded",
+            f"无限延伸海图扩展至 {state.map_columns}×{state.map_rows}；全局坐标平移 dq={dq}, dr={dr}",
+            payload={
+                "map_columns": state.map_columns,
+                "map_rows": state.map_rows,
+                "added": {"west": west, "east": east, "north": north, "south": south},
+                "coordinate_shift": {"dq": dq, "dr": dr},
+            },
+        )
+
     def _resolve_movement(self, state: GameState) -> None:
+        self._expand_infinite_map_for_fleet(state)
         self._resolve_sinking_drift(state)
         movement_orders = {
             order.ship_id: order
@@ -3525,6 +3630,7 @@ class IronBottomEngine:
             )
         state.last_turn_trajectories = resolved_trajectories
         state.last_trajectory_turn = state.turn
+        self._expand_infinite_map_for_fleet(state)
 
     def _check_torpedo_contacts(self, state: GameState) -> None:
         """IBS-R-08.2.3: mark any torpedo sharing a hex with an opposing,
@@ -3624,6 +3730,15 @@ class IronBottomEngine:
             adjusted = d66_adjust(raw, modifier)
             hits = scenario_rules(state.scenario_id).gunnery_hits(self.rules.hit_count, firepower, adjusted)
             attacker.fired = True
+            gunfire_id = f"GUNFIRE-{state.turn}-{attacker.id}"
+            if not any(marker.id == gunfire_id for marker in state.markers):
+                state.markers.append(MarkerState(
+                    id=gunfire_id,
+                    kind="gunfire",
+                    position=attacker.position,
+                    ship_id=attacker.id,
+                    expires_turn=state.turn + 1,
+                ))
             mount_ids = [mount.id for mount in mounts]
             self._event(
                 state,
@@ -4517,7 +4632,9 @@ class IronBottomEngine:
         )
         optical_blocked = self._terrain_blocks_sight(state, attacker.position, target.position)
         if not optical_blocked and (
-            illuminated or attacker.position.distance(target.position) <= self.visibility_radius(state, attacker.side)
+            illuminated
+            or target.fire_markers > 0
+            or attacker.position.distance(target.position) <= self.visibility_radius(state, attacker.side)
         ):
             return True
         if not optical_blocked and state.options.optional_rules.silhouettes and self._silhouetted(state, target):

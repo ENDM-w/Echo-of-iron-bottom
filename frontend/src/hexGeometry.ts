@@ -4,6 +4,7 @@ export const PRINTED_MAP_COLUMNS=34;
 export const PRINTED_MAP_ROWS=27;
 export const MAP_COLUMNS=46;
 export const MAP_ROWS=39;
+export const MAX_MAP_ZOOM=8;
 // 固定 46×39 扩展海图尺寸，与 HexMap viewBox / screenToHex 共用。
 export const MAP_W=1720;
 export const MAP_H=1700;
@@ -28,23 +29,24 @@ export function hexOpposite(heading:number){return ((heading+2)%6)+1}
 export interface MapSize{
  columns:number;rows:number;
  printedColumns:number;printedRows:number;
+ infinite?:boolean;
 }
 export interface ActiveMap extends MapSize{width:number;height:number}
 
-let activeMap:MapSize={columns:MAP_COLUMNS,rows:MAP_ROWS,printedColumns:PRINTED_MAP_COLUMNS,printedRows:PRINTED_MAP_ROWS};
+let activeMap:MapSize={columns:MAP_COLUMNS,rows:MAP_ROWS,printedColumns:PRINTED_MAP_COLUMNS,printedRows:PRINTED_MAP_ROWS,infinite:false};
 
 export function resetActiveMapSize():void{
- activeMap={columns:MAP_COLUMNS,rows:MAP_ROWS,printedColumns:PRINTED_MAP_COLUMNS,printedRows:PRINTED_MAP_ROWS};
+ activeMap={columns:MAP_COLUMNS,rows:MAP_ROWS,printedColumns:PRINTED_MAP_COLUMNS,printedRows:PRINTED_MAP_ROWS,infinite:false};
 }
 // 把后端 Observation / CustomScenarioDefinition 的 snake_case 尺寸解析成 MapSize：
 // 缺省字段回落到标准 46×39 / 印刷 34×27（与 data._scenario_map_dims 同一约定；
 // 非标准整幅图缺省印刷区=整图，即无 buffer 暗区）。
-export function resolveMapDims(src?:{map_columns?:number;map_rows?:number;printed_columns?:number|null;printed_rows?:number|null}|null):MapSize{
+export function resolveMapDims(src?:{map_columns?:number;map_rows?:number;printed_columns?:number|null;printed_rows?:number|null;map_infinite?:boolean}|null):MapSize{
  const columns=src?.map_columns??MAP_COLUMNS;
  const rows=src?.map_rows??MAP_ROWS;
  const printedColumns=src?.printed_columns!=null?src.printed_columns:(columns===MAP_COLUMNS?PRINTED_MAP_COLUMNS:columns);
  const printedRows=src?.printed_rows!=null?src.printed_rows:(rows===MAP_ROWS?PRINTED_MAP_ROWS:rows);
- return {columns,rows,printedColumns,printedRows};
+ return {columns,rows,printedColumns,printedRows,infinite:src?.map_infinite??false};
 }
 // dims 缺省字段保留现值；printed_* 缺省按「标准图 34×27、其他整图」补齐（同后端 _scenario_map_dims）。
 export function setActiveMapSize(dims:Partial<MapSize>|null):void{
@@ -53,7 +55,7 @@ export function setActiveMapSize(dims:Partial<MapSize>|null):void{
  const rows=dims.rows??activeMap.rows;
  const printedColumns=dims.printedColumns??(columns===MAP_COLUMNS?PRINTED_MAP_COLUMNS:columns);
  const printedRows=dims.printedRows??(rows===MAP_ROWS?PRINTED_MAP_ROWS:rows);
- activeMap={columns,rows,printedColumns,printedRows};
+ activeMap={columns,rows,printedColumns,printedRows,infinite:dims.infinite??activeMap.infinite??false};
 }
 
 // 像素世界范围：沿用现图 46×39 → 1720×1700 的留白规则（右/下补齐），大图按比例放大。
@@ -75,8 +77,8 @@ function activeWorld():ActiveMap{
 }
 export function getActiveMap():ActiveMap{return activeWorld()}
 export function hexWorld():ActiveMap{return activeWorld()}
-// 非标准（如 92×78 大战场）海图的初始视口：框住给定锚点集合（如当前舰位）留 ~3 格边距，
-// 全图缩放级封顶 4（与手动缩放一致）。标准 46×39 不走此路径，仍用既有常量视口。
+// 非标准（如 92×78 大战场）海图的初始视口：框住给定锚点集合（如当前舰位）留 ~3 格边距；
+// 初始聚焦封顶 4，手动缩放可继续放大。标准 46×39 不走此路径，仍用既有常量视口。
 export function fitMapViewport(anchors:{q:number;r:number}[], map:ActiveMap):MapViewport{
  if(!anchors.length)return {tx:0,ty:0,k:1};
  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
@@ -151,7 +153,7 @@ export function hexLabel(coord:{q:number;r:number}){
 
 // Inverse of hexLabel: parse an engine hex label ("R16", "HH27", "NNNN78") back
 // into axial coordinates. Pure geometry, no rule data. Repeated-letter columns
-// cover q 0..127 (length 1..5) and rows up to 128.
+// cover the supported 0..255 range and rows up to 256.
 export function hexFromLabel(label:string){
  const match=/^([A-Za-z]+)(\d{1,3})$/.exec(label.trim().toUpperCase());
  if(!match)throw new Error(`Invalid hex label ${label}`);

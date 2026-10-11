@@ -419,7 +419,9 @@ families:
       - {id: P4, kind: primary, position: stern, firepower: 3, caliber: 16, arcs: [port, starboard, stern]}
       - {id: P5, kind: primary, position: stern, firepower: 3, caliber: 16, arcs: [port, starboard, stern]}
       - {id: P6, kind: primary, position: stern, firepower: 3, caliber: 16, arcs: [port, starboard, stern]}
-    armour: {primary: 16, belt: 12, bridge: 15}
+      - {id: S1, kind: secondary, position: port, firepower: 1, caliber: 5, arcs: [port]}
+      - {id: S2, kind: secondary, position: starboard, firepower: 1, caliber: 5, arcs: [starboard]}
+    armour: {primary: 16, secondary: 2, belt: 12, bridge: 15}
     fire_control: true
     radar: true
     aircraft: true
@@ -436,7 +438,7 @@ records:
   IBS-U-USN-PENSACOLA: {family: usn-ca-new-orleans, name: 彭萨科拉, vp: 10, source_page: 7, fire_control: true, aircraft: true, armour: {primary: 2, belt: 2, bridge: 1}}
   IBS-U-USN-NORTHAMPTON: {family: usn-ca-new-orleans, name: 北安普敦, vp: 10, source_page: 7, fire_control: true, aircraft: true, armour: {primary: 2, belt: 4, bridge: 1}}
   IBS-U-USN-WASHINGTON: {family: usn-washington-bb, name: 华盛顿, vp: 37, source_page: 9}
-  IBS-U-USN-SOUTH-DAKOTA: {family: usn-washington-bb, name: 南达科塔, vp: 36, source_page: 9, displacement_band: G, armour: {primary: 18, belt: 12, bridge: 16}}
+  IBS-U-USN-SOUTH-DAKOTA: {family: usn-washington-bb, name: 南达科塔, vp: 36, source_page: 9, displacement_band: G, armour: {primary: 18, secondary: 2, belt: 12, bridge: 16}}
   IBS-U-IJN-FURUTAKA: {family: ijn-aoba-ca, name: 古鹰, vp: 11, source_page: 2}
   IBS-U-IJN-KINUGASA: {family: ijn-aoba-ca, name: 衣笠, vp: 11, source_page: 2}
   IBS-U-IJN-FUBUKI: {family: ijn-fubuki-dd, name: 吹雪, vp: 3, source_page: 2}

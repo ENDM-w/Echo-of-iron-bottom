@@ -101,6 +101,7 @@
 
 .hexes text.heat-value{fill:#fff;font-size:7px;font-weight:700;opacity:.94;paint-order:stroke;stroke:#10191b;stroke-width:1.5px}
 .hexes polygon.map-buffer{fill:#9bb8b3;fill-opacity:.14;stroke:#c3d8d2;stroke-dasharray:2 2}.hexes text.buffer-label{fill:#c8ddd7;opacity:.58}.map-area-legend{position:absolute;left:.65rem;top:.65rem;z-index:7;display:grid;gap:.15rem;border:1px solid #60736f;background:#142123e8;padding:.45rem .6rem;font-size:.64rem;color:#bdcbc7;pointer-events:none}.map-area-legend b{color:#efd68e}.map-area-legend span+span{color:#8fb0a8}
+.hexes polygon.beyond-two-range{fill:#101719;fill-opacity:.76;stroke:#273437;stroke-opacity:.82}.map-area-legend .visibility-legend{color:#d7dfdc}
 
 /* —— 地图缩放控件 —— */
 .map-zoom-controls{position:absolute;top:.6rem;right:.6rem;z-index:7;display:flex;gap:.25rem;border:1px solid #485554;background:#182426ee;border-radius:6px;padding:.25rem;box-shadow:0 2px 8px #0008}

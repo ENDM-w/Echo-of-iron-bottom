@@ -21,6 +21,7 @@ from iron_bottom_sound.models import (
 @pytest.mark.parametrize("index,label", [
     (0, "A"), (25, "Z"), (26, "AA"), (33, "HH"), (34, "II"),
     (36, "KK"), (45, "TT"), (51, "ZZ"), (91, "NNNN"),
+    (128, "YYYYY"), (255, "VVVVVVVVVV"),
 ])
 def test_column_codec_breakpoints_round_trip(index: int, label: str) -> None:
     assert index_to_column(index) == label
@@ -31,11 +32,11 @@ def test_column_codec_exceeding_ceiling_rejected() -> None:
     with pytest.raises(ValueError):
         index_to_column(MAX_MAP_COLUMNS)
     with pytest.raises(ValueError):
-        column_to_index("M" * 7)  # (len-1)*26 + 12 → far past the 128 ceiling
+        column_to_index("M" * 11)  # safely beyond the 256-column ceiling
 
 
 # ── 大战场标签 from_label/label 往返（列超过 46）─────────────────────────
-@pytest.mark.parametrize("label", ["AA1", "HH27", "III21", "NNNN1", "NNNN78"])
+@pytest.mark.parametrize("label", ["AA1", "HH27", "III21", "NNNN1", "NNNN78", "YYYYY256", "VVVVVVVVVV256", "A256"])
 def test_big_map_label_round_trip(label: str) -> None:
     assert HexCoord.from_label(label).label == label
 
@@ -80,6 +81,22 @@ def test_scenario_map_dims_defaults_to_fixed_board() -> None:
 def test_scenario_map_dims_declared_big_map_prints_full_board() -> None:
     definition = {"map_columns": 92, "map_rows": 78}
     assert _scenario_map_dims(definition) == (92, 78, 92, 78)
+
+
+def test_infinite_scenario_defaults_to_expandable_open_sea() -> None:
+    assert _scenario_map_dims({"map_infinite": True}) == (92, 78, 92, 78)
+    scenario = CustomScenarioInput(
+        title="无限海图", turns=6, map_infinite=True,
+        ships=[
+            {"id": "A", "side": "axis", "position": "A20", "heading": 1, "speed": 0,
+             "asset": "s.png"},
+            {"id": "B", "side": "allies", "position": "NNNN78", "heading": 1, "speed": 0,
+             "asset": "s.png"},
+        ],
+    )
+    assert scenario.map_columns == 92
+    assert scenario.map_rows == 78
+    assert scenario.map_infinite is True
 
 
 def test_scenario_map_dims_rejects_oversized_or_oversized_printed() -> None:

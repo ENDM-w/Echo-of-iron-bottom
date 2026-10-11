@@ -419,6 +419,64 @@ def test_leaving_fixed_expanded_map_stops_without_translating_any_counter() -> N
     assert other_resolution.payload["secret_side"] == Side.ALLIES.value
 
 
+def test_infinite_map_expands_and_translates_live_coordinates_together() -> None:
+    engine = IronBottomEngine()
+    state = engine.reset("IBS-S-03", seed=3)
+    state.map_infinite = True
+    state.map_columns, state.map_rows = 92, 78
+    state.printed_columns, state.printed_rows = 92, 78
+    mover = next(iter(state.ships.values()))
+    for ship in state.ships.values():
+        ship.position = None
+    mover.position = HexCoord.from_label("A20")
+    state.markers.append(MarkerState(id="edge-marker", kind="smoke", position=HexCoord.from_label("B20")))
+    state.submitted_orders[Side.AXIS.value] = OrderBatch(
+        side=Side.AXIS,
+        illumination=[IlluminationOrder(ship_id=mover.id, target_hex=HexCoord.from_label("C20"))],
+    )
+
+    engine._expand_infinite_map_for_fleet(state)
+
+    assert (state.map_columns, state.map_rows) == (102, 78)
+    assert mover.position is not None and mover.position.label == "K20"
+    assert state.markers[0].position is not None and state.markers[0].position.label == "L20"
+    assert state.submitted_orders[Side.AXIS.value].illumination[0].target_hex.label == "M20"
+    expansion = next(event for event in state.events if event.type == "map_expanded")
+    assert expansion.payload["coordinate_shift"] == {"dq": 10, "dr": -5}
+
+
+def test_infinite_map_expansion_respects_256_coordinate_safety_ceiling() -> None:
+    engine = IronBottomEngine()
+    state = engine.reset("IBS-S-03", seed=3)
+    state.map_infinite = True
+    state.map_columns, state.map_rows = 256, 78
+    ship = next(iter(state.ships.values()))
+    for item in state.ships.values():
+        item.position = None
+    ship.position = HexCoord.from_label("A20")
+
+    engine._expand_infinite_map_for_fleet(state)
+
+    assert state.map_columns == 256
+    assert ship.position is not None and ship.position.q == 0
+
+
+def test_infinite_map_can_expand_past_previous_128_column_limit() -> None:
+    engine = IronBottomEngine()
+    state = engine.reset("IBS-S-03", seed=3)
+    state.map_infinite = True
+    state.map_columns, state.map_rows = 128, 78
+    ship = next(iter(state.ships.values()))
+    for item in state.ships.values():
+        item.position = None
+    ship.position = HexCoord.from_label("A20")
+
+    engine._expand_infinite_map_for_fleet(state)
+
+    assert state.map_columns == 138
+    assert ship.position is not None and ship.position.label == "K20"
+
+
 def test_observe_repairs_legacy_bent_torpedo_trail_without_mutating_state() -> None:
     engine = IronBottomEngine()
     state = engine.reset("IBS-S-03", seed=13)
@@ -682,6 +740,10 @@ def test_gunnery_executes_individual_mount_orders_for_both_sides() -> None:
     attacks = [event for event in state.events if event.type == "gun_mount_attack"]
     assert len(attacks) == 2
     assert {event.payload["mount_id"] for event in attacks} == {"P1"}
+    gunfire = [marker for marker in state.markers if marker.kind == "gunfire"]
+    assert {marker.ship_id for marker in gunfire} == {axis_ship.id, allied_ship.id}
+    assert all(marker.position == state.ships[marker.ship_id].position for marker in gunfire)
+    assert len({marker.id for marker in gunfire}) == 2
 
 
 def test_gunnery_allows_visible_friendly_ship_as_target() -> None:
@@ -767,6 +829,51 @@ def test_legal_actions_publish_only_engine_valid_weapon_candidates() -> None:
     assert all(candidate["launch_positions"][0]["mf"] == 0 for candidate in torpedo_candidates)
     assert all(candidate["launch_positions"][1]["mf"] == 1 for candidate in torpedo_candidates)
     assert all(candidate["settings"] for candidate in torpedo_candidates)
+
+
+def test_gunnery_can_target_visible_burning_ship_beyond_base_visibility() -> None:
+    engine = IronBottomEngine()
+    state = engine.reset("IBS-S-03", seed=51)
+    state.phase = Phase.GUNNERY
+    attacker = next(ship for ship in state.ships.values() if ship.side == Side.ALLIES and ship.position)
+    target = next(ship for ship in state.ships.values() if ship.side == Side.AXIS and ship.position)
+    radius = engine.visibility_radius(state, attacker.side)
+    target_position = next(
+        candidate
+        for q in range(state.map_columns)
+        for row in range(state.map_rows)
+        for candidate in [HexCoord(q=q, r=row - (q - (q & 1)) // 2)]
+        if radius < attacker.position.distance(candidate) <= radius * 2
+        and not engine._terrain_blocks_sight(state, attacker.position, candidate)
+        and any(
+            engine._relative_aspect(attacker.position, attacker.heading, candidate) in mount.arcs
+            for mount in attacker.gun_mounts
+            if not mount.destroyed
+        )
+    )
+    target.position = target_position
+    target.fire_markers = 1
+
+    assert engine._can_see(state, attacker, target)
+    candidate = next(
+        item for item in engine._gunnery_candidates(state, attacker.side)
+        if item["ship_id"] == attacker.id
+    )
+    target_candidate = next(item for item in candidate["targets"] if item["target_id"] == target.id)
+    assert target_candidate["mount_ids"]
+
+    result = engine.validate_orders(
+        state.game_id,
+        OrderBatch(
+            side=attacker.side,
+            phase=Phase.GUNNERY,
+            gunnery=[GunneryOrder(
+                ship_id=attacker.id,
+                mounts=[GunMountOrder(mount_id=target_candidate["mount_ids"][0], target_id=target.id)],
+            )],
+        ),
+    )
+    assert result.valid, result.errors
 
 
 def test_movement_candidates_exclude_sunk_ships_even_with_pending_drift_position() -> None:

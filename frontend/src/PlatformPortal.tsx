@@ -63,6 +63,17 @@ const parseMapHexLabel = (label: string) => {
     return null;
   }
 };
+const movementPlanCost = (raw: string): { cost: number; error?: string } => {
+  const plan = raw.trim().toUpperCase().replaceAll("左", "P").replaceAll("右", "S");
+  if (plan === "0") return { cost: 0 };
+  const tokens = plan.match(/\d+|PP|SS|LL|RR|P|S|L|R/g) ?? [];
+  if (tokens.join("") !== plan) return { cost: 0, error: "航路格式无法识别" };
+  const cost = tokens.reduce((total, token) => {
+    if (/^\d+$/.test(token)) return total + Number(token);
+    return total + (["PP", "SS", "LL", "RR"].includes(token) ? 1 : 0);
+  }, 0);
+  return Number.isSafeInteger(cost) ? { cost } : { cost: 0, error: "航路 MF 数值超出范围" };
+};
 const targetLabel = (ship: Ship) =>
   ship.signal_only ? `某标记 · ${positionLabel(ship.position)}` : ship.name;
 const saveDownload = (blob: Blob, filename: string) => {
@@ -260,6 +271,7 @@ function PlatformMap({
             map_rows: view.map_rows,
             printed_columns: view.printed_columns,
             printed_rows: view.printed_rows,
+            map_infinite: view.map_infinite,
           }}
           showVisibility={!fullMap}
         />
@@ -532,7 +544,7 @@ export function PlatformPortal({ onClose }: Props) {
       setMessage(`已下载第 ${turn} 回合存档`);
     });
   };
-  const submitOrder = (ignoreValidationErrors = false) => {
+  const submitOrder = (ignoreValidationErrors: boolean) => {
     if (!session || !summary || !view || !selectedSeatId) return;
     void run(async () => {
       let next;
@@ -877,6 +889,17 @@ export function PlatformPortal({ onClose }: Props) {
   }, [view]);
   const selectedActionShip =
     ownShips.find((ship) => ship.id === actionShipId) ?? ownShips[0];
+  const movementCostPreview = movementPlanCost(movementPlan);
+  const movementPlanWarnings = selectedActionShip ? [
+    movementCostPreview.error,
+    movementCostPreview.cost < (selectedActionShip.min_legal_speed ?? 0)
+      || movementCostPreview.cost > (selectedActionShip.max_legal_speed ?? Number.POSITIVE_INFINITY)
+      ? `航路消耗 ${movementCostPreview.cost} MF，超出本回合合法范围 ${selectedActionShip.min_legal_speed ?? "—"}–${selectedActionShip.max_legal_speed ?? "—"} MF。`
+      : undefined,
+    movementSpeed.trim() !== "" && Number(movementSpeed) !== movementCostPreview.cost
+      ? `声明速度 ${movementSpeed} MF 与航路消耗 ${movementCostPreview.cost} MF 不一致。`
+      : undefined,
+  ].filter((warning): warning is string => Boolean(warning)) : [];
   const captainCommandLost = Boolean(selectedActionShip?.captain_command_lost);
   const selectedActionTarget =
     visibleTargets.find((ship) => ship.id === actionTargetId) ?? visibleTargets[0];
@@ -1024,6 +1047,62 @@ export function PlatformPortal({ onClose }: Props) {
         )
       : []
   );
+  const draftShipName = (shipId: unknown) =>
+    ownShips.find((ship) => ship.id === String(shipId ?? ""))?.name
+      ?? String(shipId ?? "本舰");
+  const draftTargetName = (targetId: unknown) => {
+    const target = visibleTargets.find((ship) => ship.id === String(targetId ?? ""));
+    return target ? targetLabel(target) : String(targetId ?? "目标待刷新");
+  };
+  const draftSummarySections = view ? [
+    {
+      key: "reinforcements", label: "增援", visible: view.phase === "reinforcement",
+      rows: draftRows("reinforcements"),
+      describe: (row: JsonRecord) => `${draftShipName(row.ship_id)} · ${positionLabel(row.entry_hex ?? row.position)}`,
+    },
+    {
+      key: "movement", label: "移动", visible: view.phase === "reinforcement" || view.phase === "movement_planning",
+      rows: draftRows("movement"),
+      describe: (row: JsonRecord) => `${draftShipName(row.ship_id)} · ${String(row.plan ?? "未设航路")}${row.speed == null ? "" : ` · ${String(row.speed)} MF`}`,
+    },
+    {
+      key: "gunnery", label: "炮击", visible: view.phase === "reinforcement" || view.phase === "gunnery",
+      rows: draftRows("gunnery"),
+      describe: (row: JsonRecord) => {
+        const mounts = Array.isArray(row.mounts) ? row.mounts.length : 0;
+        return `${draftShipName(row.ship_id)} → ${draftTargetName(row.primary_target)} · ${mounts} 个炮位`;
+      },
+    },
+    {
+      key: "torpedoes", label: "鱼雷", visible: view.phase === "reinforcement" || view.phase === "torpedo_planning",
+      rows: draftRows("torpedoes"),
+      describe: (row: JsonRecord) => `${draftShipName(row.ship_id)} · ${String(row.launcher_id ?? "发射器未指定")} · ${String(row.count ?? 1)} 枚 · MF ${String(row.launch_at_mf ?? "?")}`,
+    },
+    {
+      key: "illumination", label: "照明弹", visible: view.phase === "reinforcement" || view.phase === "gunnery",
+      rows: draftRows("illumination"),
+      describe: (row: JsonRecord) => `${draftShipName(row.ship_id)} · ${String(row.mount_id ?? "自动炮位")} → ${positionLabel(row.target_hex)}`,
+    },
+    {
+      key: "searchlights", label: "探照灯", visible: view.phase === "reinforcement" || view.phase === "gunnery",
+      rows: draftRows("searchlights"),
+      describe: (row: JsonRecord) => `${draftShipName(row.ship_id)} → ${draftTargetName(row.target_id)}`,
+    },
+    {
+      key: "smoke", label: "烟幕与其他行动", visible: view.phase === "reinforcement" || view.phase === "gunnery",
+      rows: [
+        ...draftRows("smoke"),
+        ...(Array.isArray(orderDraft?.smoke_ships) ? orderDraft.smoke_ships : [])
+          .map((shipId) => ({ ship_id: typeof shipId === "object" && shipId ? (shipId as JsonRecord).ship_id : shipId })),
+      ],
+      describe: (row: JsonRecord) => draftShipName(row.ship_id),
+    },
+    {
+      key: "formations", label: "编队", visible: view.phase === "formation_setup" || view.phase === "movement_planning",
+      rows: ["formation_setup", "formation_movement", "formation_speed_decisions"].flatMap((key) => draftRows(key)),
+      describe: (row: JsonRecord) => String(row.name ?? row.formation_id ?? row.ship_id ?? "编队行动"),
+    },
+  ].filter((section) => section.visible) : [];
   const nextJudgeTorpedoLauncher = defaultOrderShip?.torpedo_launchers.find((launcher) =>
     !launcher.destroyed && launcher.loaded > 0 && !launcher.reload_turns_remaining,
   );
@@ -2180,6 +2259,28 @@ export function PlatformPortal({ onClose }: Props) {
                           : "本阶段没有专用控件时，直接确认或使用高级 JSON 补充行动。"}
                   </span>
                 </div>
+                <section className="player-order-summary" aria-label="本阶段订单填写状态">
+                  <header>
+                    <b>{view.phase === "reinforcement" ? "本回合订单清单" : "本阶段订单清单"}</b>
+                    <span>{draftSummarySections.reduce((total, section) => total + section.rows.length, 0)} 项已写入</span>
+                  </header>
+                  {!orderDraft ? (
+                    <p className="draft-summary-error">订单草稿格式有误，请展开高级 JSON 修复后再提交。</p>
+                  ) : (
+                    <div className="player-order-summary-grid">
+                      {draftSummarySections.map((section) => (
+                        <article className={section.rows.length ? "has-orders" : "no-orders"} key={section.key}>
+                          <div><b>{section.label}</b><span>{section.rows.length ? `已填写 ${section.rows.length} 项` : "尚未填写"}</span></div>
+                          {section.rows.length > 0 && (
+                            <ul>{section.rows.slice(0, 4).map((row, index) => (
+                              <li key={`${section.key}-${index}`}>{section.describe(row)}</li>
+                            ))}{section.rows.length > 4 && <li>另有 {section.rows.length - 4} 项</li>}</ul>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
                 {view.stage === "awaiting_publication" && (
                   <div className="review-readiness" role="status">
                     裁判正在审理本回合结果。此处仍显示上一次已发布状态；裁判发布后地图、舰船状态和电报会自动更新。
@@ -2241,6 +2342,13 @@ export function PlatformPortal({ onClose }: Props) {
                           ? `当前航向 ${selectedActionShip.heading} · 合法速度 ${selectedActionShip.min_legal_speed ?? "—"}–${selectedActionShip.max_legal_speed ?? "—"}`
                           : "请先选择一条舰船。"}
                       </p>
+                      {movementPlanWarnings.length > 0 && (
+                        <div className="review-error" role="alert">
+                          <strong>移动计划有待修正</strong>
+                          <ul>{movementPlanWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+                          <span>最终提交仍会由规则引擎校验；如需强行送交裁判，请在提交时报错后明确选择忽略。</span>
+                        </div>
+                      )}
                       <button onClick={writeMovementOrder} disabled={!selectedActionShip || captainCommandLost}>
                         写入移动计划
                       </button>
@@ -2290,7 +2398,7 @@ export function PlatformPortal({ onClose }: Props) {
                               ? "已使用"
                               : fireableMountIds.has(mount.id)
                                 ? "可射击"
-                                : "不在目标射界";
+                                : "目标/视野条件不满足";
                           return <small className={fireableMountIds.has(mount.id) ? "mount-ready" : "mount-unavailable"} key={mount.id}>
                             {mount.id} · GF {mount.firepower} · {status}
                           </small>;
@@ -2498,9 +2606,12 @@ export function PlatformPortal({ onClose }: Props) {
                 <p className="field-hint">
                   订单只会提交给裁判；同阵营其他席位不会看到你的视野或草稿。
                 </p>
+                <p className="order-validation-default" role="note">
+                  默认严格校验：发现非法订单会停止提交。只有出现报错后，再明确选择“忽略报错并提交”才会送交裁判审理；规则引擎仍会按规则裁决。
+                </p>
                 <button
                   className="primary"
-                  onClick={() => submitOrder()}
+                  onClick={() => submitOrder(false)}
                   disabled={
                     busy ||
                     view.stage === "resolving" ||
@@ -2518,7 +2629,7 @@ export function PlatformPortal({ onClose }: Props) {
                     <ul>{orderValidationErrors.map((item, index) => <li key={`submit-validation-${index}`}>{item}</li>)}</ul>
                     <p>忽略只会允许把订单送交裁判审理，不会绕过规则引擎的最终裁决。</p>
                     <button type="button" className="danger" disabled={busy || view.stage === "awaiting_publication"} onClick={() => submitOrder(true)}>
-                      忽略报错并提交
+                      确认忽略报错并提交给裁判
                     </button>
                   </div>
                 )}

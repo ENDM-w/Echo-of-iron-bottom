@@ -5,7 +5,7 @@ import sqlite3
 import pytest
 
 from iron_bottom_sound.engine import IronBottomEngine
-from iron_bottom_sound.models import DiceRoll, GunneryOrder, HexCoord, IlluminationOrder, MarkerState, MovementOrder, OrderBatch, Phase, SearchlightOrder, Side, TorpedoTrack, WreckState
+from iron_bottom_sound.models import DiceRoll, GunMountOrder, GunneryOrder, HexCoord, IlluminationOrder, MarkerState, MovementOrder, OrderBatch, Phase, SearchlightOrder, Side, TorpedoOrder, TorpedoTrack, WreckState
 from iron_bottom_sound.platform.auth import PasswordHasher
 from iron_bottom_sound.platform.models import (
     ControllerType,
@@ -259,6 +259,13 @@ def test_hidden_contacts_uses_two_range_anonymous_signal_band(tmp_path) -> None:
     friendly_signal.position = HexCoord(q=11, r=5)
     friendly_signal.fire_markers = 1
     friendly_signal.fired = True
+    state.markers.append(MarkerState(
+        id=f"GUNFIRE-{state.turn}-{friendly_signal.id}",
+        kind="gunfire",
+        position=friendly_signal.position,
+        ship_id=friendly_signal.id,
+        expires_turn=state.turn + 1,
+    ))
     allies_ship.position = HexCoord(q=15, r=5)
     beyond_light.position = HexCoord(q=16, r=5)
     unlit_outer.position = HexCoord(q=12, r=5)
@@ -340,6 +347,10 @@ def test_hidden_contacts_uses_two_range_anonymous_signal_band(tmp_path) -> None:
 
     signal_kinds = {marker.kind for marker in view.markers}
     assert {"fire", "gunfire", "star_shell", "searchlight", "smoke", "torpedo_hit", "sunk"}.issubset(signal_kinds)
+    assert sum(
+        marker.kind == "gunfire" and marker.position == friendly_signal.position
+        for marker in view.markers
+    ) == 1
     assert not any(marker.kind == "searchlight" and marker.position == beyond_light.position for marker in view.markers)
     assert all("IBS-U-" not in marker.id for marker in view.markers)
     assert all(marker.ship_id is None and marker.target_ship_id is None for marker in view.markers)
@@ -524,6 +535,68 @@ def test_referee_observation_includes_full_tactical_map(tmp_path) -> None:
         if ship.position and ship.torpedo and not ship.torpedo.destroyed and not ship.sunk
     }
     assert all("settings" in candidate and "launchers" in candidate for candidate in torpedo_ships.values())
+
+
+def test_resolved_gunfire_marker_reaches_referee_and_only_observing_player(tmp_path) -> None:
+    service, engine, _, _, _, match, axis_seat, allies_seat, _, axis_ship, allies_ship = make_service(tmp_path)
+    state = engine.get(match.game_id)
+    state.phase = Phase.GUNNERY
+    match.phase = Phase.GUNNERY
+    axis_ship.position = HexCoord(q=8, r=8)
+    axis_ship.heading = 1
+    for ship in state.ships.values():
+        if ship.id not in {axis_ship.id, allies_ship.id}:
+            ship.position = HexCoord(q=35, r=30)
+    target_position = None
+    mount = None
+    for q in range(5, 12):
+        for r in range(5, 12):
+            candidate = HexCoord(q=q, r=r)
+            allies_ship.position = candidate
+            mount = next((
+                item for item in axis_ship.gun_mounts
+                if not item.destroyed
+                and engine._mount_can_bear(axis_ship, allies_ship, item.arcs)
+                and engine._can_see(state, axis_ship, allies_ship)
+            ), None)
+            if mount:
+                target_position = candidate
+                break
+        if mount:
+            break
+    assert mount and target_position
+    state.sealed_orders[f"{state.turn}:{Phase.GUNNERY.value}"] = {
+        Side.AXIS.value: OrderBatch(
+            side=Side.AXIS,
+            phase=Phase.GUNNERY,
+            gunnery=[GunneryOrder(
+                ship_id=axis_ship.id,
+                mounts=[GunMountOrder(mount_id=mount.id, target_id=allies_ship.id)],
+            )],
+        ),
+    }
+
+    engine._resolve_gunnery(state)
+    marker = next(
+        item for item in state.markers
+        if item.kind == "gunfire" and item.ship_id == axis_ship.id
+    )
+    assert marker.position == axis_ship.position
+
+    player = service.authenticate(service.issue_token("axis-player", "axis-password")[0])
+    opponent = service.authenticate(service.issue_token("allies-player", "allies-password")[0])
+    judge = service.authenticate(service.issue_token("judge", "judge-password")[0])
+    assert player and opponent and judge
+    player_view = service.observation(match.match_id, axis_seat.seat_id, player)
+    opponent_view = service.observation(match.match_id, allies_seat.seat_id, opponent)
+    judge_view = service.judge_observation(match.match_id, judge)
+    assert any(item.kind == "gunfire" and item.position == marker.position for item in player_view.markers)
+    assert any(item.kind == "gunfire" and item.position == marker.position for item in opponent_view.markers)
+    assert any(item.kind == "gunfire" and item.position == marker.position for item in judge_view.markers)
+
+    axis_ship.position = HexCoord(q=35, r=30)
+    distant_player_view = service.observation(match.match_id, allies_seat.seat_id, opponent)
+    assert not any(item.kind == "gunfire" for item in distant_player_view.markers)
 
 
 def test_hidden_projected_enemy_appears_as_anonymous_player_contact(tmp_path) -> None:
@@ -719,6 +792,54 @@ def test_seat_fragments_can_cover_movement_and_resolution_phases(tmp_path) -> No
     service.publish_adjudication(match.match_id, judge_user, torpedo_result.match.version)
 
 
+def test_player_turn_submission_validates_future_phase_orders(tmp_path) -> None:
+    service, engine, _, _, _, match, _, allies_seat, _, _, ship = make_service(tmp_path)
+    user = service.authenticate(service.issue_token("allies-player", "allies-password")[0])
+    assert user
+
+    state = engine.get(match.game_id)
+    ship.name = "华盛顿"
+    ship.ship_type = "BB"
+    ship.speed_track = (5, 4, 4)
+    ship.speed_damage_track = ((5, 4, 3, 2, 1), (4, 3, 2, 1), (4, 3, 2, 1))
+    ship.speed_damage_crossed = (0, 0, 0)
+    ship.current_speed = 5
+    ship.previous_speed = 5
+    service.game_repository.save(state)
+
+    with pytest.raises(ValueError, match="movement cost 6 outside legal range") as error:
+        service.submit_order(
+            match.match_id,
+            allies_seat.seat_id,
+            user,
+            SeatOrderSubmission(
+                phase=Phase.REINFORCEMENT,
+                batch=OrderBatch(
+                    side=Side.ALLIES,
+                    phase=Phase.REINFORCEMENT,
+                    movement=[MovementOrder(ship_id=ship.id, plan="6", speed=5)],
+                    torpedoes=[TorpedoOrder(ship_id=ship.id, launcher_id="INVALID")],
+                    gunnery=[GunneryOrder(
+                        ship_id=ship.id,
+                        primary_target="NO-SUCH-SHIP",
+                        mounts=[GunMountOrder(mount_id="INVALID", target_id="NO-SUCH-SHIP")],
+                    )],
+                    illumination=[IlluminationOrder(
+                        ship_id=ship.id,
+                        mount_id="INVALID",
+                        target_hex=HexCoord(q=1, r=1),
+                    )],
+                ),
+                scope="turn",
+                request_id="washington-six-mf",
+            ),
+        )
+    message = str(error.value)
+    assert "unavailable torpedo launcher INVALID" in message
+    assert "Illegal target NO-SUCH-SHIP" in message
+    assert "Star-shell orders require optional rule 9.3" in message
+
+
 def test_full_turn_submission_accepts_future_phase_orders_and_advances_once(tmp_path) -> None:
     service, engine, _, _, _, match, axis_seat, allies_seat, proxy_seats, axis_ship, _ = make_service(tmp_path)
     axis_user = service.authenticate(service.issue_token("axis-player", "axis-password")[0])
@@ -803,6 +924,7 @@ def test_full_turn_submission_can_ignore_missing_movement_and_keeps_review_warni
         batch=OrderBatch(side=missing_seat.side, phase=Phase.REINFORCEMENT),
         request_id="turn-missing-movement",
     )
+    assert submission.ignore_validation_errors is False
     with pytest.raises(ValueError, match="缺少移动计划"):
         service.submit_order(
             match.match_id,

@@ -185,16 +185,20 @@ def make_ship(
 def _scenario_map_dims(scenario: dict[str, Any]) -> tuple[int, int, int, int]:
     """Resolve the scenario's playable map + printed region (defaults match the
     fixed IBS-R-MAP-01 46×39 board so every legacy scenario is byte-identical)."""
-    columns = int(scenario.get("map_columns", MAP_COLUMNS))
-    rows = int(scenario.get("map_rows", MAP_ROWS))
+    from .models import INFINITE_MAP_START_COLUMNS, INFINITE_MAP_START_ROWS
+
+    default_columns = INFINITE_MAP_START_COLUMNS if scenario.get("map_infinite") else MAP_COLUMNS
+    default_rows = INFINITE_MAP_START_ROWS if scenario.get("map_infinite") else MAP_ROWS
+    columns = int(scenario.get("map_columns", default_columns))
+    rows = int(scenario.get("map_rows", default_rows))
     if not (0 < columns <= MAX_MAP_COLUMNS and 0 < rows <= MAX_MAP_ROWS):
         raise ValueError(f"Invalid scenario map size {columns}x{rows}")
     printed_columns = scenario.get("printed_columns")
     printed_rows = scenario.get("printed_rows")
     if printed_columns is None:
-        printed_columns = PRINTED_MAP_COLUMNS if columns == MAP_COLUMNS else columns
+        printed_columns = PRINTED_MAP_COLUMNS if columns == MAP_COLUMNS and not scenario.get("map_infinite") else columns
     if printed_rows is None:
-        printed_rows = PRINTED_MAP_ROWS if rows == MAP_ROWS else rows
+        printed_rows = PRINTED_MAP_ROWS if rows == MAP_ROWS and not scenario.get("map_infinite") else rows
     if printed_columns > columns or printed_rows > rows:
         raise ValueError(f"Printed region {printed_columns}x{printed_rows} exceeds the playable map")
     return columns, rows, printed_columns, printed_rows
@@ -232,6 +236,7 @@ def build_initial_state(game_id: str, scenario_id: str, seed: int, options: Game
         map_rows=map_rows,
         printed_columns=printed_columns,
         printed_rows=printed_rows,
+        map_infinite=bool(scenario.get("map_infinite", False)),
     )
     if reinforcement:
         state.reinforcement_trigger_turn = int(reinforcement["trigger"]["turn"])

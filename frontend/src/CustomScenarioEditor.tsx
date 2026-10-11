@@ -16,7 +16,7 @@ import {
 } from "./editor/scenario";
 import {setActiveMapSize} from "./hexGeometry";
 import type {Axial} from "./hexGeometry";
-import type {EditorState,ScenarioMeta} from "./editor/scenario";
+import type {EditorState,MapSize,ScenarioMeta} from "./editor/scenario";
 
 type Mode="hotseat"|"vs_ai"|"llm";
 type Props={onClose:()=>void;onLaunch:(id:string,mode:Mode,side:Side,profile:string,realistic:boolean)=>void;error:string};
@@ -100,9 +100,10 @@ export function CustomScenarioEditor({onClose,onLaunch,error}:Props){
 
  const patchMeta=<K extends keyof ScenarioMeta>(key:K,value:ScenarioMeta[K])=>setMeta(current=>({...current,[key]:value}));
  // 海图尺寸选择：标准图不写尺寸键（旧存档/导出逐字节不变）；大战场等非标准图明确声明。
- const selectMapSize=(size:{columns:number;rows:number;printedColumns:number;printedRows:number})=>{
+ const selectMapSize=(size:MapSize)=>{
   const standard=size.columns===MAP_SIZE_STANDARD.columns&&size.rows===MAP_SIZE_STANDARD.rows;
   setMeta(current=>({...current,
+   mapInfinite:size.infinite===true,
    mapColumns:standard?undefined:size.columns,mapRows:standard?undefined:size.rows,
    printedColumns:standard?undefined:size.printedColumns,printedRows:standard?undefined:size.printedRows}));
  };
@@ -153,7 +154,8 @@ export function CustomScenarioEditor({onClose,onLaunch,error}:Props){
  setMeta({title:body.title??"",turns:body.turns??12,visibility:body.visibility??{axis:4,allies:4},
    optional_rules:body.optional_rules??[],description:body.description??"",recommended_mode:body.recommended_mode??null,
    mapColumns:isStandard?undefined:columns,mapRows:isStandard?undefined:rows,
-   printedColumns:isStandard?undefined:printedColumns,printedRows:isStandard?undefined:printedRows});
+   printedColumns:isStandard?undefined:printedColumns,printedRows:isStandard?undefined:printedRows,
+   mapInfinite:body.map_infinite??false});
   setSeatAssignments(Object.fromEntries((body.seat_assignments??[]).map(item=>[item.ship_id,item])));
   setModeTouched(false);
   setBanner(null);
@@ -226,6 +228,7 @@ export function CustomScenarioEditor({onClose,onLaunch,error}:Props){
     description:String(pick("description","")??""),recommended_mode:pick<RecommendedMode>("recommended_mode",null),
     map_columns:dimsNum("map_columns"),map_rows:dimsNum("map_rows"),
     printed_columns:dimsNum("printed_columns"),printed_rows:dimsNum("printed_rows"),
+    map_infinite:Boolean(pick("map_infinite",false)),
    };
    applyBodyWithMeta(body);
    return true;
@@ -331,10 +334,10 @@ export function CustomScenarioEditor({onClose,onLaunch,error}:Props){
     <label>回合数<input type="number" min={1} max={99} value={meta.turns} onChange={event=>patchMeta("turns",Number(event.target.value))}/></label>
     <label>轴心能见度<input type="number" min={1} max={99} value={meta.visibility.axis} onChange={event=>patchMeta("visibility",{...meta.visibility,axis:Number(event.target.value)})}/></label>
     <label>同盟能见度<input type="number" min={1} max={99} value={meta.visibility.allies} onChange={event=>patchMeta("visibility",{...meta.visibility,allies:Number(event.target.value)})}/></label>
-    <label>海图尺寸<select value={mapSize.columns===MAP_SIZE_STANDARD.columns&&mapSize.rows===MAP_SIZE_STANDARD.rows?"standard":"big"} onChange={event=>{const option=MAP_SIZE_OPTIONS.find(item=>item.key===event.target.value);if(option)selectMapSize(option.size)}}>
+    <label>海图尺寸<select value={meta.mapInfinite?"infinite":mapSize.columns===MAP_SIZE_STANDARD.columns&&mapSize.rows===MAP_SIZE_STANDARD.rows?"standard":"big"} onChange={event=>{const option=MAP_SIZE_OPTIONS.find(item=>item.key===event.target.value);if(option)selectMapSize(option.size)}}>
       {MAP_SIZE_OPTIONS.map(option=><option key={option.key} value={option.key}>{option.label}</option>)}
      </select>
-     <small>标准 46×39 含 34×27 原印刷区（四周为缓冲海）；大战场为 92×78 整幅印刷，用于超大规模会战想定。载入大战场存档后切回标准会让伸出界外的纵队报错，需重新布防。</small></label>
+     <small>{meta.mapInfinite?"从 92×78 纯海起步；舰队靠近边界后自动向四周扩展并统一平移坐标，最大范围 256×256。":"标准 46×39 含 34×27 原印刷区（四周为缓冲海）；大战场为 92×78 整幅印刷，用于超大规模会战想定。载入大战场存档后切回标准会让伸出界外的纵队报错，需重新布防。"}</small></label>
     <label>推荐玩法<select value={meta.recommended_mode??""} onChange={event=>setRecommended((event.target.value||null) as RecommendedMode)}>
       <option value="">无偏好</option><option value="pvp">PvP 同机对战</option><option value="pve">PvE 打 AI</option></select>
      <small>只是启动默认值：开局时仍可临时换成别的对手。</small></label>

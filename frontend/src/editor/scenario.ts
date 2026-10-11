@@ -22,19 +22,21 @@ export interface EditorState{
 export const SIDES:Side[]=["axis","allies"];
 export const sideLabel=(side:Side)=>side==="axis"?"轴心":"同盟";
 // 剧本可选海图尺寸（与后端 MAX/默认同源；标准图有 34×27 印刷区+扩展缓冲海）。
-export interface MapSize{columns:number;rows:number;printedColumns:number;printedRows:number}
+export interface MapSize{columns:number;rows:number;printedColumns:number;printedRows:number;infinite?:boolean}
 export const MAP_SIZE_STANDARD:MapSize={columns:46,rows:39,printedColumns:34,printedRows:27};
 export const MAP_SIZE_BIG:MapSize={columns:92,rows:78,printedColumns:92,printedRows:78};
-export const MAP_SIZE_OPTIONS:{key:"standard"|"big";label:string;size:MapSize}[]=[
+export const MAP_SIZE_INFINITE:MapSize={columns:92,rows:78,printedColumns:92,printedRows:78,infinite:true};
+export const MAP_SIZE_OPTIONS:{key:"standard"|"big"|"infinite";label:string;size:MapSize}[]=[
  {key:"standard",label:"标准海图 46×39（印刷区 34×27）",size:MAP_SIZE_STANDARD},
  {key:"big",label:"大战场 92×78（整图印刷）",size:MAP_SIZE_BIG},
+ {key:"infinite",label:"无限延伸海图（动态扩图）",size:MAP_SIZE_INFINITE},
 ];
 export function mapSizeOfMeta(meta:ScenarioMeta):MapSize{
  const columns=meta.mapColumns??MAP_SIZE_STANDARD.columns;
  const rows=meta.mapRows??MAP_SIZE_STANDARD.rows;
  const printedColumns=meta.printedColumns??(columns===MAP_SIZE_STANDARD.columns?MAP_SIZE_STANDARD.printedColumns:columns);
  const printedRows=meta.printedRows??(rows===MAP_SIZE_STANDARD.rows?MAP_SIZE_STANDARD.printedRows:rows);
- return {columns,rows,printedColumns,printedRows};
+ return {columns,rows,printedColumns,printedRows,infinite:meta.mapInfinite??false};
 }
 // 每侧真实编队上限：用户裁定由 4 放开到 8，支持“全主力+大队驱逐”的巨舰剧本。
 export const MAX_WELLS_PER_SIDE=8;
@@ -316,6 +318,7 @@ export interface ScenarioMeta{
  title:string;turns:number;visibility:{axis:number;allies:number};optional_rules:string[];description:string;recommended_mode:RecommendedMode;
  // 可选地图尺寸（缺省 = 标准 46×39/印刷 34×27，保存时不写键、逐字节不变）。
  mapColumns?:number;mapRows?:number;printedColumns?:number;printedRows?:number;
+ mapInfinite?:boolean;
 }
 export function buildPayload(state:EditorState,meta:ScenarioMeta):
  {body:CustomScenarioDefinition;errors:string[];realisticCapable:boolean}{
@@ -355,7 +358,7 @@ export function buildPayload(state:EditorState,meta:ScenarioMeta):
  }
  const body:CustomScenarioDefinition={title:meta.title,turns:meta.turns,visibility:meta.visibility,
    optional_rules:meta.optional_rules,ships,formations,
-   description:meta.description,recommended_mode:meta.recommended_mode};
+   description:meta.description,recommended_mode:meta.recommended_mode,map_infinite:meta.mapInfinite??false};
  const size=mapSizeOfMeta(meta);
  const isStandard=size.columns===MAP_SIZE_STANDARD.columns&&size.rows===MAP_SIZE_STANDARD.rows
    &&size.printedColumns===MAP_SIZE_STANDARD.printedColumns&&size.printedRows===MAP_SIZE_STANDARD.printedRows;

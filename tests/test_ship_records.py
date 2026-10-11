@@ -4,6 +4,7 @@ import yaml
 
 from iron_bottom_sound.engine import IronBottomEngine
 from iron_bottom_sound.counter_assets import all_asset_bindings, validate_asset_bindings
+from iron_bottom_sound.data import make_ship
 from iron_bottom_sound.models import FiringArc
 from iron_bottom_sound.ship_records import load_ship_catalog, load_ship_records
 
@@ -46,6 +47,8 @@ def test_ship_record_mounts_and_tracks_match_source_examples() -> None:
     akizuki = records["IBS-U-IJN-AKIZUKI"]
     karl = records["IBS-U-KM-KARL-GALSTER"]
     javelin = records["IBS-U-RN-JAVELIN"]
+    washington = records["IBS-U-USN-WASHINGTON"]
+    south_dakota = records["IBS-U-USN-SOUTH-DAKOTA"]
     assert aoba.hull_boxes == 11
     assert aoba.maximum_speed_cycle == (6, 5, 5)
     assert sum(mount.firepower for mount in aoba.guns if mount.kind == "primary") == 16
@@ -65,6 +68,25 @@ def test_ship_record_mounts_and_tracks_match_source_examples() -> None:
     assert [launcher.torpedoes for launcher in records["IBS-U-USN-FARENHOLT"].torpedo_launchers] == [2, 1]
     assert [launcher.torpedoes for launcher in records["IBS-U-IJN-FUBUKI"].torpedo_launchers] == [2, 2]
     assert [launcher.torpedoes for launcher in records["IBS-U-IJN-ASAGUMO"].torpedo_launchers] == [3, 3]
+    assert sum(mount.kind == "primary" for mount in washington.guns) == 6
+    assert sum(mount.firepower for mount in washington.guns if mount.kind == "primary") == 18
+    washington_secondaries = [mount for mount in washington.guns if mount.kind == "secondary"]
+    assert [(mount.id, mount.position, mount.firepower, mount.caliber, mount.arcs) for mount in washington_secondaries] == [
+        ("S1", "port", 1, 5, (FiringArc.PORT,)),
+        ("S2", "starboard", 1, 5, (FiringArc.STARBOARD,)),
+    ]
+    assert washington.armour.secondary == south_dakota.armour.secondary == 2
+
+    ship = make_ship(
+        {"id": "IBS-U-USN-WASHINGTON", "name": "华盛顿", "side": "allies", "position": "U40"},
+        {},
+        records,
+    )
+    assert ship.secondary is not None and ship.secondary.firepower == 1 and ship.secondary.caliber == 5
+    assert [(mount.id, mount.firepower) for mount in ship.gun_mounts if mount.kind == "secondary"] == [
+        ("S1", 1),
+        ("S2", 1),
+    ]
 
 
 def test_every_mount_and_launcher_has_a_legal_source_arc() -> None:

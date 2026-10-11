@@ -4,6 +4,7 @@ import re
 import secrets
 import sqlite3
 import uuid
+from copy import copy
 from ..engine import ORDER_PHASES, IronBottomEngine
 from ..models import DiceRoll, GameEvent, GameOptions, GameState, HexCoord, MarkerState, OrderBatch, Phase, PublicShip, ShipState, Side
 from ..storage import GameRepository
@@ -838,6 +839,7 @@ class PlatformService:
             map_rows=state.map_rows,
             printed_columns=state.printed_columns,
             printed_rows=state.printed_rows,
+            map_infinite=state.map_infinite,
             visibility=self.engine.visibility_radius(state, seat.side),
             visibility_axis=None,
             visibility_allies=None,
@@ -913,6 +915,7 @@ class PlatformService:
             map_rows=state.map_rows,
             printed_columns=state.printed_columns,
             printed_rows=state.printed_rows,
+            map_infinite=state.map_infinite,
             visibility=max(
                 self.engine.visibility_radius(state, Side.AXIS),
                 self.engine.visibility_radius(state, Side.ALLIES),
@@ -1081,6 +1084,11 @@ class PlatformService:
         visible_ids = own_ids | visible_other_ids
         output: list[MarkerState] = []
         signal_counts: dict[tuple[str, str], int] = {}
+        marked_ship_signals = {
+            (marker.kind, marker.ship_id)
+            for marker in source_markers
+            if marker.ship_id is not None
+        }
 
         def append_neutral(kind: str, position: HexCoord) -> None:
             key = (kind, position.label)
@@ -1125,9 +1133,9 @@ class PlatformService:
                     state, ship.position, own_positions, visibility_radius * 2
                 ):
                     continue
-                if ship.fire_markers:
+                if ship.fire_markers and ("fire", ship.id) not in marked_ship_signals:
                     append_neutral("fire", ship.position)
-                if ship.fired:
+                if ship.fired and ("gunfire", ship.id) not in marked_ship_signals:
                     append_neutral("gunfire", ship.position)
         return output
 
@@ -1203,10 +1211,14 @@ class PlatformService:
             for required_id in match.required_seat_ids
             if self.repository.seat(required_id).side == seat.side
         }
-        if submission.scope == "turn" and submitted_side_seats <= set(pending_orders):
+        if submission.scope == "turn":
             validation_errors.extend(
-                self._validate_turn_movement_coverage(match_id, pending_orders, only_side=seat.side)
+                self._validate_turn_future_orders(match_id, pending_orders, only_side=seat.side)
             )
+            if submitted_side_seats <= set(pending_orders):
+                validation_errors.extend(
+                    self._validate_turn_movement_coverage(match_id, pending_orders, only_side=seat.side)
+                )
         validation_errors = list(dict.fromkeys(validation_errors))
         if validation_errors and not submission.ignore_validation_errors:
             raise OrderValidationIssue(validation_errors)
@@ -1255,6 +1267,99 @@ class PlatformService:
             if submitted != expected:
                 errors.append("本阵营有舰船缺少移动计划；详细舰只列表仅裁判可见。")
         return errors
+
+    def _validate_turn_future_orders(
+        self,
+        match_id: str,
+        orders: dict[str, tuple[str, OrderBatch]],
+        only_side: Side | None = None,
+    ) -> list[str]:
+        """Validate all preplanned actions against isolated future-phase states.
+
+        Turn-scope orders are submitted during reinforcement, so validating the
+        current phase alone silently skips future actions. Run the engine's
+        normal validator for movement, torpedo, and gunnery phases against an
+        isolated copy; never mutate or advance the live game while drafting.
+        """
+        match = self.repository.match(match_id)
+        state = self._ensure_loaded(match.game_id).model_copy(deep=True)
+        state.submitted_orders.clear()
+        validator = copy(self.engine)
+        validator.games = {**self.engine.games, state.game_id: state}
+        batches_by_side: dict[Side, list[OrderBatch]] = {side: [] for side in Side}
+        for seat_id, (_, batch) in orders.items():
+            side = self.repository.seat(seat_id).side
+            if only_side is None or side == only_side:
+                batches_by_side[side].append(batch)
+                for reinforcement in batch.reinforcements:
+                    ship = state.ships.get(reinforcement.ship_id)
+                    if ship and ship.position is None:
+                        ship.position = reinforcement.entry_hex
+                        ship.heading = reinforcement.heading
+                        ship.current_speed = reinforcement.speed
+                        ship.previous_speed = reinforcement.speed
+        errors: list[str] = []
+        phase_order = (Phase.MOVEMENT_PLANNING, Phase.TORPEDO_PLANNING, Phase.GUNNERY)
+        movement_batches: dict[Side, OrderBatch] = {}
+        movement_end_states: dict[str, tuple[HexCoord, int, int]] = {}
+        for phase in phase_order:
+            state.phase = phase
+            if phase == Phase.GUNNERY:
+                for ship_id, (position, heading, speed) in movement_end_states.items():
+                    ship = state.ships.get(ship_id)
+                    if ship:
+                        ship.position = position
+                        ship.heading = heading
+                        ship.current_speed = speed
+            for side, batches in batches_by_side.items():
+                if only_side is not None and side != only_side:
+                    continue
+                if not batches:
+                    continue
+                projected = [self._project_turn_batch(batch, phase) for batch in batches]
+                merged = self._merge_side_orders(phase, side, projected)
+                if phase == Phase.MOVEMENT_PLANNING:
+                    movement_for_simulation = merged
+                    if state.options.realistic_command:
+                        from ..realistic_command import expand_movement_orders
+                        movement_for_simulation, expansion_errors, _detach = expand_movement_orders(
+                            validator, state, merged
+                        )
+                        errors.extend(
+                            error for error in expansion_errors
+                            if not self._is_coverage_error(error)
+                        )
+                    movement_batches[side] = movement_for_simulation
+                    for order in movement_for_simulation.movement:
+                        ship = state.ships.get(order.ship_id)
+                        if not ship or not ship.position:
+                            continue
+                        try:
+                            commands = validator.movement_commands(order)
+                            trajectory, final_heading = validator.movement_trajectory(
+                                ship, order.plan, commands,
+                                columns=state.map_columns, rows=state.map_rows,
+                            )
+                            speed = validator.movement_cost(order.plan, commands)
+                        except ValueError:
+                            continue
+                        final_position = trajectory[-1][0] if trajectory else ship.position
+                        movement_end_states[ship.id] = (final_position, final_heading, speed)
+                        ship.current_speed = speed
+                elif phase == Phase.TORPEDO_PLANNING:
+                    movement = movement_batches.get(side)
+                    if movement:
+                        sealed = state.sealed_orders.setdefault(
+                            f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}", {}
+                        )
+                        sealed[side.value] = movement
+                validation = validator.validate_orders(state.game_id, merged)
+                if not validation.valid:
+                    errors.extend(
+                        error for error in validation.errors
+                        if not self._is_coverage_error(error)
+                    )
+        return list(dict.fromkeys(errors))
 
     def _resolve_contact_aliases(self, match_id: str, seat_id: str, batch: OrderBatch) -> OrderBatch:
         """Translate neutral contact labels back to authoritative ship ids.
@@ -1972,7 +2077,13 @@ class PlatformService:
     @staticmethod
     def _marker_visible(marker, own_ids: set[str], visible_enemy_ids: set[str], known_marker_ids: set[str]) -> bool:
         if marker.secret_side is None:
-            return marker.ship_id in own_ids or marker.target_ship_id in own_ids or marker.kind in {"fire", "smoke", "squall"}
+            return (
+                marker.ship_id in own_ids
+                or marker.target_ship_id in own_ids
+                or marker.kind in {"fire", "smoke", "squall"}
+                or marker.kind == "gunfire"
+                and marker.ship_id in visible_enemy_ids
+            )
         return (
             marker.id in known_marker_ids
             or marker.ship_id in own_ids

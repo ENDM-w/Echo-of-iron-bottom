@@ -12,6 +12,8 @@ from .models import (
     FormationSetupOrder,
     GameOptions,
     HexCoord,
+    INFINITE_MAP_START_COLUMNS,
+    INFINITE_MAP_START_ROWS,
     MAP_COLUMNS,
     MAP_ROWS,
     MAX_MAP_COLUMNS,
@@ -66,6 +68,7 @@ class CustomScenarioInput(BaseModel):
     map_rows: int = Field(default=MAP_ROWS, ge=1, le=MAX_MAP_ROWS)
     printed_columns: int | None = None
     printed_rows: int | None = None
+    map_infinite: bool = False
 
     @field_validator("optional_rules")
     @classmethod
@@ -78,6 +81,11 @@ class CustomScenarioInput(BaseModel):
 
     @model_validator(mode="after")
     def _within_declared_map(self) -> "CustomScenarioInput":
+        if self.map_infinite:
+            if "map_columns" not in self.model_fields_set:
+                self.map_columns = INFINITE_MAP_START_COLUMNS
+            if "map_rows" not in self.model_fields_set:
+                self.map_rows = INFINITE_MAP_START_ROWS
         printed_columns = self.printed_columns if self.printed_columns is not None else self.map_columns
         printed_rows = self.printed_rows if self.printed_rows is not None else self.map_rows
         if printed_columns > self.map_columns or printed_rows > self.map_rows:

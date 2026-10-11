@@ -69,6 +69,7 @@ class SeatObservation(BaseModel):
     map_rows: int
     printed_columns: int | None = None
     printed_rows: int | None = None
+    map_infinite: bool = False
     visibility: int
     # Judge-only base radii. Player observations leave these unset so the
     # opposing side's configured radius is never exposed.

@@ -15,12 +15,12 @@ PRINTED_MAP_COLUMNS = 34
 PRINTED_MAP_ROWS = 27
 MAP_COLUMNS = 46
 MAP_ROWS = 39
-# Largest playable board a scenario may declare (the "大战场" 92×78 fits well
-# below these).  The column label codec and HexCoord caps must never approach
-# this ceiling, so it can stay a global sanity bound independent of the active
-# scenario's declared map size.
-MAX_MAP_COLUMNS = 128
-MAX_MAP_ROWS = 128
+INFINITE_MAP_START_COLUMNS = 92
+INFINITE_MAP_START_ROWS = 78
+# Structural coordinate ceiling. Keep the codec and HexCoord caps in sync;
+# active scenario dimensions are still enforced at each map boundary.
+MAX_MAP_COLUMNS = 256
+MAX_MAP_ROWS = 256
 
 
 class Side(StrEnum):
@@ -611,6 +611,7 @@ class GameState(BaseModel):
     map_rows: int = MAP_ROWS
     printed_columns: int | None = None
     printed_rows: int | None = None
+    map_infinite: bool = False
     rng_counter: int = 0
     options: GameOptions
     tutorial_flags: set[str] = Field(default_factory=set)
@@ -707,6 +708,7 @@ class PlayerObservation(BaseModel):
     map_rows: int = MAP_ROWS
     printed_columns: int | None = None
     printed_rows: int | None = None
+    map_infinite: bool = False
     ships: list[PublicShip]
     torpedo_tracks: list[TorpedoTrack] = Field(default_factory=list)
     markers: list[MarkerState] = Field(default_factory=list)
