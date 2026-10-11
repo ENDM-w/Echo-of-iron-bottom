@@ -1074,3 +1074,10 @@
 - 修复移动端整页无法滚动：`frontend/src/style.css` 的 `@media(max-width:1100px)` 用 `html,body,#root{overflow:hidden}` 锁死文档滚动，而 `.start-screen`（≤560px 时 `height:auto` 使 `overflow:auto` 永不触发）、`.platform-shell`、`.landing`、`.handoff`、`.custom-editor` 都不是受约束的滚动容器，超出视口的内容被裁切后无法下滑。为这些整屏容器补 `max-height:100vh`/`max-height:100dvh` 与 `overflow:auto`，放在根节点锁之后以确保级联顺序，不改动 `.game` 对局三栏与移动端页签布局。对局界面默认呈现的海图是可平移绘图面板（`touch-action:none`），其内部面板本就各自滚动，属既有设计而非本次缺陷。
 - 验证：`pnpm exec tsc -b` 与 `pnpm exec vite build --base=/tiedi/` 通过（新产物 `index-BzOnaU_T.css`，已对线上产物断言新规则落在 `@media(max-width:1100px)` 块内）；`python -m pytest tests/test_platform.py tests/test_deployment_security.py -q` 33 项通过；公网隧道回归验收 9 项通过（首页 200、资源前缀 `/tiedi/assets/`、`/api/scenarios` 200、中文名棋子图 200 `image/png`、未登录 `/platform/matches/*` 与 `POST /platform/users` 401、`/api/games` 不含网推局、旧 `/games/{id}?debug=true` 404、`/tiedi` 301）。移动端滚动修复已由用户真机确认（Android Chrome）可正常下滑；改动落地时只做了规则与产物级断言，真机验收在部署后补做。
 - 首位裁判尚未初始化（须在服务器交互终端运行 `bootstrap_user` 并由本人输入口令，符合仓库不代持秘密的纪律）。本批次提交：`655c7ae2e85ed4b6505d30208d7d628c5a259dc6`。
+
+# 2026-10-11 玩家端鱼雷发射器选择修复（热更新，未重启服务）
+
+- 缺陷：玩家席位「鱼雷发射草稿」卡的「发射器」下拉在**候选存在时只渲染一个 option**——`PlatformPortal.tsx` 里写成 `selectedLauncherCandidate ? <option …> : …map(全部)`，而 `selectedLauncherCandidate` 解析不到就回落到 `selectedTorpedoCandidate.launchers[0]`，因此玩家只能看到并"选中"第一个发射器。后端与裁判端均正常：引擎 `_torpedo_candidates` 对每舰返回全部 `not destroyed / not reloading / loaded > 0` 的发射器，裁判端下拉一直是 `torpedo_launchers.map(...)` 列全部。
+- 修复：新增 `launcherOptions`（引擎候选优先，候选缺失时回落到舰船自身未损毁且已装填的发射器）并全部渲染为 option；换发射器或换舰船时重置**发射器级**依赖字段——舷侧取新发射器 `sides[0]`（候选缺失时取 `arcs` 里的 port/starboard）、发射角取 `angles[0]`、枚数夹到新发射器 `loaded`；发射 MF 属舰级（随航路），保持不变。
+- 验证：`tsc -b` 通过；`vite build --base=/tiedi/ --outDir dist-new`（`NODE_OPTIONS=--max-old-space-size=384` + `nice -n 19`）后原子切换 `dist`，**`tiedi` 的 `MainPID` 构建前后均为 631**（未重启、未踢下线）；线上 `index.html` 已引用新产物 `index-D4gzjHBh.js`，首页 200、未登录 `/platform/matches/*` 401。渲染结果需玩家席位在鱼雷阶段用多发射器舰（如 IJN 重雷装舰）实测确认，未做浏览器端验收。
+- 本批次提交：`5e9d7ef1f89ea8ffdd15347ad0b1bd752184376e`。
