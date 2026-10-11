@@ -537,6 +537,48 @@ def test_referee_observation_includes_full_tactical_map(tmp_path) -> None:
     assert all("settings" in candidate and "launchers" in candidate for candidate in torpedo_ships.values())
 
 
+def test_torpedo_candidates_preview_uses_unsubmitted_movement_draft(tmp_path) -> None:
+    service, engine, _, _, _, match, axis_seat, _, _, axis_ship, _ = make_service(tmp_path)
+    state = engine.get(match.game_id)
+    template = next(
+        ship for ship in state.ships.values()
+        if ship.side == Side.AXIS and ship.position and ship.torpedo
+        and ship.torpedo_launchers and any(not launcher.destroyed and launcher.loaded for launcher in ship.torpedo_launchers)
+    )
+    ship = axis_ship
+    ship.torpedo = template.torpedo.model_copy(deep=True)
+    ship.torpedo_type = template.torpedo_type
+    ship.torpedo_launchers = [launcher.model_copy(deep=True) for launcher in template.torpedo_launchers]
+    user = service.authenticate(service.issue_token("axis-player", "axis-password")[0])
+    assert user and ship.position
+    original_position = ship.position.model_copy(deep=True)
+    movement = MovementOrder(ship_id=ship.id, plan="1")
+
+    candidates = service.torpedo_candidates_for_movement_draft(
+        match.match_id, axis_seat.seat_id, user, [movement]
+    )
+
+    candidate = next(item for item in candidates if item["ship_id"] == ship.id)
+    assert [item["mf"] for item in candidate["launch_positions"]] == [0, 1]
+    assert candidate["blocked_reason"] is None
+    assert ship.position == original_position
+    assert f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}" not in state.sealed_orders
+
+
+def test_torpedo_candidate_preview_rejects_other_seat_ship_orders(tmp_path) -> None:
+    service, _, _, _, _, match, axis_seat, _, _, _, _ = make_service(tmp_path)
+    user = service.authenticate(service.issue_token("axis-player", "axis-password")[0])
+    assert user
+
+    with pytest.raises(PermissionError, match="controlled by this seat"):
+        service.torpedo_candidates_for_movement_draft(
+            match.match_id,
+            axis_seat.seat_id,
+            user,
+            [MovementOrder(ship_id="not-controlled", plan="1")],
+        )
+
+
 def test_resolved_gunfire_marker_reaches_referee_and_only_observing_player(tmp_path) -> None:
     service, engine, _, _, _, match, axis_seat, allies_seat, _, axis_ship, allies_ship = make_service(tmp_path)
     state = engine.get(match.game_id)

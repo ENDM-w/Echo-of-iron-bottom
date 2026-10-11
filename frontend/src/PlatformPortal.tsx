@@ -13,6 +13,7 @@ import {
   platformReject,
   platformReview,
   platformSeatView,
+  platformTorpedoCandidatePreview,
   platformSubmitOrder,
   platformSubmitTelegram,
   platformTelegramInbox,
@@ -296,6 +297,7 @@ export function PlatformPortal({ onClose }: Props) {
   const [selectedSeatId, setSelectedSeatId] = useState("");
   const [orderSeatId, setOrderSeatId] = useState("");
   const [orderText, setOrderText] = useState("");
+  const [torpedoDraftCandidates, setTorpedoDraftCandidates] = useState<PlatformTorpedoCandidate[]>();
   const [orderValidationErrors, setOrderValidationErrors] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -953,6 +955,39 @@ export function PlatformPortal({ onClose }: Props) {
       return [];
     }
   }, [orderText]);
+  useEffect(() => {
+    if (!session || session.is_referee || !summary || !selectedSeatId || view?.phase !== "reinforcement") {
+      setTorpedoDraftCandidates(undefined);
+      return;
+    }
+    let movement: unknown[];
+    try {
+      const batch = JSON.parse(orderText) as JsonRecord;
+      movement = Array.isArray(batch.movement) ? batch.movement : [];
+    } catch {
+      setTorpedoDraftCandidates([]);
+      return;
+    }
+    if (movement.length === 0) {
+      setTorpedoDraftCandidates(undefined);
+      return;
+    }
+    let active = true;
+    setTorpedoDraftCandidates([]);
+    const timer = window.setTimeout(() => {
+      void platformTorpedoCandidatePreview(
+        session.token, summary.match.match_id, selectedSeatId, movement,
+      ).then((candidates) => {
+        if (active) setTorpedoDraftCandidates(candidates as unknown as PlatformTorpedoCandidate[]);
+      }).catch(() => {
+        if (active) setTorpedoDraftCandidates([]);
+      });
+    }, 180);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [orderText, session, summary, selectedSeatId, view?.phase]);
   const selectedLauncherUsed = torpedoDrafts
     .filter((item) => item.ship_id === selectedActionShip?.id && item.launcher_id === selectedLauncher?.id)
     .reduce((total, item) => total + Number(item.count ?? 0), 0);
@@ -974,7 +1009,8 @@ export function PlatformPortal({ onClose }: Props) {
       || left.firepower - right.firepower
       || left.id.localeCompare(right.id),
     )[0];
-  const torpedoCandidates = (view?.torpedo_candidates ?? []) as unknown as PlatformTorpedoCandidate[];
+  const torpedoCandidates = torpedoDraftCandidates
+    ?? (view?.torpedo_candidates ?? []) as unknown as PlatformTorpedoCandidate[];
   const selectedTorpedoCandidate = torpedoCandidates.find(
     (candidate) => candidate.ship_id === selectedActionShip?.id,
   );
@@ -2680,7 +2716,7 @@ export function PlatformPortal({ onClose }: Props) {
                       <p className="field-hint">
                         鱼雷订单不指定目标：航迹与任何未沉没舰船重合时，规则核心会对重合的每条船分别进行命中裁决，不区分敌我。同一发射器可写入多条独立订单，累计枚数不能超过当前装载量（本发射器剩余 {selectedLauncherRemaining} 枚）。
                         {launchPositions.length > 0
-                          ? " 发射格和舰首航向由规则核心从所选 MF 自动带出。"
+                          ? " 发射格和舰首航向由规则核心从本回合移动草稿投影后自动带出；提交时仍会整体严格校验。"
                           : " 本阶段移动计划尚未封存，引擎暂时给不出合法 MF 列表：请按你自己的移动计划填写发射 MF（0–8），此处先收集数据；合法性与发射格将在裁判端确定移动计划后核对，如有偏差由裁判修正（提交时若报错，可用下方「忽略校验报错提交」）。"}
                         {selectedTorpedoCandidate?.blocked_reason ? ` 引擎当前判定：${selectedTorpedoCandidate.blocked_reason}。` : ""}
                       </p>

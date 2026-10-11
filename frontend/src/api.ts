@@ -78,6 +78,7 @@ export function platformCreateMatch(token:string,body:{scenario_id:string;seed:n
 export function platformSummary(token:string,matchId:string){return platformRequest<PlatformSummary>(`/matches/${encodeURIComponent(matchId)}`,token)}
 export function platformCreateSeat(token:string,matchId:string,body:Record<string,unknown>){return platformRequest<PlatformSeat>(`/matches/${encodeURIComponent(matchId)}/seats`,token,{method:"POST",body:JSON.stringify(body)})}
 export function platformSeatView(token:string,matchId:string,seatId:string){return platformRequest<PlatformView>(`/matches/${encodeURIComponent(matchId)}/seats/${encodeURIComponent(seatId)}/view`,token)}
+export function platformTorpedoCandidatePreview(token:string,matchId:string,seatId:string,movement:unknown[]){return platformRequest<Array<Record<string,unknown>>>(`/matches/${encodeURIComponent(matchId)}/seats/${encodeURIComponent(seatId)}/torpedo-candidates`,token,{method:"POST",body:JSON.stringify({movement})})}
 export function platformJudgeView(token:string,matchId:string){return platformRequest<PlatformView>(`/matches/${encodeURIComponent(matchId)}/judge/view`,token)}
 export function platformTurnArchives(token:string,matchId:string){return platformRequest<PlatformTurnArchive[]>(`/matches/${encodeURIComponent(matchId)}/turn-archives`,token)}
 export async function platformDownloadTurnArchive(token:string,matchId:string,turn:number):Promise<Blob>{

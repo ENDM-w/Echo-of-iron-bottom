@@ -6,7 +6,7 @@ import sqlite3
 import uuid
 from copy import copy
 from ..engine import ORDER_PHASES, IronBottomEngine
-from ..models import DiceRoll, GameEvent, GameOptions, GameState, HexCoord, MarkerState, OrderBatch, Phase, PublicShip, ShipState, Side
+from ..models import DiceRoll, GameEvent, GameOptions, GameState, HexCoord, MarkerState, MovementOrder, OrderBatch, Phase, PublicShip, ShipState, Side
 from ..storage import GameRepository
 from ..ship_imports import ShipImportEnvelope
 from ..ship_records import clear_imported_ship_asset_cache, load_ship_catalog, load_ship_records
@@ -869,6 +869,46 @@ class PlatformService:
             ),
             gunnery_candidates=gunnery_candidates,
         )
+
+    def torpedo_candidates_for_movement_draft(
+        self,
+        match_id: str,
+        seat_id: str,
+        user: AuthenticatedUser,
+        movement_orders: list[MovementOrder],
+    ) -> list[dict]:
+        """Preview this seat's torpedo launch points against an uncommitted movement draft."""
+        match = self.repository.match(match_id)
+        seat = self.repository.seat(seat_id)
+        self._authorize_seat(seat, user)
+        if seat.match_id != match_id:
+            raise PermissionError("Seat does not belong to this match")
+        if any(order.ship_id not in seat.controlled_ship_ids for order in movement_orders):
+            raise PermissionError("Movement preview may include only ships controlled by this seat")
+
+        state = self._player_state(match).model_copy(deep=True)
+        movement = OrderBatch(side=seat.side, phase=Phase.MOVEMENT_PLANNING, movement=movement_orders)
+        projected_orders = []
+        for order in movement_orders:
+            ship = state.ships.get(order.ship_id)
+            if not ship or ship.side != seat.side or ship.sunk or not ship.position:
+                continue
+            try:
+                commands = self.engine.movement_commands(order)
+                self.engine.movement_trajectory(
+                    ship, order.plan, commands,
+                    columns=state.map_columns, rows=state.map_rows,
+                )
+                ship.current_speed = self.engine.movement_cost(order.plan, commands)
+            except ValueError:
+                continue
+            projected_orders.append(order)
+        movement.movement = projected_orders
+        state.sealed_orders.setdefault(
+            f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}", {}
+        )[seat.side.value] = movement
+        state.phase = Phase.TORPEDO_PLANNING
+        return self.engine._torpedo_candidates(state, seat.side, ship_ids=seat.controlled_ship_ids)
 
     def judge_observation(self, match_id: str, user: AuthenticatedUser) -> SeatObservation:
         """Return the referee's full tactical map, including hidden positions."""

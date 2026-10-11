@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..models import GameEvent, OrderBatch, Phase, PublicShip, Side, TorpedoTrack, WreckState, MarkerState
+from ..models import GameEvent, MovementOrder, OrderBatch, Phase, PublicShip, Side, TorpedoTrack, WreckState, MarkerState
 
 TELEGRAM_RULE_ID = "IBS-R-COMMS-01"
 
@@ -114,6 +114,10 @@ class SeatOrderSubmission(BaseModel):
     scope: str = Field(default="phase", pattern="^(phase|turn)$")
     request_id: str = Field(min_length=1, max_length=120)
     ignore_validation_errors: bool = False
+
+
+class TorpedoCandidatePreviewRequest(BaseModel):
+    movement: list[MovementOrder] = Field(default_factory=list)
 
 
 class TelegramSubmission(BaseModel):

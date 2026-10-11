@@ -23,6 +23,7 @@ from .models import (
     SeatCreateRequest,
     SeatOrderSubmission,
     TelegramSubmission,
+    TorpedoCandidatePreviewRequest,
     UserCreateRequest,
 )
 from .service import OrderValidationIssue, PlatformService
@@ -154,6 +155,23 @@ def build_router(service: PlatformService) -> APIRouter:
         user = user_from_header(authorization)
         try:
             return service.observation(match_id, seat_id, user).model_dump(mode="json")
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except PermissionError as error:
+            raise HTTPException(status_code=403, detail=str(error)) from error
+
+    @router.post("/matches/{match_id}/seats/{seat_id}/torpedo-candidates")
+    def torpedo_candidate_preview(
+        match_id: str,
+        seat_id: str,
+        request: TorpedoCandidatePreviewRequest,
+        authorization: Annotated[str | None, Header()] = None,
+    ):
+        user = user_from_header(authorization)
+        try:
+            return service.torpedo_candidates_for_movement_draft(
+                match_id, seat_id, user, request.movement
+            )
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except PermissionError as error:
