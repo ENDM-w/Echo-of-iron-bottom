@@ -1061,3 +1061,16 @@
 - 将工作簿 24 艘的舰种-名称 PNG，以及热那亚目录中的法国 8 艘、意大利 7 艘算子图对应到导入记录；不再把船表/舰卡裁图当作算子。来源原图归档到 `resources/originals/ship-imports/genoa-2026/operator-art/`，船表图继续仅作转录来源。
 - 重新写入本机 SQLite：39 条舰船均有算子图片，数据库完整性检查通过。Git 移除错误的 `import-assets` 卡面缩略图。
 - 验证：`py -3.12 backend/scripts/import_ship_bundle.py --check-only`、`py -3.12 -m pytest tests/test_ship_records.py -q` 与 `git diff --check` 通过；来源清单已重建。
+
+- 从用户提供的工作簿与热那亚剧本/VASSAL 船表整理 39 条可执行舰艇记录，保存 YAML、原始来源、舰艇图片、法意鱼雷与穿甲数据；新增离线校验及本机 SQLite 导入脚本。按用户确认将 Excel 总船体与总速力均分三轨；炮位方向为左端舰首、上方左舷。数据库仍为本地忽略文件。
+- 修复舰艇加载器默认数据库文件名与 API 实际数据库文件名不一致的问题；本机数据库导入后有 39 条导入记录、SQLite integrity_check 为 ok，运行时舰艇记录总数 219。
+- 验证：`py -3.12 -m pytest tests/test_rules.py tests/test_ship_records.py tests/test_engine.py -q` 通过；`py -3.12 -m py_compile backend/src/iron_bottom_sound/engine.py backend/scripts/import_ship_bundle.py` 通过；导入器 `--check-only` 通过；`git diff --cached --check` 通过。开放问题 IBS-Q-009 记录意大利 DD 中置零火力照明弹尚不能由当前自动裁决表示。
+- 实施提交：`dbee188`。未推送。
+
+# 2026-10-11 云端公网部署与移动端整页滚动修复
+
+- 在阿里云服务器（cn-shanghai，2 vCPU / 1.67 GB）按 `deploy/README.md` 完成首次云端落地：`tiedi` 无登录系统用户（uid 993）、代码 `/opt/tiedi`、状态 `/var/lib/tiedi`、`tiedi.service` 单 worker uvicorn 监听 `127.0.0.1:8001`、nginx `/tiedi/` 反代与登录 IP 限速、前端 `--base=/tiedi/` 子路径构建；公网入口暂用 Cloudflare quick tunnel（不改动安全组），浏览器到 Cloudflare 段为 HTTPS。服务器 `state.sqlite3` 为全新库，未上传本地开发库。
+- 部署中发现三处与仓库既有假设不一致的环境问题并处理：clone 默认未拉取 Git LFS（314 个指针文件、约 97 MB，其中 `resources/originals/assets/images/` 正是 `/assets/counters` 的挂载源，缺图会让所有棋子损坏），安装 git-lfs 并全量拉取；本机 Node 未提供 `corepack`，改用 pnpm 12.11.2 完成 `--frozen-lockfile` 安装；系统自带 nginx 默认 server 块与预案的 `default_server` 并存，`nginx -t` 仅告警不报错、实际请求由本部署块处理。
+- 修复移动端整页无法滚动：`frontend/src/style.css` 的 `@media(max-width:1100px)` 用 `html,body,#root{overflow:hidden}` 锁死文档滚动，而 `.start-screen`（≤560px 时 `height:auto` 使 `overflow:auto` 永不触发）、`.platform-shell`、`.landing`、`.handoff`、`.custom-editor` 都不是受约束的滚动容器，超出视口的内容被裁切后无法下滑。为这些整屏容器补 `max-height:100vh`/`max-height:100dvh` 与 `overflow:auto`，放在根节点锁之后以确保级联顺序，不改动 `.game` 对局三栏与移动端页签布局。对局界面默认呈现的海图是可平移绘图面板（`touch-action:none`），其内部面板本就各自滚动，属既有设计而非本次缺陷。
+- 验证：`pnpm exec tsc -b` 与 `pnpm exec vite build --base=/tiedi/` 通过（新产物 `index-BzOnaU_T.css`，已对线上产物断言新规则落在 `@media(max-width:1100px)` 块内）；`python -m pytest tests/test_platform.py tests/test_deployment_security.py -q` 33 项通过；公网隧道回归验收 9 项通过（首页 200、资源前缀 `/tiedi/assets/`、`/api/scenarios` 200、中文名棋子图 200 `image/png`、未登录 `/platform/matches/*` 与 `POST /platform/users` 401、`/api/games` 不含网推局、旧 `/games/{id}?debug=true` 404、`/tiedi` 301）。移动端滚动修复尚未在真实手机浏览器上验收，只做了规则与产物级断言。
+- 首位裁判尚未初始化（须在服务器交互终端运行 `bootstrap_user` 并由本人输入口令，符合仓库不代持秘密的纪律）。本批次提交：`655c7ae2e85ed4b6505d30208d7d628c5a259dc6`。
