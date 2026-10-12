@@ -587,6 +587,31 @@ export function PlatformPortal({ onClose }: Props) {
     }
   };
 
+  // JSON.stringify 会把 NaN/Infinity 写成 null，而 null 会让后端的请求体校验直接返回 422；
+  // 422 的 detail 是对象数组，join 之后玩家只看到 "[object Object]"（见 api.ts 的翻译修复）。
+  // 这里在提交前先把这类"必然被拒"的行挡下来，并明确指出问题在哪。
+  const collectNonFinitePaths = (value: unknown, path = "", found: string[] = []): string[] => {
+    if (typeof value === "number") {
+      if (!Number.isFinite(value)) found.push(path || "(根)");
+    } else if (Array.isArray(value)) {
+      value.forEach((item, index) => collectNonFinitePaths(item, `${path}[${index}]`, found));
+    } else if (value && typeof value === "object") {
+      for (const [key, item] of Object.entries(value as JsonRecord)) {
+        collectNonFinitePaths(item, path ? `${path}.${key}` : key, found);
+      }
+    }
+    return found;
+  };
+  const dropTorpedoRowsWithoutHex = (batch: JsonRecord): number => {
+    const rows = Array.isArray(batch.torpedoes) ? (batch.torpedoes as JsonRecord[]) : [];
+    const keep = rows.filter((row) => {
+      const hex = row.launch_hex as JsonRecord | null | undefined;
+      return Boolean(hex && Number.isInteger(Number(hex.q)) && Number.isInteger(Number(hex.r)));
+    });
+    if (keep.length !== rows.length) batch.torpedoes = keep;
+    return rows.length - keep.length;
+  };
+
   const submitOrder = (ignoreValidationErrors: boolean) => {
     if (!session || !summary || !view || !selectedSeatId) return;
     void run(async () => {
@@ -613,6 +638,17 @@ export function PlatformPortal({ onClose }: Props) {
           }
         }
         await resyncTorpedoLaunchHex(submittedBatch);
+        // 提交前自检：后端请求体校验失败只会回一个对象数组（此前前端显示成 "[object Object]"），
+        // 所以先把"必然被拒"的载荷挡下来并说明原因，别让玩家面对一句无意义的报错。
+        const nonFinitePaths = collectNonFinitePaths(submittedBatch);
+        if (nonFinitePaths.length) {
+          setError(`订单里有非法数值（NaN/无穷），提交必被后端拒绝，请修正后重试：${nonFinitePaths.slice(0, 4).join("、")}`);
+          return;
+        }
+        const droppedTorpedoRows = dropTorpedoRowsWithoutHex(submittedBatch);
+        if (droppedTorpedoRows) {
+          setMessage(`已剔除 ${droppedTorpedoRows} 条缺少合法发射格的陈旧鱼雷行（请用「鱼雷发射草稿」重新写入），其余行动照常提交。`);
+        }
         next = await platformSubmitOrder(
           session.token,
           summary.match.match_id,

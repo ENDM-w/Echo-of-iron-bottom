@@ -1315,3 +1315,13 @@
 2. **轮询降频 1.8s → 4s**：2026-10-12 卡死复盘（见运维速查）显示玩家活跃时约 250 请求/分钟，逐请求的 nginx + uvicorn 日志与 SQLite 写盘产生 139 字节小随机写，打满低 IOPS 云盘的写入队列。
 3. **`--no-access-log`**（`deploy/tiedi.service`）：消除负载下每小时 3000+ 条 journald 写入；nginx 访问日志保留，排查能力不受影响。
 4. **SQLite `synchronous=NORMAL`**（`storage.py`，已用 WAL）：把 fsync 从每次提交降到检查点。
+
+## 2026-10-12 修复提交报错显示为 "[object Object]"（纯前端热更新）
+
+状态：完成（已热更新上线，未重启服务）。
+
+对局 `1d7b2a3a` 的进取号席位提交时报 `error:[object Object]`。定位：该接口的请求模型是 `SeatOrderSubmission`（内含完整 `OrderBatch`），**请求体校验失败**时 FastAPI 返回 422 且 `detail` 是**对象数组**，而 `platformRequest` 用 `payload.detail.join("；")` 渲染 → 每个元素被字符串化成 `[object Object]`。规则性拒绝（`OrderValidationIssue`）走的是 `detail.code === "order_validation"`，本来就能正常显示，所以这句报错专指"请求体形状不合法"。
+
+nginx 日志证据：该对局席位提交接口当天 8 次 422（进取号 15:51–15:52 三次，均在我 16:50 上线**之前**），且进取号 17:04:08 已成功（200）——即非本次改动引入，但报错不可读是真问题。
+
+修复：① `api.ts` 把 422 的 `detail` 数组翻译成「字段路径：原因（收到的值）」；② `PlatformPortal.tsx` 提交前自检——递归查 `NaN/Infinity`（`JSON.stringify` 会写成 `null`，正是这类 422 的来源）并就地报出路径，剔除缺少合法发射格的陈旧鱼雷行并提示数量，避免必然被拒的载荷发出去。
