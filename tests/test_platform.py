@@ -1337,3 +1337,40 @@ def test_non_referee_cannot_use_judge_override(tmp_path) -> None:
     except PermissionError:
         return
     raise AssertionError("non-referee override was accepted")
+
+
+def test_seat_validation_errors_do_not_name_unseen_enemy_ships(tmp_path) -> None:
+    """席位报错不得点名本席位看不见的舰船（2026-10-12 信息泄露修复）。
+
+    引擎与平台的部分报错会带上舰名或舰船 id（"舰长失能…"、"cannot see <id>"、
+    "Seat cannot command ships: [...]"）。若该舰对本席位不可见，玩家就能从报错里
+    读出敌方编成乃至隐蔽损伤，因此席位侧必须脱敏，裁判侧保持完整文案。
+    """
+    service, engine, _, axis, _, match, axis_seat, _, _, axis_ship, allies_ship = make_service(tmp_path)
+    state = engine.get(match.game_id)
+    assert axis_ship.position
+    # 把敌舰挪远，确保本席位观察不到——这样测试才是确定性的。
+    allies_ship.position = HexCoord(q=axis_ship.position.q + 40, r=axis_ship.position.r + 20)
+
+    # ① 归属报错（例如炮击把敌舰当作攻击舰）不得点名敌舰 id
+    batch = OrderBatch(side=axis_seat.side, phase=state.phase, gunnery=[GunneryOrder(ship_id=allies_ship.id)])
+    submission = SeatOrderSubmission(phase=state.phase, batch=batch, scope="phase", request_id="leak-ownership")
+    with pytest.raises(PermissionError) as excinfo:
+        service.submit_order(match.match_id, axis_seat.seat_id, axis, submission)
+    message = str(excinfo.value)
+    assert allies_ship.id not in message
+    assert "未识别舰船" in message
+
+    # ② 带舰名的报错（舰长失能）同样不得点名敌舰
+    redacted = service._redact_unseen_ship_mentions(
+        match,
+        axis_seat,
+        [f"{allies_ship.name} 舰长失能：本回合仅由引擎自动按原速直航，不接受其他行动订单"],
+    )
+    assert allies_ship.name not in redacted[0]
+    assert "未识别舰船" in redacted[0]
+
+    # ③ 本方舰名必须保留：脱敏只针对看不见的船，不做无差别遮蔽
+    kept = service._redact_unseen_ship_mentions(match, axis_seat, [f"{axis_ship.name} 舰长失能：示例"])
+    assert axis_ship.name in kept[0]
+

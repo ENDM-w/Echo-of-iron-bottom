@@ -1230,7 +1230,13 @@ class PlatformService:
         if match.phase == Phase.CONTACT_SETUP and batch.contacts:
             raise PermissionError("Hidden contact deployment is managed by the referee")
         batch = self._resolve_contact_aliases(match_id, seat_id, batch)
-        self._assert_order_ownership(batch, seat)
+        try:
+            self._assert_order_ownership(batch, seat)
+        except PermissionError as error:
+            # 该文案会列出本席位无权指挥的舰船 id；对玩家而言这就是"点名"，
+            # 因此与校验报错走同一道可见性脱敏（2026-10-12 信息泄露修复）。
+            redacted = self._redact_unseen_ship_mentions(match, seat, [str(error)])
+            raise PermissionError(redacted[0]) from error
         previous = self.repository.orders(match_id, match.phase).get(seat_id)
         validation_errors = self._validate_pending_batch(match, seat_id, seat.side, batch, submission.scope)
         pending_orders = self.repository.orders(match_id, match.phase)
@@ -1261,7 +1267,10 @@ class PlatformService:
                 )
         validation_errors = list(dict.fromkeys(validation_errors))
         if validation_errors and not submission.ignore_validation_errors:
-            raise OrderValidationIssue(validation_errors)
+            # 席位侧必须脱敏：报错不得点名本席位看不见的舰船（裁判侧不经过这里，仍是完整文案）。
+            raise OrderValidationIssue(
+                self._redact_unseen_ship_mentions(match, seat, validation_errors)
+            )
         if previous:
             self.repository.forget_markers(match_id, seat_id, self._marker_ids(previous[1]))
         self.repository.save_order(
@@ -2046,6 +2055,59 @@ class PlatformService:
             if ship and self.engine.captain_command_lost(state, ship):
                 errors.append(f"{ship.name} 舰长失能：本回合仅由引擎自动按原速直航，不接受其他行动订单")
         return list(dict.fromkeys(errors))
+
+    def _redact_unseen_ship_mentions(
+        self, match: MatchRecord, seat: SeatRecord, errors: list[str]
+    ) -> list[str]:
+        """席位报错不得点名本席位看不见的舰船（舰名或舰船 id）。
+
+        引擎与平台的部分报错会带上舰名或 id（"舰长失能…"、"cannot see <id>"、
+        "Seat cannot command ships: [...]"）。若该舰对本席位不可见，玩家就能从报错里
+        读出敌方编成乃至隐蔽损伤——2026-10-12 报告"校验炮击不通过时会报出对方船名"即此。
+
+        可见性沿用席位视图的判定（`_seat_can_observe_ship` + 本席位舰船位置），不复制
+        任何规则常量；方向 fail-closed：拿不准可见的一律按不可见处理，只保留本席位
+        自己指挥的舰船与确实能观察到的船。
+        """
+        if not errors:
+            return errors
+        state = self._ensure_loaded(match.game_id)
+        own_ids = {ship_id for ship_id in seat.controlled_ship_ids if ship_id in state.ships}
+        own_positions = [state.ships[ship_id].position for ship_id in own_ids]
+        hidden_contact_mode = bool(state.options.optional_rules.hidden_contacts)
+        visibility_radius = self.engine.visibility_radius(state, seat.side)
+        seen = set(own_ids)
+        for ship_id, ship in state.ships.items():
+            if ship_id in own_ids or not ship.position:
+                continue
+            if self._seat_can_observe_ship(
+                state,
+                ship,
+                seat.side,
+                own_positions,
+                own_ids,
+                hidden_contact_mode=hidden_contact_mode,
+                visibility_radius=visibility_radius,
+            ):
+                seen.add(ship_id)
+        unseen = [
+            (ship_id, ship.name or "")
+            for ship_id, ship in state.ships.items()
+            if ship_id not in seen
+        ]
+        if not unseen:
+            return errors
+        unseen.sort(key=lambda item: len(item[1]), reverse=True)  # 长名先替换，避免短名切碎长名
+        redacted: list[str] = []
+        for error in errors:
+            text = error
+            for ship_id, name in unseen:
+                if ship_id:
+                    text = text.replace(ship_id, "未识别舰船")
+                if name:
+                    text = text.replace(name, "未识别舰船")
+            redacted.append(text)
+        return redacted
 
     @staticmethod
     def _is_coverage_error(error: str) -> bool:
