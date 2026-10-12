@@ -783,28 +783,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -892,28 +878,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -1001,28 +973,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -1110,28 +1068,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -1219,28 +1163,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -1327,28 +1257,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -1435,28 +1351,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -1543,28 +1445,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -2363,28 +2251,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -2481,28 +2355,14 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
+      - id: TT-M1
         position: midships
         arcs:
         - port
         - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-M1-S1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 2
-        reloads: 0
-      - id: TT-M2-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M2-S1
+      - id: TT-M2
         position: midships
         arcs:
         - port
@@ -2601,14 +2461,7 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M1-S1
+      - id: TT-M1
         position: midships
         arcs:
         - port
@@ -2719,14 +2572,7 @@ records:
         - starboard
         - stern
       torpedo_launchers:
-      - id: TT-M1-P1
-        position: midships
-        arcs:
-        - port
-        - starboard
-        torpedoes: 1
-        reloads: 0
-      - id: TT-M1-S1
+      - id: TT-M1
         position: midships
         arcs:
         - port

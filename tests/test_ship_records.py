@@ -97,6 +97,57 @@ def test_every_mount_and_launcher_has_a_legal_source_arc() -> None:
         assert all(set(launcher.arcs) <= {FiringArc.PORT, FiringArc.STARBOARD} for launcher in record.torpedo_launchers)
 
 
+def test_workbook_centerline_torpedo_launchers_are_not_split_by_firing_side() -> None:
+    bundle = yaml.safe_load(
+        (STRUCTURED / "ships" / "import-bundle.yaml").read_text(encoding="utf-8")
+    )
+    records = bundle["records"]
+    both_sides = [FiringArc.PORT.value, FiringArc.STARBOARD.value]
+    one_centerline_pair = {
+        ship_id: [
+            ("TT-M1", "midships", both_sides, 2),
+            ("TT-M2", "midships", both_sides, 1),
+        ]
+        for ship_id in (
+            "IBS-U-RN-FAULKNOR",
+            "IBS-U-RN-FOXHOUND",
+            "IBS-U-RN-FEARLESS",
+            "IBS-U-RN-FORESIGHT",
+            "IBS-U-RN-FORESTER",
+            "IBS-U-RN-WRESTLER",
+            "IBS-U-RN-VIDETTE",
+            "IBS-U-RN-VORTIGERN",
+            "IBS-U-FRN-LYNX",
+            "IBS-U-FRN-TIGRE",
+        )
+    }
+    one_centerline_and_two_side_mounts = {
+        "IBS-U-FRN-LE-TRIOMPHANT": "凯旋",
+        "IBS-U-FRN-L-INDOMPTABLE": "不屈",
+    }
+    for ship_id, expected in one_centerline_pair.items():
+        record = records[ship_id]["record"]
+        actual = [
+            (item["id"], item["position"], item["arcs"], item["torpedoes"])
+            for item in record["torpedo_launchers"]
+        ]
+        assert actual == expected
+        assert sum(item["torpedoes"] for item in record["torpedo_launchers"]) == 3
+
+    for ship_id, name in one_centerline_and_two_side_mounts.items():
+        record = records[ship_id]["record"]
+        assert record["name"] == name
+        assert [
+            (item["id"], item["position"], item["arcs"], item["torpedoes"])
+            for item in record["torpedo_launchers"]
+        ] == [
+            ("TT-M1", "midships", both_sides, 1),
+            ("TT-M2-P1", "port", [FiringArc.PORT.value], 2),
+            ("TT-M2-S1", "starboard", [FiringArc.STARBOARD.value], 2),
+        ]
+        assert sum(item["torpedoes"] for item in record["torpedo_launchers"]) == 5
+
+
 def test_torpedo_characteristics_table_matches_source_cells() -> None:
     data = yaml.safe_load((STRUCTURED / "rules" / "torpedoes.yaml").read_text(encoding="utf-8"))
     types = data["types"]
