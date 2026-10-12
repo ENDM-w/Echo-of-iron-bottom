@@ -1143,3 +1143,11 @@
 - 修复（纯前端，热更新，未重启 `tiedi`，玩家不掉线）：① `api.ts` 把 422 的 `detail` 数组翻译成「字段路径：原因（收到的值）」（去掉 `body` 前缀）；② `PlatformPortal.tsx` 提交前自检——递归检查 `NaN/Infinity` 并就地报出路径、拒绝提交（这类值必被后端拒绝），并剔除缺少合法发射格（非整数 q/r）的陈旧鱼雷行且明确提示条数。
 - 验证：`tsc -b` 通过、`vite build` 通过、线上已服务新包 `index-DoUmWWwN.js`（旧包 `index-CQylOlLX.js` 原子替换），首页/API 均 200，`tiedi` MainPID 2604 未变。
 - 本批次提交：见下方 git log（`fix(platform): surface request-validation errors and block doomed rows`）。
+
+# 2026-10-12 修复席位报错泄露敌舰身份（后端席位边界脱敏）
+
+- 现象：玩家端校验炮击不通过时，报错会报出**对方船名/舰船 id**。
+- 泄露面：① `_assert_order_ownership` → `Seat cannot command ships: ['IBS-U-FRN-BRETAGNE']`（炮击行把敌舰当攻击舰时命中，`smoke_ships` 不参与归属校验故更易命中）；② 引擎（`{ship.name}: captain incapacitated…`）与平台（`{ship.name} 舰长失能…`）对**批次引用的任意舰船**（含敌舰）打出舰名——顺带暴露敌方隐蔽损伤。席位报错在界面上是原文渲染（无 id→名字映射），故直接落到玩家眼前。
+- 修复：新增 `PlatformService._redact_unseen_ship_mentions(match, seat, errors)`，可见性沿用席位视图的 `_seat_can_observe_ship` + 本席位舰船位置（不复制规则常量），把本席位**观察不到**的舰船 id/舰名替换为「未识别舰船」，fail-closed；应用于席位提交的校验报错与归属 PermissionError。裁判侧（`judge_*`）不经过该路径，保持完整文案。
+- 验证：① 新增测试 `test_seat_validation_errors_do_not_name_unseen_enemy_ships`（把敌舰挪远保证不可见，断言归属报错不含敌舰 id、含「未识别舰船」，带舰名的报错不含敌舰名，且本方舰名保留）；② 全量 `pytest tests/test_platform.py` 35 项通过；③ 线上真实状态副本复现：`Seat cannot command ships: ['IBS-U-FRN-BRETAGNE']` → `['未识别舰船']`，本方舰名「进取」保留；④ 部署后重启 `tiedi`（MainPID 2604→2206），入口/API 200，`integrity: ok`，31 用户/4 局/10 订单不变。
+- 本批次提交：见 git log `fix(platform): keep unseen ships out of player-facing errors`。
