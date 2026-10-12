@@ -1235,7 +1235,7 @@ class PlatformService:
         except PermissionError as error:
             # 该文案会列出本席位无权指挥的舰船 id；对玩家而言这就是"点名"，
             # 因此与校验报错走同一道可见性脱敏（2026-10-12 信息泄露修复）。
-            redacted = self._redact_unseen_ship_mentions(match, seat, [str(error)])
+            redacted = self._redact_foreign_ship_identities(match, seat, [str(error)])
             raise PermissionError(redacted[0]) from error
         previous = self.repository.orders(match_id, match.phase).get(seat_id)
         validation_errors = self._validate_pending_batch(match, seat_id, seat.side, batch, submission.scope)
@@ -1269,7 +1269,7 @@ class PlatformService:
         if validation_errors and not submission.ignore_validation_errors:
             # 席位侧必须脱敏：报错不得点名本席位看不见的舰船（裁判侧不经过这里，仍是完整文案）。
             raise OrderValidationIssue(
-                self._redact_unseen_ship_mentions(match, seat, validation_errors)
+                self._redact_foreign_ship_identities(match, seat, validation_errors)
             )
         if previous:
             self.repository.forget_markers(match_id, seat_id, self._marker_ids(previous[1]))
@@ -2056,52 +2056,37 @@ class PlatformService:
                 errors.append(f"{ship.name} 舰长失能：本回合仅由引擎自动按原速直航，不接受其他行动订单")
         return list(dict.fromkeys(errors))
 
-    def _redact_unseen_ship_mentions(
+    def _redact_foreign_ship_identities(
         self, match: MatchRecord, seat: SeatRecord, errors: list[str]
     ) -> list[str]:
-        """席位报错不得点名本席位看不见的舰船（舰名或舰船 id）。
+        """席位报错不得点出非本席位舰船的真实身份（舰船 id 或舰名）。
 
-        引擎与平台的部分报错会带上舰名或 id（"舰长失能…"、"cannot see <id>"、
-        "Seat cannot command ships: [...]"）。若该舰对本席位不可见，玩家就能从报错里
-        读出敌方编成乃至隐蔽损伤——2026-10-12 报告"校验炮击不通过时会报出对方船名"即此。
+        席位视图对**所有**非本席位舰船做匿名化——包括能观察到的敌舰与其他友军
+        （`test_seat_view_anonymizes_visible_enemy_identity` 等就是这条保证），玩家
+        只该看到匿名接触名。而引擎/平台的报错用的是真实 id 与舰名，例如
+        "IBS-U-RN-ENTERPRISE:TT-M1 cannot bear on IBS-U-FRN-BRETAGNE"、
+        "<舰名> 舰长失能…"、"Seat cannot command ships: ['…']"，直接把身份摊给玩家。
 
-        可见性沿用席位视图的判定（`_seat_can_observe_ship` + 本席位舰船位置），不复制
-        任何规则常量；方向 fail-closed：拿不准可见的一律按不可见处理，只保留本席位
-        自己指挥的舰船与确实能观察到的船。
+        因此按**归属**脱敏（"能瞄到"不等于"知道身份"）：只有本席位自己指挥的舰船
+        保留身份，其余一律替换为「未识别舰船」。方向 fail-closed。裁判侧不经过这里，
+        保持完整文案以便裁决。
         """
         if not errors:
             return errors
         state = self._ensure_loaded(match.game_id)
         own_ids = {ship_id for ship_id in seat.controlled_ship_ids if ship_id in state.ships}
-        own_positions = [state.ships[ship_id].position for ship_id in own_ids]
-        hidden_contact_mode = bool(state.options.optional_rules.hidden_contacts)
-        visibility_radius = self.engine.visibility_radius(state, seat.side)
-        seen = set(own_ids)
-        for ship_id, ship in state.ships.items():
-            if ship_id in own_ids or not ship.position:
-                continue
-            if self._seat_can_observe_ship(
-                state,
-                ship,
-                seat.side,
-                own_positions,
-                own_ids,
-                hidden_contact_mode=hidden_contact_mode,
-                visibility_radius=visibility_radius,
-            ):
-                seen.add(ship_id)
-        unseen = [
+        foreign = [
             (ship_id, ship.name or "")
             for ship_id, ship in state.ships.items()
-            if ship_id not in seen
+            if ship_id not in own_ids
         ]
-        if not unseen:
+        if not foreign:
             return errors
-        unseen.sort(key=lambda item: len(item[1]), reverse=True)  # 长名先替换，避免短名切碎长名
+        foreign.sort(key=lambda item: len(item[1]), reverse=True)  # 长名先替换，避免短名切碎长名
         redacted: list[str] = []
         for error in errors:
             text = error
-            for ship_id, name in unseen:
+            for ship_id, name in foreign:
                 if ship_id:
                     text = text.replace(ship_id, "未识别舰船")
                 if name:

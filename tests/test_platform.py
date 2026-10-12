@@ -1339,20 +1339,37 @@ def test_non_referee_cannot_use_judge_override(tmp_path) -> None:
     raise AssertionError("non-referee override was accepted")
 
 
-def test_seat_validation_errors_do_not_name_unseen_enemy_ships(tmp_path) -> None:
-    """席位报错不得点名本席位看不见的舰船（2026-10-12 信息泄露修复）。
+def test_seat_validation_errors_do_not_name_foreign_ships(tmp_path) -> None:
+    """席位报错不得点出非本席位舰船的真实身份（2026-10-12 信息泄露修复）。
 
-    引擎与平台的部分报错会带上舰名或舰船 id（"舰长失能…"、"cannot see <id>"、
-    "Seat cannot command ships: [...]"）。若该舰对本席位不可见，玩家就能从报错里
-    读出敌方编成乃至隐蔽损伤，因此席位侧必须脱敏，裁判侧保持完整文案。
+    席位视图对所有非本席位舰船做匿名化——**包括能观察到的敌舰**，玩家只该看到匿名接触名。
+    而引擎/平台报错用真实 id 与舰名："cannot bear on <id>"、"舰长失能…"、
+    "Seat cannot command ships: [...]"，都会把身份直接摊给玩家。故脱敏按**归属**判定。
     """
     service, engine, _, axis, _, match, axis_seat, _, _, axis_ship, allies_ship = make_service(tmp_path)
     state = engine.get(match.game_id)
     assert axis_ship.position
-    # 把敌舰挪远，确保本席位观察不到——这样测试才是确定性的。
-    allies_ship.position = HexCoord(q=axis_ship.position.q + 40, r=axis_ship.position.r + 20)
+    # 关键回归场景：敌舰就在旁边（本席位能看见、能瞄到），报错仍不得点名它。
+    allies_ship.position = HexCoord(q=axis_ship.position.q + 1, r=axis_ship.position.r)
 
-    # ① 归属报错（例如炮击把敌舰当作攻击舰）不得点名敌舰 id
+    # ① "炮没射界"这类报错不得带敌方 id（能瞄到 ≠ 知道身份）
+    bearing = service._redact_foreign_ship_identities(
+        match, axis_seat, [f"{axis_ship.id}:TT-M1 cannot bear on {allies_ship.id}"]
+    )[0]
+    assert allies_ship.id not in bearing
+    assert axis_ship.id in bearing  # 本方舰只保留身份
+    assert "未识别舰船" in bearing
+
+    # ② 带舰名的报错（舰长失能）同样不得点名敌舰
+    named = service._redact_foreign_ship_identities(
+        match,
+        axis_seat,
+        [f"{allies_ship.name} 舰长失能：本回合仅由引擎自动按原速直航，不接受其他行动订单"],
+    )[0]
+    assert allies_ship.name not in named
+    assert "未识别舰船" in named
+
+    # ③ 归属报错同样经过脱敏
     batch = OrderBatch(side=axis_seat.side, phase=state.phase, gunnery=[GunneryOrder(ship_id=allies_ship.id)])
     submission = SeatOrderSubmission(phase=state.phase, batch=batch, scope="phase", request_id="leak-ownership")
     with pytest.raises(PermissionError) as excinfo:
@@ -1361,16 +1378,7 @@ def test_seat_validation_errors_do_not_name_unseen_enemy_ships(tmp_path) -> None
     assert allies_ship.id not in message
     assert "未识别舰船" in message
 
-    # ② 带舰名的报错（舰长失能）同样不得点名敌舰
-    redacted = service._redact_unseen_ship_mentions(
-        match,
-        axis_seat,
-        [f"{allies_ship.name} 舰长失能：本回合仅由引擎自动按原速直航，不接受其他行动订单"],
-    )
-    assert allies_ship.name not in redacted[0]
-    assert "未识别舰船" in redacted[0]
-
-    # ③ 本方舰名必须保留：脱敏只针对看不见的船，不做无差别遮蔽
-    kept = service._redact_unseen_ship_mentions(match, axis_seat, [f"{axis_ship.name} 舰长失能：示例"])
+    # ④ 本方舰名必须保留：脱敏只针对非本席位舰船，不做无差别遮蔽
+    kept = service._redact_foreign_ship_identities(match, axis_seat, [f"{axis_ship.name} 舰长失能：示例"])
     assert axis_ship.name in kept[0]
 

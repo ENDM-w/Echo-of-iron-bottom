@@ -1151,3 +1151,11 @@
 - 修复：新增 `PlatformService._redact_unseen_ship_mentions(match, seat, errors)`，可见性沿用席位视图的 `_seat_can_observe_ship` + 本席位舰船位置（不复制规则常量），把本席位**观察不到**的舰船 id/舰名替换为「未识别舰船」，fail-closed；应用于席位提交的校验报错与归属 PermissionError。裁判侧（`judge_*`）不经过该路径，保持完整文案。
 - 验证：① 新增测试 `test_seat_validation_errors_do_not_name_unseen_enemy_ships`（把敌舰挪远保证不可见，断言归属报错不含敌舰 id、含「未识别舰船」，带舰名的报错不含敌舰名，且本方舰名保留）；② 全量 `pytest tests/test_platform.py` 35 项通过；③ 线上真实状态副本复现：`Seat cannot command ships: ['IBS-U-FRN-BRETAGNE']` → `['未识别舰船']`，本方舰名「进取」保留；④ 部署后重启 `tiedi`（MainPID 2604→2206），入口/API 200，`integrity: ok`，31 用户/4 局/10 订单不变。
 - 本批次提交：见 git log `fix(platform): keep unseen ships out of player-facing errors`。
+
+# 2026-10-12 纠正席位报错脱敏口径（可见性 → 归属）
+
+- 反馈：修复后**"炮没射界"报错里仍在泄露敌舰 id**。
+- 根因（我的口径错）：引擎 `cannot bear on {target.id}`（engine.py:1721）能出现的前提就是 `_can_see(state, attacker, target)` 成立，即目标**必然可见**；我上一版按"是否可观察"脱敏，于是这条报错永远不被脱敏。而席位视图的既定保证是——**所有非本席位舰船都匿名化**（`test_seat_view_anonymizes_visible_enemy_identity`、`test_seat_view_includes_other_friendly_ships_as_anonymous_contacts`），玩家只该看到匿名接触名。故"能瞄到"绝不等于"知道身份"。
+- 修复：`_redact_unseen_ship_mentions` → `_redact_foreign_ship_identities`，判定改为**归属**：仅 `seat.controlled_ship_ids` 内的舰船保留 id/舰名，其余全部替换为「未识别舰船」；不再依赖 `_seat_can_observe_ship`（去掉可见性计算，更简单）。应用点不变（席位校验报错 + 归属 PermissionError），裁判侧不变。
+- 验证：① 测试更新为 `test_seat_validation_errors_do_not_name_foreign_ships`，把敌舰放在**紧邻**（可见可瞄）位置，断言 `cannot bear on <id>` 脱敏后不含敌方 id、含本方 id 与「未识别舰船」，舰长失能文案不含敌舰名，归属报错同样脱敏，本方舰名保留；② `pytest tests/test_platform.py` 35 项通过；③ 线上真实状态副本：该席位能观察到 13 艘他方舰船，引擎原文 `IBS-U-RN-ENTERPRISE:PB11: cannot bear on IBS-U-FRN-DUNKERQUE` → `… cannot bear on 未识别舰船`（本方 id 保留）；④ 确认存储的 `validation_errors_json` 仅由裁判 review 面（`require_referee`）读取，玩家面无二次暴露；⑤ 重启 `tiedi`（MainPID 2206→2553），入口/API 200，`integrity: ok`，31 用户/4 局/14 订单不变。
+- 本轮 IO 纪律：仅窄范围 `grep`、一次 `rsync`、一次 `pytest`、一次 `systemctl restart`，**无任何构建**。

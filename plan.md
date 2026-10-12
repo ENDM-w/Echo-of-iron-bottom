@@ -1333,3 +1333,11 @@ nginx 日志证据：该对局席位提交接口当天 8 次 422（进取号 15:
 玩家端校验炮击不通过时，报错会点名本席位**看不见**的敌舰。泄露面两处：① 归属校验 `_assert_order_ownership` 抛 `Seat cannot command ships: ['IBS-U-FRN-BRETAGNE']`（英文文案带 id）；② 引擎与平台的「舰长失能」报错 `f"{ship.name} 舰长失能…"`（带舰名，顺带暴露敌方隐蔽损伤）。席位报错在界面上是原文渲染，且 `smoke_ships` 不参与归属校验，故可直达玩家。
 
 修复层选在**平台席位边界**（引擎不动，裁判端保持完整文案）：新增 `_redact_unseen_ship_mentions(match, seat, errors)`，可见性沿用席位视图的 `_seat_can_observe_ship` + 本席位舰船位置（不复制规则常量），把「非本席位可见」的舰船 id 与舰名统一替换为「未识别舰船」；方向 fail-closed。应用于席位提交的校验报错与归属 PermissionError 两处。
+
+## 2026-10-12 纠正：席位报错脱敏口径从「可见性」改为「归属」
+
+状态：完成（已部署并重启生效）。
+
+上一版按"本席位能否观察到该舰"脱敏，**口径错误**：引擎的 `cannot bear on {target.id}`（"炮没射界"）前提正是 `_can_see` 成立——即目标**必然可见**，于是这条报错永远不会被脱敏，实测仍在泄露敌舰 id。而席位视图对**所有非本席位舰船**（含能观察到的敌舰与其他友军）都做匿名化，玩家只该看到匿名接触名。
+
+因此改为按**归属**判定：只有本席位 `controlled_ship_ids` 内的舰船保留身份（id/舰名），其余一律替换为「未识别舰船」，fail-closed。方法更名 `_redact_foreign_ship_identities`，不再依赖 `_seat_can_observe_ship`（更简单、更快、无额外状态计算）。裁判侧路径不变。
