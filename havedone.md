@@ -1115,3 +1115,11 @@
 - 修复（纯前端）：① 撤掉数值兜底——`launchPositions` 为空时 MF 下拉禁用并显示"请先在移动草稿里写出该舰航路"，写单按钮重新要求存在候选位置，`writeTorpedoOrder` 恢复 `position.hex/heading` 且不再接受无位置分支；② 新增 `resyncTorpedoLaunchHex`，在 `submitOrder` 里于提交前用当前移动草稿现取一次预览，把每条鱼雷行的 `launch_hex`/`bearing` 校正到其 `launch_at_mf` 对应位置（消除"写单后又改移动草稿"的陈旧格；预览失败则保持原样不阻塞）；③ 鱼雷草稿列表对"MF 不在当前航路"的行显示告警并列出可用 MF（新增最小样式 `.draft-order-warning`，不动既有列表外观）。
 - 验证（用线上真实对局状态 + 引擎校验复刻，`1d7b2a3a` / `IBS-U-RN-VIDETTE` / 移动草稿 `4P`）：预览给出 MF2 = `FF27`、舰首 5；以其为 `launch_hex` 提交 → `valid=True` **无报错**；`launch_hex=None` → `valid=False`，报错 **正是** `IBS-U-RN-VIDETTE: launch_hex does not match its MF position`（复现用户所见）；给错格 → 同句外加 bearing 报错。另：`tsc -b` 与 `vite build --base=/tiedi/` 通过后原子切换（线上 `index-taCEEnUs.js`），`tiedi` 的 `MainPID` 构建前后均为 8501（未重启）；首页 200、未登录 `/platform/matches/*` 401。
 - 本批次提交：`73c45f730a3bc31e0b9076b149e9b58cf7e48d21`。
+
+# 2026-10-12 部署上游中轴线鱼雷发射器修复（数据热更新，未重启服务）
+
+- 上游 `384bab3` + `d4fb4c1`：中轴线（midships）鱼雷发射器此前被打成"左右各一具"（`TT-M1-P1`/`TT-M1-S1`，各自都带 port+starboard 射界），实为**单具双向**（`TT-M1`/`TT-M2`，`arcs: [port, starboard]`）。该提交只改 `import-bundle.yaml`、`ship-imports/genoa-2026/README.md`、`tests/test_ship_records.py`、`plan.md`，**未涉及后端或前端源码**。
+- 部署方式（不打断对局）：本地 4 个提交 rebase 到上游（零冲突）→ `rsync` → 重跑 `import_ship_bundle.py --db /var/lib/tiedi/state.sqlite3`（`ON CONFLICT DO UPDATE` 热覆盖 39 条记录）→ **不重启 `tiedi`/nginx/cloudflared**。因鱼雷管定义在**建局时**冻结进 `GameState`，本次修复只对新建对局生效；自定义想定仅存 `id/side/position/heading/speed/asset`，不含发射器定义，故新建对局会读到修正后的记录。
+- 未打断的证明：部署前后对 4 局在进行对局的 `state_json` 取 md5（`96bf496eff26` / `6fb45833cd4e` / `5d08fcfd0978` / `01011d962765`）逐一比对**完全一致**；订单 1 条、席位 78 个不变；`tiedi` `MainPID` 仍为 8501、`cloudflared-tiedi` 重启次数仍为 0、隧道域名仍为 `non-diesel-london-attractive`。
+- 验证：`--check-only` 通过并导入成功（39 行、`integrity: ok`）；`pytest tests/test_ship_records.py -q` 8 项通过（含新增的中轴线断言）；运行时 `load_ship_records()` 返回 `VIDETTE: [TT-M1, TT-M2]`、`AIGLE/ALPINO: [TT-M]`，均为单具双向；线上前端仍为含 launch_hex 一致性修复的 `index-taCEEnUs.js`（`draft-order-warning` 命中）。
+- 遗留：已进行对局仍用旧发射器定义（状态冻结）。如需让它们也生效，需对 `games.state_json` 做定向迁移（当前仅 1 条订单且无鱼雷行，风险低），另行确认后进行。
