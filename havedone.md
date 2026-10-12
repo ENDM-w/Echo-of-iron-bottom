@@ -1134,3 +1134,12 @@
 - 验证：① 引擎实测 `ARETHUSA`/`ENTERPRISE`/`FAULKNOR` 拉烟 `valid=True`，`HOOD`（战巡）被正确拒绝（`only DD or CL may release smoke`），四局想定的 `options.optional_rules.smoke=true`（前端按钮因此可点）；② 重启后连发 3 个请求，`journalctl -u tiedi` **0 条新增请求日志**，单元 `ExecStart` 含 `--no-access-log`；③ 新建连接探针：`journal_mode=wal`、`synchronous=1`；④ 线上 `https://wangchuanlvren.space/tiedi/` 200、新包 `index-CQylOlLX.js` 已服务、`integrity: ok`、31 用户/4 局/78 席位/5 订单不变；⑤ `tsc -b` 通过，`pytest tests/test_api_llm_storage.py tests/test_engine.py` 93 项通过。
 - 构建/部署纪律（本次起执行）：所有重活 `ionice -c3 nice -n 19`（构建实测 21.8s）、串行执行、避开玩家活跃高峰；构建内存上限 `NODE_OPTIONS=--max-old-space-size=384`。
 - 本批次提交：`f3b6f6e1eeb705a9cb5760072f7e937a4d5a9d3e`。
+
+# 2026-10-12 修复提交报错显示为 "[object Object]"（纯前端热更新，未重启服务）
+
+- 现象：对局 `1d7b2a3a` 进取号席位提交报 `error:[object Object]`。
+- 归因：提交接口请求模型是 `SeatOrderSubmission`（内含完整 `OrderBatch`）；**请求体 shape 校验失败**时 FastAPI 返回 422，`detail` 是**对象数组**，而 `api.ts` 的 `platformRequest` 用 `payload.detail.join("；")` 渲染 → 每个元素字符串化成 `[object Object]`。规则性拒绝走 `detail.code === "order_validation"`（本来能正常显示），故该报错专指请求体不合法。
+- 证据：nginx 记录该接口当天 **9 次 422 / 149 次 200**；进取号（席位 `41a93ab3`）三次 422 在 **15:51–15:52**，均早于本次前端上线（16:50），且其 **17:04:08 已 200 成功**；其他席位同样"422 后重试 200"。用 FastAPI `TestClient` 复现：批次内某字段不合法（如 `JSON.stringify` 把 `NaN` 变 `null` 后的 `launch_hex.q`）即返回该形状的 422，`join` 后正好是 `[object Object]`。
+- 修复（纯前端，热更新，未重启 `tiedi`，玩家不掉线）：① `api.ts` 把 422 的 `detail` 数组翻译成「字段路径：原因（收到的值）」（去掉 `body` 前缀）；② `PlatformPortal.tsx` 提交前自检——递归检查 `NaN/Infinity` 并就地报出路径、拒绝提交（这类值必被后端拒绝），并剔除缺少合法发射格（非整数 q/r）的陈旧鱼雷行且明确提示条数。
+- 验证：`tsc -b` 通过、`vite build` 通过、线上已服务新包 `index-DoUmWWwN.js`（旧包 `index-CQylOlLX.js` 原子替换），首页/API 均 200，`tiedi` MainPID 2604 未变。
+- 本批次提交：见下方 git log（`fix(platform): surface request-validation errors and block doomed rows`）。
