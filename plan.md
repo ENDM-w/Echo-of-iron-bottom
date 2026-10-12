@@ -1294,3 +1294,15 @@
 2. 提交前用当前移动草稿现取一次预览，把每条鱼雷行的 `launch_hex`/`bearing` 校正到其 `launch_at_mf` 对应位置（消除"预览后又改移动草稿"造成的陈旧 hex）。
 3. 鱼雷草稿列表里，对"MF 不在当前航路上"的行给出醒目提示，指明可用 MF。
 4. 验证：`tsc -b` 与 `vite build --base=/tiedi/` 通过；原子切换热更新，不重启 `tiedi`。
+
+## 2026-10-12 部署上游中轴线鱼雷发射器修复（不重启、不打断对局）
+
+状态：完成。
+
+上游 `384bab3 fix(data): keep centerline torpedo launchers singular` 把中轴线（midships）发射器从"左右各一具"（`TT-M1-P1`/`TT-M1-S1`，各自同时带 port+starboard 射界）改回**单具双向**（`TT-M1`/`TT-M2`，`arcs: [port, starboard]`），并新增 `tests/test_ship_records.py` 断言；只动数据、测试与文档，**未改后端或前端源码**。
+
+1. rebase 本地 4 个提交到上游之上，零冲突。
+2. 因无后端代码改动，**不重启 `tiedi`**：仅 `rsync` + 重跑 `import_ship_bundle.py`（upsert 热更新 39 条记录）。
+3. 部署前后对 4 局在进行对局的 `state_json` 取 md5 指纹逐一比对，确认未被触碰；订单/席位计数不变；`tiedi` MainPID、cloudflared 重启次数与隧道域名均未变。
+4. 生效范围说明：鱼雷管定义在**建局时**写入 `GameState`，因此修复只对**新建对局**生效；已进行对局仍保留旧的 4 具发射器（其状态冻结）。自定义想定只存 `id/side/position/heading/speed/asset`，不内嵌发射器定义，故新建对局会取到修正后的记录。
+5. 验证：`import_ship_bundle.py --check-only` 通过并成功导入（39 行、`integrity: ok`）；`pytest tests/test_ship_records.py` 8 项通过（含上游新增的中轴线断言）；运行时 `load_ship_records()` 对 VIDETTE/AIGLE/ALPINO 返回单具双向发射器；线上前端仍带此前 launch_hex 一致性修复。
