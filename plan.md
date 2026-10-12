@@ -1306,3 +1306,12 @@
 3. 部署前后对 4 局在进行对局的 `state_json` 取 md5 指纹逐一比对，确认未被触碰；订单/席位计数不变；`tiedi` MainPID、cloudflared 重启次数与隧道域名均未变。
 4. 生效范围说明：鱼雷管定义在**建局时**写入 `GameState`，因此修复只对**新建对局**生效；已进行对局仍保留旧的 4 具发射器（其状态冻结）。自定义想定只存 `id/side/position/heading/speed/asset`，不内嵌发射器定义，故新建对局会取到修正后的记录。
 5. 验证：`import_ship_bundle.py --check-only` 通过并成功导入（39 行、`integrity: ok`）；`pytest tests/test_ship_records.py` 8 项通过（含上游新增的中轴线断言）；运行时 `load_ship_records()` 对 VIDETTE/AIGLE/ALPINO 返回单具双向发射器；线上前端仍带此前 launch_hex 一致性修复。
+
+## 2026-10-12 玩家端拉烟控件 + IO 饱和治理（前端热更新 + 后端/单元微调）
+
+状态：完成（已上线；后端两项随一次重启生效）。
+
+1. **玩家端拉烟（烟幕）控件**：仓库历史中玩家端从未有过 smoke 输入控件（`施放烟幕` 仅存在于初始快照的裁判端），玩家只能手写高级 JSON。新增「烟幕（拉烟）」卡片（炮击/强化阶段可见）：施放舰船下拉 + 本回合施放勾选 + 写入 + 已写入列表（可移除）+ 规则提示；只写整回合批次里的 `smoke: [{ship_id, deploy}]`（与裁判端同一条路径）。施放资格（仅 DD/CL）与阶段合法性**不在界面复制**，一律由规则核心校验（agent.md：引擎是唯一规则权威）。
+2. **轮询降频 1.8s → 4s**：2026-10-12 卡死复盘（见运维速查）显示玩家活跃时约 250 请求/分钟，逐请求的 nginx + uvicorn 日志与 SQLite 写盘产生 139 字节小随机写，打满低 IOPS 云盘的写入队列。
+3. **`--no-access-log`**（`deploy/tiedi.service`）：消除负载下每小时 3000+ 条 journald 写入；nginx 访问日志保留，排查能力不受影响。
+4. **SQLite `synchronous=NORMAL`**（`storage.py`，已用 WAL）：把 fsync 从每次提交降到检查点。

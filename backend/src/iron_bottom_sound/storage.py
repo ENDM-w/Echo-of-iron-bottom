@@ -17,6 +17,10 @@ class GameRepository:
         self.connection.executescript(
             """
             PRAGMA journal_mode=WAL;
+            -- WAL 下 synchronous=NORMAL 是推荐组合：仍对应用级崩溃安全（已提交事务不丢），
+            -- 只把 fsync 从"每次提交"降到"检查点"。2026-10-12 IO 饱和复盘显示，
+            -- 低 IOPS 云盘上逐请求 fsync 是主要写放大来源，故由默认 FULL(2) 降为 NORMAL(1)。
+            PRAGMA synchronous=NORMAL;
             CREATE TABLE IF NOT EXISTS games (
               game_id TEXT PRIMARY KEY,
               state_json TEXT NOT NULL,

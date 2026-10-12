@@ -322,6 +322,8 @@ export function PlatformPortal({ onClose }: Props) {
   const [torpedoLaunchAtMf, setTorpedoLaunchAtMf] = useState("");
   const [torpedoLaunchSide, setTorpedoLaunchSide] = useState("");
   const [torpedoLaunchAngle, setTorpedoLaunchAngle] = useState("");
+  const [smokeShipId, setSmokeShipId] = useState("");
+  const [smokeDeploy, setSmokeDeploy] = useState(true);
   const [torpedoSettingIndex, setTorpedoSettingIndex] = useState("");
   const [illuminationHexLabel, setIlluminationHexLabel] = useState("");
   const [searchlightTargetId, setSearchlightTargetId] = useState("");
@@ -472,7 +474,11 @@ export function PlatformPortal({ onClose }: Props) {
         pollInFlight.current = false;
       }
     };
-    const timer = window.setInterval(() => void refreshPublishedView(), 1800);
+    // 轮询间隔直接决定服务端请求量：每个请求都会写 nginx 访问日志 + uvicorn 访问日志
+    // + SQLite。2026-10-12 玩家活跃（约 250 请求/分钟）时，1.8s 轮询产生的 139 字节小随机写
+    // 把低 IOPS 云盘的写入队列打满，导致整机卡死。放宽到 4s：回合制对局足够实时，
+    // 同时把日志与写盘压力减半以上。
+    const timer = window.setInterval(() => void refreshPublishedView(), 4000);
     return () => {
       active = false;
       window.clearInterval(timer);
@@ -1259,6 +1265,14 @@ export function PlatformPortal({ onClose }: Props) {
       rows.push(row);
       batch[key] = rows;
     }, notice);
+  };
+  // 玩家端拉烟（烟幕）：引擎在每回合推进时把 ship.smoke 清零，所以烟幕只在当回合有效、
+  // 需要逐回合声明。施放资格（仅 DD/CL）与阶段合法性一律交给规则核心校验，
+  // 界面不复制规则常量（agent.md：引擎是唯一规则权威）。
+  const writeSmokeOrder = () => {
+    if (!smokeShipId) return;
+    const shipName = ownShips.find((ship) => ship.id === smokeShipId)?.name ?? smokeShipId;
+    appendOrderRow("smoke", { ship_id: smokeShipId, deploy: smokeDeploy }, `已加入拉烟指令：${shipName}`);
   };
   const updateIlluminationHex = (index: number, label: string, input: HTMLInputElement) => {
     const targetHex = parseMapHexLabel(label);
@@ -2772,6 +2786,65 @@ export function PlatformPortal({ onClose }: Props) {
                         </div>
                         );
                       })()}
+                    </div>
+                  </section>
+                )}
+                {(view.phase === "gunnery" || view.phase === "reinforcement") && (
+                  <section className="player-action-builder">
+                    <div className="action-card">
+                      <h3>烟幕（拉烟）</h3>
+                      <div className="action-grid">
+                        <label>
+                          施放舰船
+                          <select
+                            value={smokeShipId}
+                            onChange={(event) => setSmokeShipId(event.target.value)}
+                          >
+                            <option value="">选择舰船</option>
+                            {ownShips.map((ship) => (
+                              <option key={ship.id} value={ship.id}>
+                                {ship.name} · {ship.id}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="check-label">
+                          <input
+                            type="checkbox"
+                            checked={smokeDeploy}
+                            onChange={(event) => setSmokeDeploy(event.target.checked)}
+                          />
+                          本回合施放烟幕
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={writeSmokeOrder}
+                        disabled={!smokeShipId || captainCommandLost || !view.optional_rules?.smoke}
+                      >
+                        写入拉烟指令
+                      </button>
+                      {draftRows("smoke").length > 0 && (
+                        <div className="draft-order-list">
+                          <strong>已写入拉烟</strong>
+                          {draftRows("smoke").map((item, index) => (
+                            <div className="draft-order-row" key={`smoke-draft-${index}`}>
+                              <span>
+                                {ownShips.find((ship) => ship.id === item.ship_id)?.name ?? String(item.ship_id ?? "")}
+                                {" · "}
+                                {item.deploy === false ? "本回合不施放" : "施放"}
+                              </span>
+                              <button type="button" className="quiet" onClick={() => removeOrderRow("smoke", index)}>移除</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <p className="field-hint">
+                        烟幕只持续本回合（引擎在回合推进时清零），需要每回合重新声明；可写多条订单，取消勾选表示本回合对该舰不施放。
+                        {view.optional_rules?.smoke
+                          ? " 施放资格与阶段合法性由规则核心校验（仅驱逐舰/轻巡可拉烟），提交时若有问题会给出具体原因。"
+                          : " 本想定未启用烟幕可选规则，现在写入也会被规则核心拒绝——请让裁判在想定里开启。"}
+                      </p>
                     </div>
                   </section>
                 )}

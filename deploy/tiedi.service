@@ -6,6 +6,10 @@
 #
 # 密钥纪律：DEEPSEEK_API_KEY 只经 EnvironmentFile=/etc/tiedi.env 注入；
 # 文件 root:root 0600。服务不以 root 运行，且 EnvironmentFile 可缺省。
+#
+# --no-access-log：uvicorn 默认给每个请求写一条 journald 日志。2026-10-12 玩家端
+# 1.8s 轮询在活跃时产生约 250 请求/分钟，这些 139 字节的小随机写把低 IOPS 云盘的
+# 写入队列打满导致整机卡死。关掉它（nginx 访问日志仍在，排查不受影响）。
 
 [Unit]
 Description=铁底湾的回响 IV backend (uvicorn, serves /tiedi API for fuwenji.asia)
@@ -23,7 +27,7 @@ Environment=IBS_DB_PATH=/var/lib/tiedi/state.sqlite3
 Environment=IBS_REPORTS_DIR=/var/lib/tiedi/reports
 EnvironmentFile=-/etc/tiedi.env
 UMask=0077
-ExecStart=/opt/tiedi/.venv/bin/python -m uvicorn iron_bottom_sound.api:app --app-dir backend/src --host 127.0.0.1 --port 8001 --workers 1
+ExecStart=/opt/tiedi/.venv/bin/python -m uvicorn iron_bottom_sound.api:app --app-dir backend/src --host 127.0.0.1 --port 8001 --workers 1 --no-access-log
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
