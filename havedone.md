@@ -1123,3 +1123,14 @@
 - 未打断的证明：部署前后对 4 局在进行对局的 `state_json` 取 md5（`96bf496eff26` / `6fb45833cd4e` / `5d08fcfd0978` / `01011d962765`）逐一比对**完全一致**；订单 1 条、席位 78 个不变；`tiedi` `MainPID` 仍为 8501、`cloudflared-tiedi` 重启次数仍为 0、隧道域名仍为 `non-diesel-london-attractive`。
 - 验证：`--check-only` 通过并导入成功（39 行、`integrity: ok`）；`pytest tests/test_ship_records.py -q` 8 项通过（含新增的中轴线断言）；运行时 `load_ship_records()` 返回 `VIDETTE: [TT-M1, TT-M2]`、`AIGLE/ALPINO: [TT-M]`，均为单具双向；线上前端仍为含 launch_hex 一致性修复的 `index-taCEEnUs.js`（`draft-order-warning` 命中）。
 - 遗留：已进行对局仍用旧发射器定义（状态冻结）。如需让它们也生效，需对 `games.state_json` 做定向迁移（当前仅 1 条订单且无鱼雷行，风险低），另行确认后进行。
+
+# 2026-10-12 玩家端拉烟控件 + IO 饱和治理（前端热更新 + 后端/单元微调）
+
+- **玩家端拉烟（烟幕）控件**：仓库历史里玩家端从未有过 smoke 输入控件（`施放烟幕` 只出现在初始快照的裁判端编辑器），玩家只能手写高级 JSON 才能发拉烟指令。新增「烟幕（拉烟）」卡片（炮击/强化阶段可见）：施放舰船下拉、`本回合施放烟幕` 勾选、写入按钮、已写入列表（可逐条移除）与规则提示；写入的是与裁判端同一条路径的整回合字段 `smoke: [{ship_id, deploy}]`。**施放资格（仅 DD/CL）与阶段合法性不在界面复制**，一律交规则核心校验（agent.md：引擎是唯一规则权威）。界面所做的仅是「是否启用烟幕可选规则」的提示（`view.optional_rules.smoke`）。
+- **轮询降频 1.8s → 4s**：`refreshPublishedView` 的 `setInterval` 间隔是服务端请求量的直接来源。
+- **`--no-access-log`**（`deploy/tiedi.service`）：去掉 uvicorn 的逐请求 journald 写入；nginx 访问日志保留。
+- **SQLite `synchronous=NORMAL`**（`storage.py`，沿用已有 WAL）：把 fsync 从每次提交降到检查点。
+- 依据（2026-10-12 16:18 卡死复盘）：`sar -b` 显示 15:10→15:50 写入由 1.8KB/s 单调爬升到 76KB/s、tps 27→549 且平均请求仅 139 字节（小随机写）；同期 nginx 请求量 234–278/分钟，与玩家端 1.8s 轮询吻合；崩溃前 3,112 条日志全部来自 `python[4655]`（uvicorn 逐请求 access log）；`Power key pressed short` 表明是控制台按键重启而非内核崩溃；`vm.swappiness=0` 排除 swap 抖动。
+- 验证：① 引擎实测 `ARETHUSA`/`ENTERPRISE`/`FAULKNOR` 拉烟 `valid=True`，`HOOD`（战巡）被正确拒绝（`only DD or CL may release smoke`），四局想定的 `options.optional_rules.smoke=true`（前端按钮因此可点）；② 重启后连发 3 个请求，`journalctl -u tiedi` **0 条新增请求日志**，单元 `ExecStart` 含 `--no-access-log`；③ 新建连接探针：`journal_mode=wal`、`synchronous=1`；④ 线上 `https://wangchuanlvren.space/tiedi/` 200、新包 `index-CQylOlLX.js` 已服务、`integrity: ok`、31 用户/4 局/78 席位/5 订单不变；⑤ `tsc -b` 通过，`pytest tests/test_api_llm_storage.py tests/test_engine.py` 93 项通过。
+- 构建/部署纪律（本次起执行）：所有重活 `ionice -c3 nice -n 19`（构建实测 21.8s）、串行执行、避开玩家活跃高峰；构建内存上限 `NODE_OPTIONS=--max-old-space-size=384`。
+- 本批次提交：`f3b6f6e1eeb705a9cb5760072f7e937a4d5a9d3e`。
