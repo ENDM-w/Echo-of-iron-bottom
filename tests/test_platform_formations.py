@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from iron_bottom_sound.custom_scenarios import with_engine_default_formations
 from iron_bottom_sound.data import load_scenario, register_custom_scenario, unregister_custom_scenario
 from iron_bottom_sound.engine import IronBottomEngine
-from iron_bottom_sound.models import GunneryOrder, HexCoord, OrderBatch, Phase, Side
+from iron_bottom_sound.models import FormationState, GunneryOrder, HexCoord, IlluminationOrder, OrderBatch, Phase, SearchlightOrder, Side
 from iron_bottom_sound.platform.router import build_router
 from iron_bottom_sound.platform.service import PlatformService
 from iron_bottom_sound.storage import GameRepository
@@ -233,6 +233,45 @@ def test_judge_can_override_flagship_setup_and_player_preview_uses_formation_rou
         state, OrderBatch(side=flagship[0]["side"], gunnery=[leader_order, override_order]),
     )
     assert next(item for item in overridden.gunnery if item.ship_id == follower_id).primary_target == "independent-contact"
+
+
+def test_formation_light_orders_keep_the_selected_emitter_and_explicit_member_override(online_formation):
+    _client, service, root, _judge, _players = online_formation
+    state = service.engine.get(service.repository.match(root.rsplit("/", 1)[-1]).game_id)
+    state.phase = Phase.GUNNERY
+    leader_id, follower_id = [ship.id for ship in state.ships.values() if ship.side == Side.AXIS][:2]
+    formation = FormationState(
+        id="axis-test-formation", name="axis test", side=Side.AXIS,
+        ship_ids=[leader_id, follower_id], leader_id=leader_id, flagship_id=leader_id,
+        reserve_flagship_id=follower_id, heading=1,
+    )
+    state.formations[formation.id] = formation
+    state.ships[leader_id].formation_id = formation.id
+    state.ships[follower_id].formation_id = formation.id
+
+    inherited = service._inherit_formation_actions(state, OrderBatch(
+        side=Side.AXIS,
+        illumination=[IlluminationOrder(ship_id=leader_id, target_hex=HexCoord(q=4, r=7))],
+        searchlights=[SearchlightOrder(ship_id=leader_id, target_id="contact-a")],
+    ))
+    assert {item.ship_id for item in inherited.illumination} == {leader_id, follower_id}
+    assert {item.ship_id for item in inherited.searchlights} == {leader_id, follower_id}
+
+    explicit = service._inherit_formation_actions(state, OrderBatch(
+        side=Side.AXIS,
+        illumination=[
+            IlluminationOrder(ship_id=leader_id, target_hex=HexCoord(q=4, r=7)),
+            IlluminationOrder(ship_id=follower_id, target_hex=HexCoord(q=8, r=2)),
+        ],
+        searchlights=[
+            SearchlightOrder(ship_id=leader_id, target_id="contact-a"),
+            SearchlightOrder(ship_id=follower_id, target_id="contact-b"),
+        ],
+    ))
+    assert len(explicit.illumination) == 2
+    assert next(item for item in explicit.illumination if item.ship_id == follower_id).target_hex == HexCoord(q=8, r=2)
+    assert len(explicit.searchlights) == 2
+    assert next(item for item in explicit.searchlights if item.ship_id == follower_id).target_id == "contact-b"
 
 
 def test_formation_does_not_share_vision_or_accept_individual_movement(online_formation):

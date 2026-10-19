@@ -333,6 +333,8 @@ export function PlatformPortal({ onClose }: Props) {
   const [hiddenContactsEnabled, setHiddenContactsEnabled] = useState(false);
   const [scenarioWorkshopOpen, setScenarioWorkshopOpen] = useState(false);
   const [actionShipId, setActionShipId] = useState("");
+  const [illuminationShipId, setIlluminationShipId] = useState("");
+  const [searchlightShipId, setSearchlightShipId] = useState("");
   const [actionTargetId, setActionTargetId] = useState("");
   const [actionSecondaryTargetId, setActionSecondaryTargetId] = useState("");
   const [fireHeatmaps, setFireHeatmaps] = useState<FireHeatmapResponse>();
@@ -1106,6 +1108,10 @@ export function PlatformPortal({ onClose }: Props) {
   }, [view]);
   const selectedActionShip =
     commandableShips.find((ship) => ship.id === actionShipId) ?? ownShips[0] ?? commandableShips[0];
+  const selectedIlluminationShip =
+    commandableShips.find((ship) => ship.id === illuminationShipId) ?? selectedActionShip;
+  const selectedSearchlightShip =
+    commandableShips.find((ship) => ship.id === searchlightShipId) ?? selectedActionShip;
   const movementCostPreview = movementPlanCost(movementPlan);
   const movementPlanWarnings = selectedActionShip ? [
     movementCostPreview.error,
@@ -1227,10 +1233,17 @@ export function PlatformPortal({ onClose }: Props) {
   const selectedLauncherRemaining = Math.max(0, (selectedLauncher?.loaded ?? 0) - selectedLauncherUsed);
   const usedIlluminationMountIds = new Set(
     illuminationDrafts
-      .filter((item) => item.ship_id === selectedActionShip?.id)
+      .filter((item) => item.ship_id === selectedIlluminationShip?.id)
       .map((item) => String(item.mount_id ?? "")),
   );
-  const illuminationMountChoice = selectedActionShip?.gun_mounts
+  const illuminationGunneryCandidate = (view?.gunnery_candidates ?? []).find(
+    (candidate) => candidate.ship_id === selectedIlluminationShip?.id,
+  );
+  const illuminationTargetCandidate = illuminationGunneryCandidate?.targets.find(
+    (candidate) => candidate.target_id === selectedActionTarget?.id,
+  );
+  const illuminationFireableMountIds = new Set(illuminationTargetCandidate?.mount_ids ?? []);
+  const illuminationMountChoice = selectedIlluminationShip?.gun_mounts
     .filter((mount) =>
       ["primary", "secondary"].includes(mount.kind)
       && !mount.destroyed
@@ -1238,7 +1251,7 @@ export function PlatformPortal({ onClose }: Props) {
       && !usedIlluminationMountIds.has(mount.id),
     )
     .sort((left, right) =>
-      Number(fireableMountIds.has(left.id)) - Number(fireableMountIds.has(right.id))
+      Number(illuminationFireableMountIds.has(left.id)) - Number(illuminationFireableMountIds.has(right.id))
       || left.firepower - right.firepower
       || left.id.localeCompare(right.id),
     )[0];
@@ -1624,7 +1637,7 @@ export function PlatformPortal({ onClose }: Props) {
     );
   };
   const writeIlluminationOrder = () => {
-    const ship = selectedActionShip;
+    const ship = selectedIlluminationShip;
     const targetHex = parseMapHexLabel(illuminationHexLabel);
     if (!ship || !targetHex || !illuminationMountChoice) return;
     const mountId = illuminationMountChoice.id;
@@ -1651,7 +1664,7 @@ export function PlatformPortal({ onClose }: Props) {
     }, "已移除一条照明弹订单");
   };
   const writeSearchlightOrder = () => {
-    const ship = selectedActionShip;
+    const ship = selectedSearchlightShip;
     const target = visibleTargets.find((item) => item.id === searchlightTargetId) ?? selectedActionTarget;
     if (!ship || !target) return;
     replaceShipOrder(
@@ -2880,6 +2893,17 @@ export function PlatformPortal({ onClose }: Props) {
                         )}
                         <div className="action-grid">
                           <label>
+                            照明弹发射舰
+                            <select
+                              value={selectedIlluminationShip?.id ?? ""}
+                              onChange={(event) => setIlluminationShipId(event.target.value)}
+                            >
+                              {commandableShips.map((ship) => (
+                                <option key={ship.id} value={ship.id}>{ship.name} · {ship.id}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
                             照明弹（闪光弹）目标格
                             <input
                               value={illuminationHexLabel}
@@ -2894,6 +2918,17 @@ export function PlatformPortal({ onClose }: Props) {
                               ? `${illuminationMountChoice.id} · GF ${illuminationMountChoice.firepower}`
                               : "没有可用主炮/副炮组"}</b>
                           </div>
+                          <label>
+                            探照灯舰船
+                            <select
+                              value={selectedSearchlightShip?.id ?? ""}
+                              onChange={(event) => setSearchlightShipId(event.target.value)}
+                            >
+                              {commandableShips.map((ship) => (
+                                <option key={ship.id} value={ship.id}>{ship.name} · {ship.id}</option>
+                              ))}
+                            </select>
+                          </label>
                           <label>
                             探照灯目标
                             <select
@@ -2910,13 +2945,13 @@ export function PlatformPortal({ onClose }: Props) {
                         <div className="action-row">
                           <button
                             onClick={writeIlluminationOrder}
-                            disabled={captainCommandLost || (view.phase !== "gunnery" && view.phase !== "reinforcement") || !view.optional_rules?.star_shells || !selectedActionShip || !illuminationMountChoice || !parseMapHexLabel(illuminationHexLabel)}
+                            disabled={Boolean(selectedIlluminationShip?.captain_command_lost) || (view.phase !== "gunnery" && view.phase !== "reinforcement") || !view.optional_rules?.star_shells || !selectedIlluminationShip || !illuminationMountChoice || !parseMapHexLabel(illuminationHexLabel)}
                           >
-                            {illuminationDrafts.some((order) => order.ship_id === selectedActionShip?.id) ? "再加入一发照明弹" : "写入第一发照明弹"}
+                            {illuminationDrafts.some((order) => order.ship_id === selectedIlluminationShip?.id) ? "再加入一发照明弹" : "写入第一发照明弹"}
                           </button>
                           <button
                             onClick={writeSearchlightOrder}
-                            disabled={captainCommandLost || (view.phase !== "gunnery" && view.phase !== "reinforcement") || !view.optional_rules?.searchlights || !selectedActionShip || !searchlightTargetId}
+                            disabled={Boolean(selectedSearchlightShip?.captain_command_lost) || (view.phase !== "gunnery" && view.phase !== "reinforcement") || !view.optional_rules?.searchlights || !selectedSearchlightShip || !searchlightTargetId}
                           >
                             写入探照灯
                           </button>
@@ -2927,7 +2962,7 @@ export function PlatformPortal({ onClose }: Props) {
                           {illuminationDrafts.length ? illuminationDrafts.map((order, index) => (
                             <div className="illumination-draft-row" key={`${String(order.ship_id)}-${String(order.mount_id)}-${index}`}>
                               <span>
-                                {String(order.ship_id)} · 炮位 {String(order.mount_id ?? "未指定")} · 格点 {positionLabel(order.target_hex)}
+                                {commandableShips.find((ship) => ship.id === String(order.ship_id))?.name ?? String(order.ship_id)} · 炮位 {String(order.mount_id ?? "未指定")} · 格点 {positionLabel(order.target_hex)}
                               </span>
                               <button type="button" className="quiet" onClick={() => removeIlluminationOrder(index)}>
                                 移除

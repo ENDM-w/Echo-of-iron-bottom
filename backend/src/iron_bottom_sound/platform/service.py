@@ -358,20 +358,21 @@ class PlatformService:
                     if not any(item.ship_id == follower.id for item in expanded.gunnery):
                         expanded.gunnery.append(leader_gunnery.model_copy(update={"ship_id": follower.id}))
             leader_searchlights = [item for item in expanded.searchlights if item.ship_id == leader_id]
+            leader_illumination = [item for item in expanded.illumination if item.ship_id == leader_id]
             for follower in followers:
                 if not any(item.ship_id == follower.id for item in expanded.searchlights):
                     expanded.searchlights.extend(item.model_copy(update={"ship_id": follower.id}) for item in leader_searchlights)
                 if not any(item.ship_id == follower.id for item in expanded.smoke) and follower.ship_type in {"DD", "CL"}:
                     if leader_id in expanded.smoke_ships or any(item.ship_id == leader_id and item.deploy for item in expanded.smoke):
                         expanded.smoke_ships.append(follower.id)
-                leader_illumination = [item for item in expanded.illumination if item.ship_id == leader_id]
-                occupied = {item.mount_id for item in expanded.illumination if item.ship_id == follower.id}
-                candidates = sorted(
-                    (mount for mount in follower.gun_mounts if not mount.destroyed and not mount.fired_this_phase and mount.id not in occupied),
-                    key=lambda mount: (mount.firepower, mount.kind != "primary", mount.id),
-                )
-                for source, mount in zip(leader_illumination, candidates):
-                    expanded.illumination.append(source.model_copy(update={"ship_id": follower.id, "mount_id": mount.id}))
+                if not any(item.ship_id == follower.id for item in expanded.illumination):
+                    occupied = {item.mount_id for item in expanded.illumination if item.ship_id == follower.id}
+                    candidates = sorted(
+                        (mount for mount in follower.gun_mounts if not mount.destroyed and not mount.fired_this_phase and mount.id not in occupied),
+                        key=lambda mount: (mount.firepower, mount.kind != "primary", mount.id),
+                    )
+                    for source, mount in zip(leader_illumination, candidates):
+                        expanded.illumination.append(source.model_copy(update={"ship_id": follower.id, "mount_id": mount.id}))
             leader_torpedoes = [item for item in expanded.torpedoes if item.ship_id == leader_id]
             if leader_torpedoes:
                 movement_orders = [order for order in expanded.movement]
