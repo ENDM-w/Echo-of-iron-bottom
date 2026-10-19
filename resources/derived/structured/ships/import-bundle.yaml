@@ -2,7 +2,7 @@ schema_version: 1
 source:
   description: User-provided 2026-10-11 workbook, named per-ship counter PNGs, and Genoa VASSAL ship tables; workbook source rows and VASSAL page/row provenance
     are in catalog. Workbook hull and speed totals follow the user-approved equal split; VASSAL grids and tracks are transcribed
-    from the ship cards. Leyte 1944 transcribed from user-provided ship-table images.
+    from the ship cards. Leyte 1944 transcribed from user-provided ship-table images and US/Japanese operator PNGs.
   files:
   - resources/originals/ship-imports/genoa-2026/operator-art/france/信天翁.png
   - resources/originals/ship-imports/genoa-2026/operator-art/france/杜布雷.png
@@ -77,6 +77,40 @@ source:
   - resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-希利.png
   - resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-帕特森.png
   - resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-巴格利.png
+
+  - resources/originals/ship-imports/leyte-1944/日军算子.rar
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-金刚.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-榛名.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-铃谷.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-熊野.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-利根.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-筑摩.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CL-矢矧.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-浦风.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-矶风.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-雪风.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-滨风.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-清霜.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-野分.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-大和.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-武藏.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-长门.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-爱宕.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-高雄.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-摩耶.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-鸟海.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-妙高.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-羽黑.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CL-能代.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-早霜.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-秋霜.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-岸波.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-冲波.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-长波.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-朝霜.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-滨波.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-藤波.png
+  - resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-岛风.png
 
 records:
   IBS-U-RN-HOOD:
@@ -4515,6 +4549,8 @@ records:
       aircraft: true
       vp: 33
       source_page: 1
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-金刚.png
+
   IBS-U-IJN-HARUNA:
     catalog:
       name: 榛名
@@ -4695,6 +4731,8 @@ records:
       aircraft: true
       vp: 33
       source_page: 1
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-榛名.png
+
   IBS-U-IJN-SUZUYA:
     catalog:
       name: 铃谷
@@ -4839,6 +4877,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-铃谷.png
+
   IBS-U-IJN-KUMANO:
     catalog:
       name: 熊野
@@ -4983,6 +5023,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-熊野.png
+
   IBS-U-IJN-TONE:
     catalog:
       name: 利根
@@ -5120,6 +5162,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-利根.png
+
   IBS-U-IJN-CHIKUMA:
     catalog:
       name: 筑摩
@@ -5257,6 +5301,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-筑摩.png
+
   IBS-U-IJN-YAHAGI:
     catalog:
       name: 矢矧
@@ -5370,6 +5416,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CL-矢矧.png
+
   IBS-U-IJN-URAKAZE:
     catalog:
       name: 浦风
@@ -5460,6 +5508,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-浦风.png
+
   IBS-U-IJN-ISOKAZE-1944:
     catalog:
       name: 矶风-1944
@@ -5550,6 +5600,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-矶风.png
+
   IBS-U-IJN-YUKIKAZE-1944:
     catalog:
       name: 雪风-1944
@@ -5640,6 +5692,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-雪风.png
+
   IBS-U-IJN-HAMAKAZE-1944:
     catalog:
       name: 滨风-1944
@@ -5730,6 +5784,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-滨风.png
+
   IBS-U-IJN-KIYOSHIMO:
     catalog:
       name: 清霜
@@ -5829,6 +5885,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-清霜.png
+
   IBS-U-IJN-NOWAKI:
     catalog:
       name: 野分
@@ -5928,6 +5986,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-野分.png
+
   IBS-U-USN-IOWA:
     catalog:
       name: 衣阿华
@@ -6372,8 +6432,7 @@ records:
         - 3
         - 2
         - 1
-      - - 5
-        - 4
+      - - 4
         - 3
         - 2
         - 1
@@ -6501,8 +6560,7 @@ records:
         - 3
         - 2
         - 1
-      - - 5
-        - 4
+      - - 4
         - 3
         - 2
         - 1
@@ -9775,6 +9833,8 @@ records:
       aircraft: true
       vp: 45
       source_page: 3
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-大和.png
+
   IBS-U-IJN-MUSASHI:
     catalog:
       name: 武藏
@@ -9888,6 +9948,8 @@ records:
       aircraft: true
       vp: 45
       source_page: 3
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-武藏.png
+
   IBS-U-IJN-NAGATO-1944:
     catalog:
       name: 长门-1944
@@ -10036,6 +10098,8 @@ records:
       aircraft: true
       vp: 35
       source_page: 3
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-长门.png
+
   IBS-U-IJN-ATAGO-1944:
     catalog:
       name: 爱宕-1944
@@ -10172,6 +10236,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-爱宕.png
+
   IBS-U-IJN-TAKAO-1944:
     catalog:
       name: 高雄-1944
@@ -10316,6 +10382,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-高雄.png
+
   IBS-U-IJN-MAYA:
     catalog:
       name: 摩耶
@@ -10452,6 +10520,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-摩耶.png
+
   IBS-U-IJN-CHOKAI-1944:
     catalog:
       name: 鸟海-1944
@@ -10596,6 +10666,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-鸟海.png
+
   IBS-U-IJN-MYOKO-1944:
     catalog:
       name: 妙高-1944
@@ -10740,6 +10812,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-妙高.png
+
   IBS-U-IJN-HAGURO-1944:
     catalog:
       name: 羽黑-1944
@@ -10884,6 +10958,8 @@ records:
         torpedoes: 1
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-羽黑.png
+
   IBS-U-IJN-NOSHIRO:
     catalog:
       name: 能代
@@ -10985,6 +11061,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CL-能代.png
+
   IBS-U-IJN-HAYASHIMO:
     catalog:
       name: 早霜
@@ -11075,6 +11153,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-早霜.png
+
   IBS-U-IJN-AKISHIMO:
     catalog:
       name: 秋霜
@@ -11165,6 +11245,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-秋霜.png
+
   IBS-U-IJN-KISHINAMI:
     catalog:
       name: 岸波
@@ -11255,6 +11337,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-岸波.png
+
   IBS-U-IJN-OKINAMI:
     catalog:
       name: 冲波
@@ -11345,6 +11429,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-冲波.png
+
   IBS-U-IJN-NAGANAMI-1944:
     catalog:
       name: 长波-1944
@@ -11435,6 +11521,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-长波.png
+
   IBS-U-IJN-ASASHIMO:
     catalog:
       name: 朝霜
@@ -11525,6 +11613,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-朝霜.png
+
   IBS-U-IJN-HAMANAMI:
     catalog:
       name: 滨波
@@ -11615,6 +11705,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-滨波.png
+
   IBS-U-IJN-FUJINAMI:
     catalog:
       name: 藤波
@@ -11705,6 +11797,8 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-藤波.png
+
   IBS-U-IJN-SHIMAKAZE:
     catalog:
       name: 岛风
@@ -11816,3 +11910,4 @@ records:
         torpedoes: 2
         reloads: 0
       torpedo_type: jp-24-type93
+    artwork: resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-岛风.png

@@ -51,6 +51,24 @@ def test_repository_migrates_imported_ships_to_allow_missing_artwork(tmp_path: P
         repository.connection.close()
 
 
+def test_leyte_operators_and_corrected_battleship_speed_tracks_are_in_bundle() -> None:
+    bundle = yaml.safe_load(
+        (STRUCTURED / "ships" / "import-bundle.yaml").read_text(encoding="utf-8")
+    )
+    leyte = {
+        ship_id: entry
+        for ship_id, entry in bundle["records"].items()
+        if "resources/originals/ship-imports/leyte-1944/" in entry.get("artwork", "")
+    }
+    japanese = [entry for entry in leyte.values() if "/operator-art/jp/" in entry["artwork"]]
+    assert len(leyte) == 63
+    assert len(japanese) == 32
+    assert all(Path(entry["artwork"]).is_file() for entry in leyte.values())
+    expected_track = [[5, 4, 3, 2, 1], [4, 3, 2, 1], [4, 3, 2, 1]]
+    for ship_id in ("IBS-U-USN-WASHINGTON-1944", "IBS-U-USN-SOUTH-DAKOTA-1944"):
+        assert leyte[ship_id]["record"]["speed_damage_track"] == expected_track
+
+
 def test_all_playable_and_reinforcement_ships_have_verified_records() -> None:
     records = load_ship_records()
     required: set[str] = set()

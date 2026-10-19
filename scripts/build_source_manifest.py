@@ -27,6 +27,21 @@ RENAMED = {
 
 
 def original_paths(relative: str, filename: str) -> list[str]:
+    if relative.startswith("resources/originals/ship-imports/leyte-1944/source-images/"):
+        source_names = {
+            "ship-table-1.png": "微信图片_20261019000528_41_98.png",
+            "ship-table-2.png": "微信图片_20261019000529_42_98.png",
+            "ship-table-3.png": "微信图片_20261019000547_43_98.png",
+        }
+        return [rf"E:\铁底湾在线网推\新的船的资料\莱特湾\{source_names[filename]}"]
+    if relative == "resources/originals/ship-imports/leyte-1944/美军算子.rar":
+        return [r"E:\铁底湾在线网推\新的船的资料\莱特湾\美军算子.rar"]
+    if relative == "resources/originals/ship-imports/leyte-1944/日军算子.rar":
+        return [r"E:\铁底湾在线网推\新的船的资料\莱特湾\日军算子.rar"]
+    if relative.startswith("resources/originals/ship-imports/leyte-1944/operator-art/us/"):
+        return [r"E:\铁底湾在线网推\新的船的资料\莱特湾\美军算子.rar"]
+    if relative.startswith("resources/originals/ship-imports/leyte-1944/operator-art/jp/"):
+        return [r"E:\铁底湾在线网推\新的船的资料\莱特湾\日军算子.rar"]
     if relative.startswith("resources/originals/ship-imports/genoa-2026/workbooks/"):
         return [rf"E:\铁底湾在线网推\新的船的资料\{filename}"]
     if relative.startswith("resources/originals/ship-imports/genoa-2026/scenario/"):

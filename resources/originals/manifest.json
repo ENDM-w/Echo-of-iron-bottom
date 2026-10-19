@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "source_root": "D:\\desktop\\铁底湾",
-  "canonical_file_count": 439,
-  "source_path_count": 440,
-  "total_bytes": 111324348,
+  "canonical_file_count": 472,
+  "source_path_count": 473,
+  "total_bytes": 112450559,
   "files": [
     {
       "path": "resources/originals/assets/images/1.png",
@@ -3222,6 +3222,262 @@
       ]
     },
     {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-大和.png",
+      "bytes": 17672,
+      "sha256": "4bd55ad0fc3232b85c1487b52da8039ddbd29ecf72dd2f35b62235c273f3ae69",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-榛名.png",
+      "bytes": 19657,
+      "sha256": "1a95db87b3a090dbdabc79588a2436b2a08705c6adb9ea4dbb87b6eeeb9e0ea3",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-武藏.png",
+      "bytes": 18361,
+      "sha256": "84d9dc63fdada083ca60663b3e127dd8fb0070df6bb9add5d371fa7056ab0d43",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-金刚.png",
+      "bytes": 19243,
+      "sha256": "d3c884a6d307e60cf8710fe5a1de5b53af7f2773a5a26231a15307e4a4395ef9",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/BB-长门.png",
+      "bytes": 19361,
+      "sha256": "63692af8c49ff657f2d1a939bd5b44100d1d64befd3dc7d73d285e49786e780c",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-利根.png",
+      "bytes": 19125,
+      "sha256": "a968407e3db86bca98f7a1f7ecef444f7542a084770bc3450ac8520a94b9e7fa",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-妙高.png",
+      "bytes": 19250,
+      "sha256": "5e319e29f022b23cb20f24409cdc547aa915c312b6512feb3bb0aef004749e3e",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-摩耶.png",
+      "bytes": 19832,
+      "sha256": "90e3a48a584783fc927f71e0f21f88dba8c087646d9207b73df8316fcf1909ff",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-熊野.png",
+      "bytes": 19185,
+      "sha256": "8f7b47da76f92ecc6732153111e142c241075e9804ea534754841355a5f31db1",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-爱宕.png",
+      "bytes": 18974,
+      "sha256": "e5cdbed3d3daf2309e244d58afcea16f6c32078ca47b6c33dc3ce700ca5e2b47",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-筑摩.png",
+      "bytes": 19329,
+      "sha256": "738e316b74de273f74361e2109b77e5cf9c61ba90dfe7857849a8d86f6ad7ff1",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-羽黑.png",
+      "bytes": 19019,
+      "sha256": "b25e36683d1fd67d19aa0fd9dcc41c03bca43d9e496c137868fe9d41ac9178ec",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-铃谷.png",
+      "bytes": 18918,
+      "sha256": "d940bac1a47b653f0bdec0fbe97e983e06ddd096087792b58ff77dd3eb6c438d",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-高雄.png",
+      "bytes": 19011,
+      "sha256": "857a52c47b791657216e88fdcf3fe57843a18907f9118fbef6f0baaab4e810e2",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CA-鸟海.png",
+      "bytes": 19510,
+      "sha256": "62f705ece720d98c80d2f544381d38c424a81099e4dfcad50be0a17276d13ba9",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CL-矢矧.png",
+      "bytes": 18343,
+      "sha256": "be73f33c0ca65e7ed54a59700ba45fc3928b05a5a19c99d3d797fa5027eb2bad",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/CL-能代.png",
+      "bytes": 18416,
+      "sha256": "c639f836cc90064830f1fe257e4db23e6fc9109eadb8db961323a1bb2112619a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-冲波.png",
+      "bytes": 16103,
+      "sha256": "ed1cb1c7145485357de3406dcc1386a672207b9222a456c5641cb1d570e91731",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-岛风.png",
+      "bytes": 15503,
+      "sha256": "aaa9b4124496f9c154127668ee97c54dcbe1ebd6f9895c08bbf39b83a7544ad7",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-岸波.png",
+      "bytes": 16295,
+      "sha256": "f30582a8cb63d0ebb9f8fc986621aa009701067de911b0294f05770513b03ac5",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-早霜.png",
+      "bytes": 16054,
+      "sha256": "6f1873d7234a013d867be5a96a6ff771d087eae4d5270f9d0c8977ca85606a8a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-朝霜.png",
+      "bytes": 16376,
+      "sha256": "b12ea819f21e63a355f9d325a18864c5b503230d3193ebcb3cda11b442ce96f9",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-浦风.png",
+      "bytes": 15967,
+      "sha256": "bb7ae8dd7c5b83fee002f1215c1e935ceaeba44c4be1270c27baed354f3fe899",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-清霜.png",
+      "bytes": 16175,
+      "sha256": "a36f671eab00780ce22fb3318fe6d679a472286678eca73d98075b2cee589184",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-滨波.png",
+      "bytes": 16527,
+      "sha256": "92e6bd78e693d894124a3c83a8e605464f5bf0d33b14c49f80b61810a3bd3ba5",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-滨风.png",
+      "bytes": 15788,
+      "sha256": "263c3c6ea55704e11bb582d49c15f47c82ceb5c52d0925c052480a0f39cd2d3e",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-矶风.png",
+      "bytes": 15460,
+      "sha256": "d185b72829e2492e057547c6fee7e9ca7b8f8ce005bc37dae4d85214aee47e2e",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-秋霜.png",
+      "bytes": 16345,
+      "sha256": "049c74d0a73ff3f2fc8e7a6a2ee32689f26b6148a4c2473233c689b2d14b0a50",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-藤波.png",
+      "bytes": 16703,
+      "sha256": "1e74116ce41a6c1bf0a58241d123a1ed2bb5fad5ed494fc7478a143ee263f265",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-野分.png",
+      "bytes": 16045,
+      "sha256": "2fdc273ecf6abbec9ee0064a36d35790461b32f720bc49ce497e1a7fa68bc9ff",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-长波.png",
+      "bytes": 16070,
+      "sha256": "944c9b0b60fb303201c564190c905d264ba4deac43c1c7b8a58f3dad4aa3016c",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/jp/日军算子/DD-雪风.png",
+      "bytes": 15768,
+      "sha256": "351e378eea0a5d15e01080dc32835f5d20c21663d99522079f101f8e9d323955",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
+      ]
+    },
+    {
       "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/BB-华盛顿.png",
       "bytes": 17887,
       "sha256": "3455d787d9dcd8f94c2f21925558d54800e1bd5a874e2b7087989f72806862d7",
@@ -3471,8 +3727,8 @@
     },
     {
       "path": "resources/originals/ship-imports/leyte-1944/README.md",
-      "bytes": 714,
-      "sha256": "bd369eed9deb3b2fec2aef4bd77337fbac8c463de40d073721fdd84554aeea7b",
+      "bytes": 1461,
+      "sha256": "d85f8fa8899a0ed450178377732e90f8ad897825d4bb74acf1fc16129ec4a24d",
       "original_paths": [
         "D:\\desktop\\铁底湾\\README.md"
       ]
@@ -3499,6 +3755,14 @@
       "sha256": "f6781c4474623a3f49a8891d0f7a4124ececf55374eb5dc9e62195ef21721117",
       "original_paths": [
         "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\微信图片_20261019000547_43_98.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/日军算子.rar",
+      "bytes": 561079,
+      "sha256": "afb7b69eeb962de0af4bcfabec2468e0c0af7af06e9225d5fbce365c9ed9137c",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\日军算子.rar"
       ]
     },
     {
