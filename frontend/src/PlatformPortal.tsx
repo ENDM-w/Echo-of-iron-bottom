@@ -1357,7 +1357,21 @@ export function PlatformPortal({ onClose }: Props) {
   const judgeTorpedoCandidate = (shipId: unknown) =>
     judgeTorpedoCandidates.find((candidate) => candidate.ship_id === String(shipId ?? ""));
   const selectedOrderSeat = summary?.seats.find((seat) => seat.seat_id === orderSeatId);
-  const orderSeatShips = judgeShips.filter((ship) => selectedOrderSeat?.controlled_ship_ids.includes(ship.id));
+  // 裁判端可编辑范围 = 席位自控舰 + 该席位旗舰所辖编队舰（引擎允许旗舰席位给跟随舰下炮击/鱼雷/
+  // 照明弹/探照灯/烟幕，但不允许给编队舰下独立移动——移动由旗舰航路统一生成，所以移动行只列自控舰）。
+  const orderSeatOwnShips = judgeShips.filter((ship) => selectedOrderSeat?.controlled_ship_ids.includes(ship.id));
+  const orderSeatFormationShipIds = new Set(
+    (judgeView?.formations ?? [])
+      .filter((formation) => formation.ship_ids?.length
+        && selectedOrderSeat?.controlled_ship_ids.includes(formation.flagship_id ?? ""))
+      .flatMap((formation) => formation.ship_ids ?? []),
+  );
+  const orderSeatShips = judgeShips.filter(
+    (ship) => selectedOrderSeat?.controlled_ship_ids.includes(ship.id) || orderSeatFormationShipIds.has(ship.id),
+  );
+  const orderSeatShipLabel = (ship: Ship) => selectedOrderSeat?.controlled_ship_ids.includes(ship.id)
+    ? `${ship.name} · ${ship.id}`
+    : `${ship.name} · ${ship.id}（编队随旗舰）`;
   const defaultOrderShipId = selectedOrderSeat?.controlled_ship_ids[0] ?? judgeShips[0]?.id ?? "";
   const defaultOrderShip = judgeShips.find((ship) => ship.id === defaultOrderShipId);
   const playerFormations = view?.formations ?? [];
@@ -2127,7 +2141,7 @@ export function PlatformPortal({ onClose }: Props) {
                     {draftRows("movement").map((row, index) => (
                       <div className="referee-order-row" key={`movement-${index}`}>
                         <label>舰船<select value={String(row.ship_id ?? "")} onChange={(event) => updateOrderRow("movement", index, { ship_id: event.target.value })}>
-                          {orderSeatShips.map((ship) => <option key={ship.id} value={ship.id}>{ship.name} · {ship.id}</option>)}
+                          {orderSeatOwnShips.map((ship) => <option key={ship.id} value={ship.id}>{ship.name} · {ship.id}</option>)}
                         </select></label>
                         <label>计划<input value={String(row.plan ?? "0")} onChange={(event) => updateOrderRow("movement", index, { plan: event.target.value })} /></label>
                         <label>速度<input type="number" value={row.speed == null ? "" : String(row.speed)} onChange={(event) => updateOrderRow("movement", index, { speed: event.target.value === "" ? null : Number(event.target.value) })} /></label>
@@ -2151,7 +2165,7 @@ export function PlatformPortal({ onClose }: Props) {
                               mounts: nextShip?.gun_mounts[0] ? [{ mount_id: nextShip.gun_mounts[0].id, target_id: String(row.primary_target ?? "") || null }] : [],
                             });
                           }}>
-                            {orderSeatShips.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.id}</option>)}
+                            {orderSeatShips.map((item) => <option key={item.id} value={item.id}>{orderSeatShipLabel(item)}</option>)}
                           </select></label>
                           <label>主目标<select value={String(row.primary_target ?? "")} onChange={(event) => updateOrderRow("gunnery", index, { primary_target: event.target.value })}>
                             <option value="">未指定</option>
@@ -2217,7 +2231,7 @@ export function PlatformPortal({ onClose }: Props) {
                               launch_hex: nextShip?.position ? { ...nextShip.position } : null,
                             });
                           }}>
-                            {orderSeatShips.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.id}</option>)}
+                            {orderSeatShips.map((item) => <option key={item.id} value={item.id}>{orderSeatShipLabel(item)}</option>)}
                           </select></label>
                           <label>发射器<select value={String(row.launcher_id ?? "")} onChange={(event) => {
                             const nextLauncher = ship?.torpedo_launchers.find((item) => item.id === event.target.value);
@@ -2281,7 +2295,7 @@ export function PlatformPortal({ onClose }: Props) {
                               mount_id: nextShip?.gun_mounts.find((item) => ["primary", "secondary"].includes(item.kind) && !item.destroyed)?.id ?? null,
                             });
                           }}>
-                            {orderSeatShips.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.id}</option>)}
+                            {orderSeatShips.map((item) => <option key={item.id} value={item.id}>{orderSeatShipLabel(item)}</option>)}
                           </select></label>
                           <label>发射炮位<select value={String(row.mount_id ?? "")} onChange={(event) => updateOrderRow("illumination", index, { mount_id: event.target.value || null })}>
                             <option value="">未指定</option>
@@ -2301,7 +2315,7 @@ export function PlatformPortal({ onClose }: Props) {
                     {draftRows("searchlights").map((row, index) => (
                       <div className="referee-order-row" key={`searchlights-${index}`}>
                         <label>舰船<select value={String(row.ship_id ?? "")} onChange={(event) => updateOrderRow("searchlights", index, { ship_id: event.target.value })}>
-                          {orderSeatShips.map((ship) => <option key={ship.id} value={ship.id}>{ship.name} · {ship.id}</option>)}
+                          {orderSeatShips.map((ship) => <option key={ship.id} value={ship.id}>{orderSeatShipLabel(ship)}</option>)}
                         </select></label>
                         <label>目标<select value={String(row.target_id ?? "")} onChange={(event) => updateOrderRow("searchlights", index, { target_id: event.target.value || null })}>
                           <option value="">未指定</option>
@@ -2319,7 +2333,7 @@ export function PlatformPortal({ onClose }: Props) {
                     {draftRows("smoke").map((row, index) => (
                       <div className="referee-order-row" key={`smoke-${index}`}>
                         <label>舰船<select value={String(row.ship_id ?? "")} onChange={(event) => updateOrderRow("smoke", index, { ship_id: event.target.value })}>
-                          {orderSeatShips.map((ship) => <option key={ship.id} value={ship.id}>{ship.name} · {ship.id}</option>)}
+                          {orderSeatShips.map((ship) => <option key={ship.id} value={ship.id}>{orderSeatShipLabel(ship)}</option>)}
                         </select></label>
                         <label className="check-label"><input type="checkbox" checked={row.deploy !== false} onChange={(event) => updateOrderRow("smoke", index, { deploy: event.target.checked })} />施放烟幕</label>
                         <button type="button" className="quiet" onClick={() => removeOrderRow("smoke", index)}>移除</button>

@@ -1476,3 +1476,12 @@
 - 验证：`tsc -b` 通过；`vite build --base=/tiedi/` 通过（56 modules，产物 `index-Cp_GdpBs.js` / `index-DW2Cjx2D.css`）；原子切换 `dist`，`tiedi` **MainPID 5956 前后一致（未重启、未踢人）**；`/tiedi/` 200、新 bundle 200、`/api/scenarios` 200；新 bundle 内含「拿不到发射 MF」「登录已过期」「航路格式不合法」「无法取得发射 MF」四段文案。
 - 生效方式：玩家刷新页面即加载新 bundle；不刷新则继续用内存里的旧包（不影响对局）。
 - 本批次提交：见 git log `fix(platform): surface torpedo preview failures instead of a silent empty list`。
+
+# 2026-10-19 裁判端订单编辑器可选编队跟随舰（纯前端热更新）
+
+- 现象：裁判在「改订单」里改某个席位时，舰船下拉只列出该席位**自控**的舰船，编队里的跟随舰选不到，因而无法替跟随舰改炮击/鱼雷/照明弹/探照灯/烟幕。
+- 根因：下拉数据源是 `judgeShips.filter(selectedOrderSeat.controlled_ship_ids.includes)`，而引擎的归属规则是「席位自控舰 + 该席位旗舰所辖编队舰」都可下这些订单（`_assert_order_ownership` 的 `remotely_commanded`）。
+- 改动：`orderSeatShips` 扩为「自控舰 ∪ 该席位旗舰所辖编队舰」（按 `judgeView.formations` 里 `flagship_id` 判断），跟随舰选项加「（编队随旗舰）」后缀；「移动计划」行仍只列自控舰（引擎拒绝编队舰独立移动）。
+- 验证：① 后端归属实测（离线副本，KNAPP 旗舰席位）：跟随舰 CAPERTON 的鱼雷订单**允许**、跟随舰独立移动**拒绝**（"编队舰只移动由旗舰航路统一生成"）、敌方舰订单**拒绝**；② `tsc -b` 通过；③ `vite build --base=/tiedi/` 通过（56 modules，产物 `index-B9bwi1QM.js`）；④ 原子切换 `dist`，`tiedi` **MainPID 5956 前后一致（未重启、未踢人）**；⑤ `/tiedi/` 200、新 bundle 200、`/api/scenarios` 200、公网 `https://wangchuanlvren.space/tiedi/` 200。
+- 生效方式：裁判刷新页面即加载新 bundle。
+- 本批次提交：见 git log `fix(platform): let referee order editor target formation followers`。

@@ -1718,3 +1718,16 @@ nginx 日志证据：该对局席位提交接口当天 8 次 422（进取号 15:
 3. 鱼雷卡在该原因存在时用红色提示块展示，占位选项改为「无法取得发射 MF（见上方提示）」；`realistic_command` 的常规提示补上当前回合数，并说明跟随舰需等旗舰席位提交。
 
 验证计划：`tsc -b` + `vite build --base=/tiedi/` 通过；线上 bundle 哈希更新、首页/接口 200、`tiedi` `MainPID` 前后一致（未重启）。
+
+## 2026-10-19 裁判端订单编辑器可选编队内的跟随舰（纯前端热更新）
+
+状态：完成（已热更新上线，`tiedi` MainPID 5956 未变）。
+
+问题：裁判在「改订单」里只能选到所选席位**自控**的舰船（`orderSeatShips = judgeShips.filter(controlled_ship_ids.includes)`）。而引擎的归属规则是"席位自控舰 + 该席位旗舰所辖编队舰"都可以下炮击/鱼雷/照明弹/探照灯/烟幕（`_assert_order_ownership` 的 `remotely_commanded`），所以编队里的跟随舰在裁判端完全无法改单。
+
+方案（纯前端）：
+1. `orderSeatShips` 扩为"自控舰 ∪ 该席位旗舰所辖编队舰"（取 `judgeView.formations` 中 `flagship_id` 属于该席位的编制），下拉标签对跟随舰加「（编队随旗舰）」后缀。
+2. 「移动计划」行的舰船下拉保持**只列自控舰**——引擎明确拒绝编队舰的独立移动（"编队舰只移动由旗舰航路统一生成"）。
+3. 切换舰船时既有的联动保持不变（炮击重建 mounts、鱼雷重建 launcher/count/launch_hex、照明弹重建 mount）。
+
+验证计划：`tsc -b` + `vite build` 通过；`dist` 原子切换、`tiedi` MainPID 不变；线上首页/接口 200。
