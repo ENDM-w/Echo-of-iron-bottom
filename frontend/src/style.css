@@ -106,6 +106,7 @@
 /* —— 地图缩放控件 —— */
 .map-zoom-controls{position:absolute;top:.6rem;right:.6rem;z-index:7;display:flex;gap:.25rem;border:1px solid #485554;background:#182426ee;border-radius:6px;padding:.25rem;box-shadow:0 2px 8px #0008}
 .map-zoom-controls button{padding:.2rem .6rem;font-size:.9rem;border-color:#52615f}
+.map-zoom-controls .last-turn-route-toggle{display:flex;align-items:center;gap:.35rem;padding:0 .45rem;color:#d7dfdc;font-size:.68rem;white-space:nowrap;cursor:pointer}.map-zoom-controls .last-turn-route-toggle input{width:auto;accent-color:#e0c779;margin:0;padding:0}.last-turn-route{fill:none;stroke:#f3dfa0;stroke-width:2.2;stroke-dasharray:4 3;opacity:.8;vector-effect:non-scaling-stroke;pointer-events:none}
 @media(max-width:800px){.map-zoom-controls{top:3rem;right:.6rem}}
 
 /* —— 左侧舰队总览 —— */

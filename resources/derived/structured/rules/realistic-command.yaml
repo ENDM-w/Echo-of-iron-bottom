@@ -19,17 +19,12 @@ rules:
     executable_at: realistic_command.resolve_setup
     tests: [test_default_setup_assigns_every_ship_once_and_is_private, test_setup_rejects_fifth_formation_and_duplicate_membership]
   - id: IBS-R-RC-02
-    title: 领舰航路与逐脉冲尾随
+    title: 旗舰航路、队员速度响应与鱼贯/同步机动
     status: tested
     executable_at: realistic_command.expand_movement_orders
-    tests: [test_leader_order_expands_to_every_attached_member]
-  - id: IBS-R-RC-03
-    title: 编队碰撞预防与紧急停车
-    status: tested
-    executable_at: engine._resolve_movement
-    tests: [test_realistic_state_machine_completes_scenario_three_without_fallback]
+    tests: [test_leader_order_expands_to_every_attached_member, test_formation_members_cannot_submit_independent_movement, test_column_follower_uses_own_speed_with_two_mf_response_limit, test_flagship_is_formation_leader_and_synchronized_mode_copies_mf_commands]
   - id: IBS-R-RC-04
-    title: 共同航速、永久脱队与自动撤退
+    title: 航速危机、永久脱队与自动撤退
     status: tested
     executable_at: realistic_command.apply_detachments
     tests: [test_detached_ship_gets_atomic_withdrawal_order_and_no_torpedoes]
@@ -48,3 +43,8 @@ rules:
     status: tested
     executable_at: realistic_command.RealisticCommander
     tests: [test_realistic_commander_emits_only_formation_movement_orders, test_realistic_state_machine_completes_scenario_three_without_fallback]
+  - id: IBS-R-RC-08
+    title: 临时掉队、自动追赶队尾并归队
+    status: tested
+    executable_at: realistic_command.after_movement
+    tests: [test_straggler_gets_automatic_legal_chase_order_and_rejoins_at_tail, test_blocked_formation_ship_is_marked_temporarily_straggling, test_ship_forced_to_circle_straggles_instead_of_blocking_formation]

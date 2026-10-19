@@ -19,6 +19,7 @@ from iron_bottom_sound.realistic_command import (
     RealisticCommander,
     _best_formation_cohort,
     _withdrawal_order,
+    after_movement,
     default_setup_orders,
     expand_movement_orders,
     refresh_command_chain,
@@ -144,6 +145,146 @@ def test_leader_order_expands_to_every_attached_member() -> None:
     assert {order.ship_id for order in prepared.movement} == {
         ship_id for ship_id in formation.ship_ids if state.ships[ship_id].position
     }
+    speeds = {
+        order.ship_id: engine.movement_cost(order.plan, engine.movement_commands(order))
+        for order in prepared.movement
+    }
+    active_ids = [ship_id for ship_id in formation.ship_ids if ship_id in speeds]
+    assert all(abs(speeds[ahead] - speeds[behind]) <= 2 for ahead, behind in zip(active_ids, active_ids[1:]))
+
+
+def test_formation_members_cannot_submit_independent_movement() -> None:
+    engine, game_id = realistic_game()
+    advance_empty_orders(engine, game_id)
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if item.side == Side.AXIS)
+    follower_id = formation.ship_ids[1]
+    batch = OrderBatch(
+        side=Side.AXIS,
+        phase=state.phase,
+        movement=[MovementOrder(ship_id=follower_id, plan="1")],
+        formation_movement=[FormationMovementOrder(
+            formation_id=formation.id, leader_plan="1", spacing=formation.spacing,
+        )],
+    )
+    _prepared, errors, _detached = expand_movement_orders(engine, state, batch)
+    assert any("independent movement orders" in error for error in errors)
+
+
+def test_column_follower_uses_own_speed_with_two_mf_response_limit() -> None:
+    engine, game_id = realistic_game()
+    advance_empty_orders(engine, game_id)
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if item.side == Side.AXIS)
+    leader_id, follower_id = formation.ship_ids[:2]
+    state.ships[follower_id].speed_damage_track = ((2,), (2,), (2,))
+    batch = OrderBatch(
+        side=Side.AXIS,
+        phase=state.phase,
+        formation_movement=[FormationMovementOrder(
+            formation_id=formation.id, leader_plan="3", spacing=formation.spacing,
+        )],
+    )
+    prepared, errors, _detached = expand_movement_orders(engine, state, batch)
+    assert not errors
+    speeds = {
+        order.ship_id: engine.movement_cost(order.plan, engine.movement_commands(order))
+        for order in prepared.movement
+    }
+    assert speeds[leader_id] == 3
+    assert speeds[follower_id] == 2
+    assert abs(speeds[leader_id] - speeds[follower_id]) <= 2
+
+
+def test_flagship_is_formation_leader_and_synchronized_mode_copies_mf_commands() -> None:
+    engine, game_id = realistic_game()
+    advance_empty_orders(engine, game_id)
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if item.side == Side.AXIS)
+    assert formation.leader_id == formation.flagship_id
+    assert formation.turn_mode == "column_follow"
+    batch = OrderBatch(
+        side=Side.AXIS,
+        phase=state.phase,
+        formation_movement=[FormationMovementOrder(
+            formation_id=formation.id, leader_plan="1S1", spacing=formation.spacing,
+            turn_mode="synchronized",
+        )],
+    )
+    prepared, errors, _ = expand_movement_orders(engine, state, batch)
+    assert not errors
+    assert {order.plan for order in prepared.movement} == {"1S1"}
+
+
+def test_straggler_gets_automatic_legal_chase_order_and_rejoins_at_tail() -> None:
+    engine, game_id = realistic_game()
+    advance_empty_orders(engine, game_id)
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if item.side == Side.AXIS)
+    straggler = state.ships[formation.ship_ids[-1]]
+    straggler.command_status = "straggling"
+    batch = OrderBatch(
+        side=Side.AXIS,
+        phase=state.phase,
+        formation_movement=[FormationMovementOrder(
+            formation_id=formation.id, leader_plan="1", spacing=formation.spacing,
+        )],
+    )
+    prepared, errors, _ = expand_movement_orders(engine, state, batch)
+    assert not errors
+    chase = next(order for order in prepared.movement if order.ship_id == straggler.id)
+    assert engine.validate_orders(game_id, OrderBatch(
+        side=Side.AXIS, phase=state.phase, movement=prepared.movement,
+    ), _prepared=True).valid
+
+    tail = [state.ships[item] for item in formation.ship_ids if item != straggler.id and state.ships[item].command_status == "attached"][-1]
+    target = tail.position.neighbor(((tail.heading + 2) % 6) + 1)
+    straggler.position = target
+    before = len(state.events)
+    after_movement(engine, state)
+    assert straggler.command_status == "attached"
+    assert formation.ship_ids[-1] == straggler.id
+    assert any(event.type == "formation_ship_rejoined" for event in state.events[before:])
+    assert chase.plan
+
+
+def test_blocked_formation_ship_is_marked_temporarily_straggling() -> None:
+    engine, game_id = realistic_game()
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if item.side == Side.AXIS)
+    ship = state.ships[formation.ship_ids[-1]]
+    engine._event(
+        state, "movement_plan_resolved", "test stop",
+        payload={"secret_side": ship.side.value, "ship_id": ship.id, "stopped_early": True},
+    )
+    after_movement(engine, state)
+    assert ship.command_status == "straggling"
+    assert ship.id in formation.ship_ids
+    assert ship.id not in state.withdrawals
+    assert any(event.type == "formation_ship_straggling" for event in state.events)
+
+
+def test_ship_forced_to_circle_straggles_instead_of_blocking_formation() -> None:
+    engine, game_id = realistic_game()
+    advance_empty_orders(engine, game_id)
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if item.side == Side.AXIS)
+    ship = state.ships[formation.ship_ids[-1]]
+    ship.forced_circle_turns = 1
+    ship.forced_turn_side = "starboard"
+    batch = RealisticCommander().choose_orders(engine, game_id, Side.AXIS)
+    prepared, errors, _ = expand_movement_orders(engine, state, batch)
+    assert not errors
+    order = next(item for item in prepared.movement if item.ship_id == ship.id)
+    assert order.formation_straggler
+    assert engine.validate_orders(game_id, prepared, _prepared=True).valid
+    ship.position = HexCoord(q=20, r=20)
+    state.sealed_orders[f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}"] = {Side.AXIS.value: prepared}
+    before = len(state.events)
+    after_movement(engine, state)
+    assert ship.command_status == "straggling"
+    assert formation.ship_ids[-1] == ship.id
+    assert any(event.type == "formation_ship_straggling" for event in state.events[before:])
 
 
 def test_detached_ship_gets_atomic_withdrawal_order_and_no_torpedoes() -> None:
@@ -344,6 +485,23 @@ def test_realistic_commander_emits_only_formation_movement_orders() -> None:
     assert batch.movement == []
 
 
+def test_sunk_attached_ships_do_not_require_formation_movement_orders() -> None:
+    engine, game_id = realistic_game()
+    advance_empty_orders(engine, game_id)
+    state = engine.get(game_id)
+    for formation in state.formations.values():
+        if formation.side == Side.AXIS:
+            for ship_id in formation.ship_ids:
+                state.ships[ship_id].sunk = True
+    prepared, errors, _ = expand_movement_orders(
+        engine,
+        state,
+        OrderBatch(side=Side.AXIS, phase=state.phase),
+    )
+    assert not errors
+    assert not prepared.movement
+
+
 def test_erma_commander_searches_public_enemy_zone_before_contact() -> None:
     engine = IronBottomEngine()
     state = engine.reset("IBS-S-EM-01", 28, GameOptions(realistic_command=True))
@@ -405,13 +563,8 @@ def test_realistic_legal_actions_include_valid_editable_formation_starting_order
     assert engine.validate_orders(game_id, batch).valid
 
 
-def test_friendly_collision_never_damages_when_enemy_shares_the_hex() -> None:
-    """混战同格既含友军对、又含敌舰时，友军对必须仍被紧急停车，不得掷友军碰撞。
-
-    回归：engine._resolve_movement 的友军保护原先按“整组是否全同侧”生效，
-    同一脉冲同落一格的组里混进一艘敌舰即整体跳过保护，随后伤害循环把组内
-    友军×友军也照常掷 collision_check/collision_result。
-    """
+def test_ship_collision_does_not_stop_ships_at_their_original_hex(monkeypatch) -> None:
+    """A successful collision roll applies its consequences without freezing movement."""
     engine = IronBottomEngine()
     state = engine.reset("IBS-S-03", 1, GameOptions(realistic_command=True))
     axis_ships = [ship for ship in state.ships.values() if ship.side == Side.AXIS and ship.position]
@@ -451,21 +604,16 @@ def test_friendly_collision_never_damages_when_enemy_shares_the_hex() -> None:
             movement=[MovementOrder(ship_id=enemy.id, plan="1")],
         ),
     }
-    before = len(state.events)
-    engine._resolve_movement(state)
-    events = state.events[before:]
+    collision_pairs: list[frozenset[str]] = []
 
-    friendly_events = [
-        event for event in events
-        if event.type in {"collision_check", "collision_result"}
-        and event.payload.get("ships")
-        and state.ships[event.payload["ships"][0]].side
-        == state.ships[event.payload["ships"][1]].side
-    ]
-    assert not friendly_events, [event.message for event in friendly_events]
-    assert a_ship.position == starts[a_ship.id]  # 友军对双双急停在起点
-    assert b_ship.position == starts[b_ship.id]
-    assert enemy.position == target  # 敌舰单独进入争议格
+    def successful_collision(_state, left, right):
+        collision_pairs.append(frozenset((left.id, right.id)))
+        return True
+
+    monkeypatch.setattr(engine, "_resolve_ship_collision", successful_collision)
+    engine._resolve_movement(state)
+    assert frozenset((a_ship.id, b_ship.id)) in collision_pairs
+    assert all(ship.position == target for ship in (a_ship, b_ship, enemy))
 
 
 @pytest.mark.parametrize(("axis_profile", "allies_profile", "seed"), [

@@ -23,7 +23,7 @@ export function FleetRoster({ships,formations,viewerSide,selectedId,onSelect}:{s
   </div>
   <div className="roster-row-meta">
    <span>{ship.ship_type}</span><span>{ship.position?hexLabel(ship.position):ship.sunk?"—":"?"}</span><span>航向 {ship.heading||"?"}</span><span>速 {ship.current_speed}</span>
-   {ship.command_status&&ship.command_status!=="attached"&&<span className="damage-chip flag">{ship.command_status==="retreating"?"自主撤退":ship.command_status==="withdrawn"?"已撤出":"正在脱队"}</span>}
+   {ship.command_status&&ship.command_status!=="attached"&&<span className="damage-chip flag">{ship.command_status==="straggling"?"掉队追赶":ship.command_status==="retreating"?"自主撤退":ship.command_status==="withdrawn"?"已撤出":"正在脱队"}</span>}
    <span>{ship.hull!=null&&ship.max_hull!=null?`船体 ${ship.hull}/${ship.max_hull}`:"船体 ?"}</span>
    {ship.fire_markers>0&&<span className="damage-chip fire">起火×{ship.fire_markers}</span>}
   </div>
@@ -52,7 +52,7 @@ export function FleetRoster({ships,formations,viewerSide,selectedId,onSelect}:{s
       <button className="roster-formation-toggle" onClick={()=>setOpen(prev=>({...prev,[key]:prev[key]===false}))}>
        <b>{formation.name}</b><small>{formationShips.length} 艘 · 间距 {formation.spacing} 格</small><span>{formation.status==="command_disrupted"?"指挥中断":formation.status==="dissolved"?"已解散":"编队完整"}</span>
       </button>
-      <div className="formation-command-strip"><span>领舰：{ships.find(ship=>ship.id===formation.leader_id)?.name??"—"}</span><span>旗舰：{ships.find(ship=>ship.id===formation.flagship_id)?.name??"—"}</span><span>备用：{ships.find(ship=>ship.id===formation.reserve_flagship_id)?.name??"—"}</span></div>
+      <div className="formation-command-strip"><span>旗舰：{ships.find(ship=>ship.id===formation.flagship_id)?.name??"—"}</span><span>备用：{ships.find(ship=>ship.id===formation.reserve_flagship_id)?.name??"—"}</span><span>{formation.turn_mode==="synchronized"?"同步转向":"鱼贯转向"}</span></div>
       {open[key]!==false&&formationShips.map(ship=><div className="formation-ship" key={ship.id}><span className="formation-role">{ship.id===formation.leader_id?"领":ship.id===formation.flagship_id?"旗":ship.id===formation.reserve_flagship_id?"备":"·"}</span>{shipRow(ship)}</div>)}
      </section>})}
      {detached.length>0&&<section className="roster-formation detached"><div className="roster-formation-toggle static"><b>脱队／直属舰</b><small>{detached.length} 艘</small></div>{detached.map(ship=>shipRow(ship))}</section>}

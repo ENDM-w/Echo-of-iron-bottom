@@ -304,7 +304,7 @@ class ShipState(BaseModel):
     forced_speed_turns: int = Field(default=0, ge=0)
     guns_disabled_turns: int = Field(default=0, ge=0)
     formation_id: str | None = None
-    command_status: Literal["attached", "detaching", "retreating", "withdrawn"] = "attached"
+    command_status: Literal["attached", "straggling", "detaching", "retreating", "withdrawn"] = "attached"
     withdrawal_edge: Literal["north", "east", "south", "west"] | None = None
 
     def max_speed_for_turn(self, turn: int) -> int:
@@ -324,6 +324,7 @@ class MovementOrder(BaseModel):
     speed: int | None = Field(default=None, ge=0)
     commands: list[MovementCommand] = Field(default_factory=list)
     formation_emergency_stop: bool = False
+    formation_straggler: bool = False
 
 
 class FormationSetupOrder(BaseModel):
@@ -335,6 +336,7 @@ class FormationSetupOrder(BaseModel):
     reserve_flagship_id: str
     spacing: Literal[1, 2] = 1
     heading: int | None = Field(default=None, ge=1, le=6)
+    turn_mode: Literal["column_follow", "synchronized"] = "column_follow"
 
 
 class FormationSpeedDecision(BaseModel):
@@ -349,6 +351,7 @@ class FormationMovementOrder(BaseModel):
     formation_id: str
     leader_plan: str = "0"
     spacing: Literal[1, 2] | None = None
+    turn_mode: Literal["column_follow", "synchronized"] | None = None
     speed_decision: FormationSpeedDecision | None = None
 
 
@@ -369,6 +372,7 @@ class FormationState(BaseModel):
     locked_heading: int | None = Field(default=None, ge=1, le=6)
     locked_speed: int | None = Field(default=None, ge=0, le=8)
     guide_trail: list[HexCoord] = Field(default_factory=list)
+    turn_mode: Literal["column_follow", "synchronized"] = "column_follow"
 
 
 class CommandSuccession(BaseModel):
@@ -630,6 +634,7 @@ class GameState(BaseModel):
     contact_formations: dict[str, list[str]] = Field(default_factory=dict)
     contact_offsets: dict[str, dict[str, tuple[int, int]]] = Field(default_factory=dict)
     formations: dict[str, FormationState] = Field(default_factory=dict)
+    formation_setup_proposals: dict[str, list[FormationSetupOrder]] = Field(default_factory=dict)
     formation_resume_phase: Phase | None = None
     command_successions: list[CommandSuccession] = Field(default_factory=list)
     withdrawals: dict[str, WithdrawalState] = Field(default_factory=dict)
@@ -690,7 +695,7 @@ class PublicShip(BaseModel):
     captain_command_lost: bool = False
     combat_history: list[ShipCombatEntry] = Field(default_factory=list)
     formation_id: str | None = None
-    command_status: Literal["attached", "detaching", "retreating", "withdrawn"] | None = None
+    command_status: Literal["attached", "straggling", "detaching", "retreating", "withdrawn"] | None = None
     signal_only: bool = False
     illuminated: bool = False
 

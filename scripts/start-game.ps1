@@ -5,9 +5,30 @@ New-Item -ItemType Directory -Force -Path $RuntimeDir | Out-Null
 
 $env:IBS_DB_PATH = Join-Path $ProjectRoot "backend\iron-bottom-sound.sqlite3"
 
-$Backend = Start-Process -FilePath "python" -ArgumentList @(
+$PythonCommand = Get-Command "python" -ErrorAction SilentlyContinue
+$PythonPath = $null
+$PythonPrefix = @()
+if ($null -ne $PythonCommand) {
+    & $PythonCommand.Source -c "import uvicorn" 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) { $PythonPath = $PythonCommand.Source }
+}
+if ($null -eq $PythonPath) {
+    $PythonLauncher = Get-Command "py" -ErrorAction SilentlyContinue
+    if ($null -ne $PythonLauncher) {
+        & $PythonLauncher.Source -3.12 -c "import uvicorn" 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            $PythonPath = $PythonLauncher.Source
+            $PythonPrefix = @("-3.12")
+        }
+    }
+}
+if ($null -eq $PythonPath) {
+    throw "Python with uvicorn is unavailable. Install the project dependencies or add a configured Python 3.12 interpreter."
+}
+
+$Backend = Start-Process -FilePath $PythonPath -ArgumentList ($PythonPrefix + @(
     "-m", "uvicorn", "iron_bottom_sound.api:app", "--app-dir", "backend/src", "--host", "127.0.0.1", "--port", "8000"
-) -WorkingDirectory $ProjectRoot -RedirectStandardOutput (Join-Path $RuntimeDir "backend.log") -RedirectStandardError (Join-Path $RuntimeDir "backend-error.log") -WindowStyle Hidden -PassThru
+)) -WorkingDirectory $ProjectRoot -RedirectStandardOutput (Join-Path $RuntimeDir "backend.log") -RedirectStandardError (Join-Path $RuntimeDir "backend-error.log") -WindowStyle Hidden -PassThru
 
 $Node = Get-Command "node" -ErrorAction SilentlyContinue
 if ($null -eq $Node) {

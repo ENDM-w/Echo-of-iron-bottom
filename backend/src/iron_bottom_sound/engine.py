@@ -406,8 +406,11 @@ class IronBottomEngine:
                 # A firing marker is public only to observers who can currently
                 # observe its source hull. The platform may project it as a
                 # neutral signal farther out under hidden-contact rules.
+                source = state.ships.get(marker.ship_id) if marker.ship_id else None
+                if source is None or source.position is None:
+                    continue
                 if debug or marker.ship_id in visible_ship_ids:
-                    markers.append(marker.model_copy(deep=True))
+                    markers.append(marker.model_copy(update={"position": source.position}, deep=True))
             elif marker.secret_side in (None, side) or debug:
                 markers.append(marker.model_copy(deep=True))
         return PlayerObservation(
@@ -1595,7 +1598,7 @@ class IronBottomEngine:
                 ship_ids = [order.ship_id] if hasattr(order, "ship_id") else []
                 ship_ids.extend(getattr(order, "ship_ids", []))
                 formation_id = getattr(order, "formation_id", None)
-                if formation_id in state.formations:
+                if formation_id in state.formations and field_name not in {"formation_movement", "formation_speed_decisions"}:
                     ship_ids.extend(state.formations[formation_id].ship_ids)
                 for ship_id in set(ship_ids):
                     ship = state.ships.get(ship_id)
@@ -1695,11 +1698,12 @@ class IronBottomEngine:
             if not attacker:
                 errors.append(f"Gunnery references non-owned ship {order.ship_id}")
                 continue
-            if state.scenario_id == "IBS-S-01" and state.turn == 1 and batch.side == Side.AXIS:
+            automatic_assignment = not order.mounts
+            if not automatic_assignment and state.scenario_id == "IBS-S-01" and state.turn == 1 and batch.side == Side.AXIS:
                 errors.append("Japanese ships may not fire during scenario 1 turn 1")
-            if attacker.guns_disabled_turns:
+            if not automatic_assignment and attacker.guns_disabled_turns:
                 errors.append(f"{order.ship_id}: all guns are disabled this turn")
-            if state.options.optional_rules.squalls and self._in_squall(state, attacker.position):
+            if not automatic_assignment and state.options.optional_rules.squalls and self._in_squall(state, attacker.position):
                 errors.append(f"{order.ship_id}: ships in squalls may not fire")
             for target in (order.primary_target, order.secondary_target, order.searchlight_target):
                 if target and target not in state.ships:
@@ -1715,7 +1719,7 @@ class IronBottomEngine:
                     errors.append(f"{order.ship_id}: unavailable gun mount {mount_order.mount_id}")
                 if not target or target.sunk or not target.position:
                     errors.append(f"Illegal target {mount_order.target_id}")
-                elif not self._can_see(state, attacker, target):
+                elif order.mounts and not self._can_see(state, attacker, target):
                     errors.append(f"{order.ship_id}: cannot see {target.id}")
                 elif mount and not self._mount_can_bear(attacker, target, mount.arcs):
                     errors.append(f"{order.ship_id}:{mount.id} cannot bear on {target.id}")
@@ -3303,6 +3307,10 @@ class IronBottomEngine:
         # gets a chance to move away.
         self._check_torpedo_contacts(state)
         for impulse in range(maximum_impulses):
+            ship_positions_before_impulse = {
+                ship.id: ship.position for ship in state.ships.values()
+                if ship.position and not ship.sunk
+            }
             # IBS-R-MAP-01: the play area has a fixed sea buffer outside the
             # printed 34×27 map.  At the final buffer edge the exiting ship
             # stops; no ship, torpedo, wreck, marker or sealed route is ever
@@ -3354,41 +3362,6 @@ class IronBottomEngine:
                         payload={"ship_id": ship_id, "land_hex": destination.label, "movement_impulse": impulse + 1},
                         rule=self._rule("IBS-R-06.1", 7, "6.1 海上移动"),
                     )
-            if state.options.realistic_command:
-                # A guide may be stopped by an enemy collision or wreck after
-                # orders were sealed. Trailing ships react to the guide chain
-                # instead of ramming their own stopped leader.
-                changed = True
-                while changed:
-                    changed = False
-                    grouped: dict[tuple[str, str], list[str]] = {}
-                    for ship_id, destination in destinations.items():
-                        formation_id = state.ships[ship_id].formation_id
-                        if formation_id and state.ships[ship_id].command_status == "attached":
-                            grouped.setdefault((formation_id, destination.label), []).append(ship_id)
-                    for (formation_id, _label), ids in grouped.items():
-                        if len(ids) < 2:
-                            continue
-                        formation = state.formations.get(formation_id)
-                        if not formation:
-                            continue
-                        order_index = {ship_id: index for index, ship_id in enumerate(formation.ship_ids)}
-                        keep = min(ids, key=lambda ship_id: order_index.get(ship_id, 999))
-                        for ship_id in ids:
-                            if ship_id == keep:
-                                continue
-                            current = state.ships[ship_id].position
-                            if current is None or destinations[ship_id] == current:
-                                continue
-                            destinations[ship_id] = current
-                            stopped.add(ship_id)
-                            changed = True
-                            self._event(
-                                state, "formation_emergency_stop",
-                                f"{state.ships[ship_id].name} 紧急停车，避免撞上本编队前舰",
-                                payload={"ship_id": ship_id, "formation_id": formation_id, "movement_impulse": impulse + 1},
-                                rule=self._rule("IBS-R-RC-03", None, "真实模式：编队尾随"),
-                            )
             by_hex: dict[str, list[str]] = {}
             for ship_id, position in destinations.items():
                 by_hex.setdefault(position.label, []).append(ship_id)
@@ -3401,43 +3374,13 @@ class IronBottomEngine:
                     right = state.ships[right_id]
                     if destinations[left_id] == right.position and destinations[right_id] == left.position:
                         collision_sets.add(frozenset((left_id, right_id)))
-            if state.options.realistic_command:
-                # Friendly commanders share the same deconfliction doctrine.
-                # A simultaneous same-hex entry or swap therefore produces a
-                # deterministic emergency stop, never a die-rolled friendly
-                # ram. This applies across formations and to a newly detached
-                # ship executing an original-rule forced movement.  Protection
-                # is granted per side, not per whole hex group: when an enemy
-                # shares the contested hex, the friendly pair must still be
-                # stopped rather than rolling a die-rolled friendly ram.
-                for collision_set in collision_sets:
-                    ids = sorted(collision_set)
-                    by_side: dict[Side, list[str]] = {}
-                    for ship_id in ids:
-                        by_side.setdefault(state.ships[ship_id].side, []).append(ship_id)
-                    for side, members in by_side.items():
-                        newly = [ship_id for ship_id in members if ship_id not in stopped]
-                        if len(newly) < 2:
-                            continue
-                        for ship_id in newly:
-                            destinations[ship_id] = state.ships[ship_id].position  # type: ignore[assignment]
-                            stopped.add(ship_id)
-                        self._event(
-                            state,
-                            "formation_emergency_stop",
-                            "、".join(state.ships[ship_id].name for ship_id in newly)
-                            + " 紧急停车，避免友舰相撞",
-                            payload={"ship_ids": newly, "movement_impulse": impulse + 1},
-                            rule=self._rule("IBS-R-RC-03", None, "真实模式：友舰航路解冲突"),
-                        )
             for collision_set in sorted(collision_sets, key=lambda group: sorted(group)):
                 ids = sorted(collision_set)
                 for left_index, left_id in enumerate(ids):
                     for right_id in ids[left_index + 1:]:
                         if left_id in stopped or right_id in stopped:
                             continue
-                        if self._resolve_ship_collision(state, state.ships[left_id], state.ships[right_id]):
-                            stopped.update((left_id, right_id))
+                        self._resolve_ship_collision(state, state.ships[left_id], state.ships[right_id])
             wreck_positions = {wreck.position: wreck for wreck in state.wrecks}
             for ship_id, destination in destinations.items():
                 if ship_id in stopped or destination not in wreck_positions:
@@ -3445,10 +3388,9 @@ class IronBottomEngine:
                 if self._resolve_wreck_collision(state, state.ships[ship_id], wreck_positions[destination]):
                     stopped.add(ship_id)
             if state.options.realistic_command:
-                # Collision/wreck adjudication above may newly stop a guide at
-                # its pre-impulse hex. Propagate that stop astern before ship
-                # positions are committed, so the sealed wake cannot create a
-                # secondary friendly collision in the same impulse.
+                # A terrain, map-edge, or wreck obstruction can stop a guide
+                # after orders were sealed. Propagate only that physical block
+                # astern; ship-to-ship collision results never stop movement.
                 propagated = True
                 while propagated:
                     propagated = False
@@ -3465,9 +3407,9 @@ class IronBottomEngine:
                                 propagated = True
                                 self._event(
                                     state, "formation_emergency_stop",
-                                    f"{follower.name} 跟随前舰紧急停车",
+                                    f"{follower.name} 因前舰受阻而停止",
                                     payload={"ship_id": follower_id, "formation_id": formation.id, "movement_impulse": impulse + 1},
-                                    rule=self._rule("IBS-R-RC-03", None, "真实模式：编队尾随"),
+                                    rule=self._rule("IBS-R-RC-08", None, "真实模式：临时掉队与追队尾"),
                                 )
             for ship_id, position in destinations.items():
                 if ship_id in resolved_trajectories:
@@ -3497,6 +3439,10 @@ class IronBottomEngine:
                 track_allowance[track.id] = max(0, track.speed_cycle[0] - order.launch_at_mf)
                 moved_tracks[track.id] = 0
                 launched_this_impulse.add(track.id)
+            torpedo_positions_before_impulse = {
+                track.id: track.position for track in state.torpedo_tracks
+                if not track.contact_ship_ids
+            }
             for track in list(state.torpedo_tracks):
                 if (
                     track.id in launched_this_impulse
@@ -3533,8 +3479,13 @@ class IronBottomEngine:
                 moved_tracks[track.id] = moved_tracks.get(track.id, 0) + 1
             # IBS-R-08.2.3: any torpedo and ship sharing a hex is a contact,
             # whether the torpedo moved this impulse or a ship drove into its
-            # stationary hex.
-            self._check_torpedo_contacts(state)
+            # stationary hex. A simultaneous exchange of the two occupied
+            # hexes is also a contact at the ship's pre-impulse hex.
+            self._check_torpedo_contacts(
+                state,
+                previous_ship_positions=ship_positions_before_impulse,
+                previous_torpedo_positions=torpedo_positions_before_impulse,
+            )
             state.torpedo_tracks = [
                 track for track in state.torpedo_tracks if track.range_remaining > 0 or track.contact_ship_ids
             ]
@@ -3632,30 +3583,53 @@ class IronBottomEngine:
         state.last_trajectory_turn = state.turn
         self._expand_infinite_map_for_fleet(state)
 
-    def _check_torpedo_contacts(self, state: GameState) -> None:
+    def _check_torpedo_contacts(
+        self,
+        state: GameState,
+        *,
+        previous_ship_positions: dict[str, HexCoord] | None = None,
+        previous_torpedo_positions: dict[str, HexCoord] | None = None,
+    ) -> None:
         """IBS-R-08.2.3: mark any torpedo sharing a hex with an opposing,
-        unsunk ship as in contact.  Runs every impulse so a ship that drives
-        into a stationary torpedo's hex is detected even when the torpedo does
-        not move that impulse."""
+        unsunk ship as in contact. Also detects a torpedo and ship exchanging
+        hexes in the same impulse; the torpedo's destination is the ship's
+        pre-impulse hex and is retained as the hit hex."""
         for track in state.torpedo_tracks:
             if track.contact_ship_ids:
                 continue
-            contacts = [
-                ship.id
-                for ship in state.ships.values()
-                # A torpedo has no declared target.  Every other unsunk ship
-                # occupying its hex becomes a contact, including friendlies.
-                if ship.id != track.launcher_ship_id
-                and not ship.sunk
-                and ship.position == track.position
-            ]
+            contacts: list[str] = []
+            crossing_targets: list[str] = []
+            track_start = (previous_torpedo_positions or {}).get(track.id)
+            for ship in state.ships.values():
+                # A torpedo has no declared target. Every other unsunk ship
+                # can become a contact, including friendlies.
+                if ship.id == track.launcher_ship_id or ship.sunk or not ship.position:
+                    continue
+                if ship.position == track.position:
+                    contacts.append(ship.id)
+                    continue
+                ship_start = (previous_ship_positions or {}).get(ship.id)
+                if (
+                    track_start is not None
+                    and ship_start is not None
+                    and track_start != track.position
+                    and ship.position == track_start
+                    and track.position == ship_start
+                ):
+                    contacts.append(ship.id)
+                    crossing_targets.append(ship.id)
             if contacts:
                 track.contact_ship_ids = contacts
                 self._event(
                     state,
                     "torpedo_contact",
                     f"鱼雷 {track.id} 进入目标格 {track.position.label}",
-                    payload={"track_id": track.id, "candidate_targets": contacts},
+                    payload={
+                        "track_id": track.id,
+                        "candidate_targets": contacts,
+                        "crossing_targets": crossing_targets,
+                        "hit_hex": track.position.label,
+                    },
                     rule=self._rule("IBS-R-08.2.3", 12, "8.2 鱼雷攻击过程"),
                 )
 
@@ -3672,13 +3646,45 @@ class IronBottomEngine:
             attacker = state.ships[order.ship_id]
             if attacker.sunk or not attacker.position:
                 continue
+            blocked_reason = None
+            if attacker.guns_disabled_turns:
+                blocked_reason = "本回合舰炮失能"
+            elif state.scenario_id == "IBS-S-01" and state.turn == 1 and attacker.side == Side.AXIS:
+                blocked_reason = "本回合剧本禁止该舰开火"
+            elif state.options.optional_rules.squalls and self._in_squall(state, attacker.position):
+                blocked_reason = "舰船位于飑区内"
+            if blocked_reason:
+                self._event(
+                    state,
+                    "gunnery_rejected",
+                    f"{attacker.name} 炮击未执行：{blocked_reason}",
+                    payload={"attacker": attacker.id, "reason": blocked_reason},
+                    rule=self._rule("IBS-R-08.1", 9, "8.1 炮击"),
+                )
+                continue
+            mounts = {mount.id: mount for mount in attacker.gun_mounts}
             requested = [(mount_order.mount_id, mount_order.target_id) for mount_order in order.mounts]
             if not requested:
-                for mount in attacker.gun_mounts:
-                    target_id = order.primary_target if mount.kind == "primary" else order.secondary_target
-                    if target_id:
-                        requested.append((mount.id, target_id))
-            mounts = {mount.id: mount for mount in attacker.gun_mounts}
+                available = [
+                    mount for mount in attacker.gun_mounts
+                    if not mount.destroyed and not mount.fired_this_phase
+                ]
+                # A target is selected for the whole ship: fallback is allowed
+                # only when no available mount can engage the primary target.
+                for target_id in (order.primary_target, order.secondary_target):
+                    target = state.ships.get(target_id or "")
+                    if (
+                        not target or target.sunk or not target.position
+                        or not self._can_see(state, attacker, target)
+                    ):
+                        continue
+                    eligible = [
+                        mount for mount in available
+                        if self._mount_can_bear(attacker, target, mount.arcs)
+                    ]
+                    if eligible:
+                        requested = [(mount.id, target.id) for mount in eligible]
+                        break
             for mount_id, target_id in requested:
                 mount = mounts.get(mount_id)
                 target = state.ships.get(target_id)
@@ -3883,6 +3889,7 @@ class IronBottomEngine:
                         "attacker_side": attacker.side.value,
                         "target": target.id,
                         "target_side": target.side.value,
+                        "hit_hex": track.position.label,
                         "distance": distance,
                         "aspect": aspect,
                         "hits": hits,

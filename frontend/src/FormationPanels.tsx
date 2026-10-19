@@ -1,6 +1,6 @@
 import type {Formation,Observation,Ship} from "./types";
 
-export interface FormationSetupDraft{formation_id:string;name:string;ship_ids:string[];leader_id:string;flagship_id:string;reserve_flagship_id:string;spacing:1|2;heading:number|null}
+export interface FormationSetupDraft{formation_id:string;name:string;ship_ids:string[];leader_id:string;flagship_id:string;reserve_flagship_id:string;spacing:1|2;heading:number|null;turn_mode?:"column_follow"|"synchronized"}
 export interface FormationSpeedDraft{formation_id:string;action:"reduce"|"detach";speed?:number|null;detach_ship_ids:string[]}
 export interface FormationMovementDraft{formation_id:string;leader_plan:string;spacing:1|2|null;speed_decision:FormationSpeedDraft|null}
 
@@ -8,18 +8,18 @@ const shipName=(ships:Ship[],id:string)=>ships.find(ship=>ship.id===id)?.name??i
 
 export function FormationSetupPanel({view,orders,onChange}:{view:Observation;orders:FormationSetupDraft[];onChange:(orders:FormationSetupDraft[])=>void}){
  const update=(index:number,patch:Partial<FormationSetupDraft>)=>{const next=structuredClone(orders);Object.assign(next[index],patch);onChange(next)};
- const move=(formationIndex:number,shipId:string,direction:-1|1)=>{const next=structuredClone(orders);const ships=next[formationIndex].ship_ids;const at=ships.indexOf(shipId);const target=at+direction;if(target<0||target>=ships.length)return;[ships[at],ships[target]]=[ships[target],ships[at]];if(direction<0&&target===0)next[formationIndex].leader_id=shipId;onChange(next)};
+ const move=(formationIndex:number,shipId:string,direction:-1|1)=>{const next=structuredClone(orders);const ships=next[formationIndex].ship_ids;const at=ships.indexOf(shipId);const target=at+direction;if(target<0||target>=ships.length)return;[ships[at],ships[target]]=[ships[target],ships[at]];next[formationIndex].leader_id=ships[0];next[formationIndex].flagship_id=ships[0];onChange(next)};
  return <section className="formation-panel">
   <div className="plan-heading"><h3>编队初设</h3><span className="engine-filtered">最多四队 · 阵营私有</span></div>
-  <p className="notation-help">每艘舰必须恰好编入一队。纵队第 1 艘是领舰；旗舰负责指挥，备用旗舰在旗舰失能后继承。</p>
+  <p className="notation-help">每艘舰必须恰好编入一队。旗舰是实际领舰；备用旗舰在旗舰失能后继承。队形可选鱼贯或同步转向。</p>
   {orders.map((order,index)=><article className="formation-card" key={order.formation_id}>
    <label>编队名称<input value={order.name} maxLength={40} onChange={event=>update(index,{name:event.target.value})}/></label>
    <div className="formation-controls">
-    <label>领舰<select value={order.leader_id} onChange={event=>{const leader=event.target.value;update(index,{leader_id:leader,ship_ids:[leader,...order.ship_ids.filter(id=>id!==leader)]})}}>{order.ship_ids.map(id=><option key={id} value={id}>{shipName(view.ships,id)}</option>)}</select></label>
-    <label>旗舰<select value={order.flagship_id} onChange={event=>update(index,{flagship_id:event.target.value})}>{order.ship_ids.map(id=><option key={id} value={id}>{shipName(view.ships,id)}</option>)}</select></label>
+    <label>旗舰 / 领舰<select value={order.flagship_id} onChange={event=>{const flagship=event.target.value;update(index,{flagship_id:flagship,leader_id:flagship,ship_ids:[flagship,...order.ship_ids.filter(id=>id!==flagship)]})}}>{order.ship_ids.map(id=><option key={id} value={id}>{shipName(view.ships,id)}</option>)}</select></label>
     <label>备用旗舰<select value={order.reserve_flagship_id} onChange={event=>update(index,{reserve_flagship_id:event.target.value})}>{order.ship_ids.filter(id=>id!==order.flagship_id).map(id=><option key={id} value={id}>{shipName(view.ships,id)}</option>)}</select></label>
     <label>舰间距<select data-tutorial={index===0?"formation-spacing":undefined} value={order.spacing} onChange={event=>update(index,{spacing:Number(event.target.value) as 1|2})}><option value={1}>1 格（相邻）</option><option value={2}>2 格（空一格）</option></select></label>
     <label>舰首方向<select value={order.heading??1} onChange={event=>update(index,{heading:Number(event.target.value)})}>{[1,2,3,4,5,6].map(value=><option key={value}>{value}</option>)}</select></label>
+    <label>转向方式<select value={order.turn_mode??"column_follow"} onChange={event=>update(index,{turn_mode:event.target.value as "column_follow"|"synchronized"})}><option value="column_follow">鱼贯转向</option><option value="synchronized">同步转向</option></select></label>
    </div>
    <ol className="formation-order">{order.ship_ids.map((id,shipIndex)=><li key={id}><b>{shipIndex+1}. {shipName(view.ships,id)}</b>{id===order.leader_id&&<span>领舰</span>}{id===order.flagship_id&&<span>旗舰</span>}{id===order.reserve_flagship_id&&<span>备用</span>}<button type="button" disabled={shipIndex===0} onClick={()=>move(index,id,-1)}>上移</button><button type="button" disabled={shipIndex===order.ship_ids.length-1} onClick={()=>move(index,id,1)}>下移</button></li>)}</ol>
   </article>)}
@@ -30,8 +30,8 @@ export function FormationMovementPanel({view,orders,onChange}:{view:Observation;
  const byId=new Map((view.formations??[]).map(item=>[item.id,item]));
  const update=(index:number,patch:Partial<FormationMovementDraft>)=>{const next=structuredClone(orders);Object.assign(next[index],patch);onChange(next)};
  return <section className="formation-panel">
-  <div className="plan-heading"><h3>编队移动计划</h3><span className="engine-filtered">只给领舰下令</span></div>
-  <p className="notation-help">填写领舰航路，后舰由引擎逐 MF 沿共享航迹尾随。共同航速不足时，降低全队速度或让受损舰永久脱队。</p>
+  <div className="plan-heading"><h3>编队移动计划</h3><span className="engine-filtered">只给旗舰下令</span></div>
+  <p className="notation-help">只填写旗舰航路。鱼贯模式沿共享航迹依次转向；同步模式全队同一 MF 执行相同舵令。临时受阻舰自动追赶队尾；速度危机可全队降速或永久脱队撤退。</p>
   {orders.map((order,index)=>{const formation=byId.get(order.formation_id) as Formation|undefined;const members=formation?.ship_ids.map(id=>view.ships.find(ship=>ship.id===id)).filter(Boolean) as Ship[]|undefined;return <article className="formation-card" key={order.formation_id}>
    <h4>{formation?.name??order.formation_id}</h4><p>{formation?`领舰 ${shipName(view.ships,formation.leader_id)} · 旗舰 ${shipName(view.ships,formation.flagship_id)} · 当前 ${formation.speed} MF`:"编队数据载入中"}</p>
    {formation?.status==="command_disrupted"&&<p className="form-error">指挥中断：本回合锁定舰首 {formation.locked_heading}、航速 {formation.locked_speed} 直航；损伤或碰撞可截断。</p>}

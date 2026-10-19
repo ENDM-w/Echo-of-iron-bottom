@@ -95,13 +95,14 @@ def default_setup_orders(state: GameState, side: Side) -> list[FormationSetupOrd
     result: list[FormationSetupOrder] = []
     for index, (name, members) in enumerate(groups, 1):
         positioned = [ship_id for ship_id in members if _source_position(state, ship_id)]
-        leader = positioned[0] if positioned else members[0]
-        ordered = [leader] + [ship_id for ship_id in members if ship_id != leader]
+        ordered = positioned + [ship_id for ship_id in members if ship_id not in positioned]
         flagship = next(
             (ship_id for ship_id in ordered if load_scenario(state.scenario_id).get("ships") and
              next((entry for entry in load_scenario(state.scenario_id)["ships"] if entry["id"] == ship_id), {}).get("flagship")),
-            leader,
+            ordered[0],
         )
+        leader = flagship
+        ordered = [leader] + [ship_id for ship_id in ordered if ship_id != leader]
         reserve = next(ship_id for ship_id in ordered if ship_id != flagship)
         heading = state.ships[leader].heading
         result.append(FormationSetupOrder(
@@ -151,8 +152,8 @@ def validate_setup(engine: "IronBottomEngine", state: GameState, batch: OrderBat
     occupied: set[str] = set()
     for order in orders:
         members = set(order.ship_ids)
-        if order.ship_ids[0] != order.leader_id:
-            errors.append(f"{order.formation_id}: leader must be first in formation order")
+        if order.ship_ids[0] != order.flagship_id or order.leader_id != order.flagship_id:
+            errors.append(f"{order.formation_id}: flagship must be the first ship and formation leader")
         if not {order.leader_id, order.flagship_id, order.reserve_flagship_id} <= members:
             errors.append(f"{order.formation_id}: leader/flagships must be formation members")
         if order.flagship_id == order.reserve_flagship_id:
@@ -197,6 +198,57 @@ def _shortest_hex_path(
     raise ValueError(f"No map path {start.label} -> {end.label}")
 
 
+def _straggler_order(engine: "IronBottomEngine", state: GameState, formation: FormationState, ship: ShipState, tail: ShipState | None) -> MovementOrder:
+    if not ship.position:
+        return MovementOrder(ship_id=ship.id, plan="0")
+    if tail and tail.position:
+        target = tail.position
+        for _ in range(formation.spacing):
+            try:
+                target = target.neighbor(_opposite(tail.heading), columns=state.map_columns, rows=state.map_rows)
+            except ValueError:
+                target = tail.position
+                break
+    else:
+        target = formation.guide_trail[0] if formation.guide_trail else ship.position
+    occupied = {
+        other.position for other in state.ships.values()
+        if other.position and other.id != ship.id and not other.sunk
+    }
+    targets = [target]
+    for heading in range(1, 7):
+        try:
+            targets.append(target.neighbor(heading, columns=state.map_columns, rows=state.map_rows))
+        except ValueError:
+            continue
+    targets = sorted(
+        {cell for cell in targets if cell not in occupied and not engine._terrain_impassable(state, cell)},
+        key=lambda cell: (target.distance(cell), ship.position.distance(cell), cell.label),
+    )
+    best: tuple[int, int, MovementOrder] | None = None
+    for cell in targets:
+        route = engine.movement_path(state, ship, cell)
+        if not route["valid"]:
+            continue
+        order = MovementOrder(ship_id=ship.id, plan=route["plan"], speed=route["cost"])
+        candidate = (target.distance(cell), -int(route["cost"] or 0), order)
+        if best is None or candidate[:2] < best[:2]:
+            best = candidate
+    if best:
+        return best[2]
+    minimum, maximum = engine._legal_speed_range(ship, state.turn)
+    if ship.forced_circle_turns and maximum > 0:
+        sides = [ship.forced_turn_side] if ship.forced_turn_side else ["port", "starboard"]
+        token = {"port": "P", "starboard": "S"}
+        for speed in range(maximum, minimum - 1, -1):
+            for side in sides:
+                plan = "1" + (f"{token[side]}1" * max(0, speed - 1))
+                if engine.movement_preview(state, ship, plan=plan)["commitable"]:
+                    return MovementOrder(ship_id=ship.id, plan=plan, speed=speed)
+    speed = max(0, min(maximum, minimum))
+    return MovementOrder(ship_id=ship.id, plan=str(speed) if speed else "0", speed=speed)
+
+
 def rebuild_guide_trail(state: GameState, formation: FormationState) -> list[HexCoord]:
     active = [state.ships[ship_id] for ship_id in formation.ship_ids if state.ships[ship_id].position and state.ships[ship_id].command_status == "attached"]
     if not active:
@@ -238,6 +290,7 @@ def resolve_setup(engine: "IronBottomEngine", state: GameState) -> None:
                 spacing=order.spacing,
                 heading=heading,
                 speed=state.ships[order.leader_id].current_speed,
+                turn_mode=order.turn_mode,
             )
             formations[formation.id] = formation
             for ship_id in order.ship_ids:
@@ -401,7 +454,13 @@ def _best_formation_cohort(
     faster deterministic programme.
     """
     forced = set(forced_detach or ())
-    available = [ship for ship in members if ship.id not in forced]
+    # Forced-circle ships are temporarily outside formation movement. They
+    # follow their damage rule and must not be permanently detached by speed
+    # planning for the rest of the column.
+    available = [
+        ship for ship in members
+        if ship.id not in forced and not ship.forced_circle_turns
+    ]
     if not available:
         return 0, sorted(forced)
     maximum = max(engine._legal_speed_range(ship, state.turn)[1] for ship in available)
@@ -422,10 +481,13 @@ def _best_formation_cohort(
         )
         choices.append((score, speed, compatible))
     if not choices:
-        return 0, sorted(ship.id for ship in members)
+        return 0, sorted(ship.id for ship in available)
     _score, speed, compatible = max(choices, key=lambda item: item[0])
     retained = {ship.id for ship in compatible}
-    detach = sorted(ship.id for ship in members if ship.id not in retained)
+    detach = sorted(
+        ship.id for ship in members
+        if ship.id not in retained and not ship.forced_circle_turns
+    )
     return speed, detach
 
 
@@ -438,17 +500,52 @@ def expand_movement_orders(
     detach_ids: list[str] = []
     orders = {order.formation_id: order for order in batch.formation_movement}
     owned_formations = [formation for formation in state.formations.values() if formation.side == batch.side and formation.status != "dissolved"]
-    expected = {formation.id for formation in owned_formations if any(state.ships[item].position and state.ships[item].command_status == "attached" for item in formation.ship_ids)}
+    formation_ship_ids = {ship_id for formation in owned_formations for ship_id in formation.ship_ids}
+    independent_formation_orders = formation_ship_ids & {order.ship_id for order in batch.movement}
+    if independent_formation_orders:
+        errors.append(f"Formation ships cannot receive independent movement orders: {sorted(independent_formation_orders)}")
+        return prepared, errors, detach_ids
+    expected = {
+        formation.id for formation in owned_formations
+        if any(
+            state.ships[item].position and not state.ships[item].sunk
+            and state.ships[item].command_status == "attached"
+            and not engine.captain_command_lost(state, state.ships[item])
+            for item in formation.ship_ids
+        )
+    }
     if set(orders) != expected:
         errors.append(f"Formation movement must cover active formations; missing={sorted(expected-set(orders))}, extra={sorted(set(orders)-expected)}")
         return prepared, errors, detach_ids
     generated: list[MovementOrder] = []
     for formation in owned_formations:
-        if formation.id not in orders:
-            continue
-        order = orders[formation.id]
-        members = [state.ships[ship_id] for ship_id in formation.ship_ids if state.ships[ship_id].position and state.ships[ship_id].command_status == "attached" and not state.ships[ship_id].sunk]
+        order = orders.get(formation.id)
+        members = [
+            state.ships[ship_id] for ship_id in formation.ship_ids
+            if state.ships[ship_id].position and state.ships[ship_id].command_status == "attached"
+            and not state.ships[ship_id].sunk
+            and not engine.captain_command_lost(state, state.ships[ship_id])
+        ]
+        forced_stragglers = [ship for ship in members if ship.forced_circle_turns]
+        members = [ship for ship in members if not ship.forced_circle_turns]
+        for ship in forced_stragglers:
+            chase = _straggler_order(engine, state, formation, ship, members[-1] if members else None)
+            generated.append(chase.model_copy(update={"formation_straggler": True}))
         if not members:
+            stragglers = [
+                state.ships[ship_id] for ship_id in formation.ship_ids
+                if state.ships[ship_id].position and state.ships[ship_id].command_status == "straggling"
+                and not state.ships[ship_id].sunk
+            ]
+            for ship in stragglers:
+                generated.append(_straggler_order(engine, state, formation, ship, None))
+            continue
+        if order is None:
+            tail = members[-1]
+            for ship_id in formation.ship_ids:
+                ship = state.ships[ship_id]
+                if ship.position and not ship.sunk and ship.command_status == "straggling":
+                    generated.append(_straggler_order(engine, state, formation, ship, tail))
             continue
         leader = state.ships.get(formation.leader_id)
         if leader not in members:
@@ -487,17 +584,10 @@ def expand_movement_orders(
             )
             plan = str(min(forced_speed, engine._legal_speed_range(leader, state.turn)[1]))
         leader_cost = engine.movement_cost(plan, engine.movement_commands(MovementOrder(ship_id=leader.id, plan=plan)))
-        forced_incompatible = next(
-            (ship for ship in members if ship.forced_circle_turns), None
-        )
-        if forced_incompatible:
-            errors.append(
-                f"{formation.id}: {forced_incompatible.id} forced movement prevents formation following"
-            )
-            continue
+        turn_mode = order.turn_mode or formation.turn_mode
         incompatible = [ship for ship in members if not (engine._legal_speed_range(ship, state.turn)[0] <= leader_cost <= engine._legal_speed_range(ship, state.turn)[1])]
         emergency_stop = bool(decision and decision.emergency_stop and leader_cost == 0)
-        if incompatible and not emergency_stop:
+        if turn_mode == "synchronized" and incompatible and not emergency_stop:
             if decision is None:
                 errors.append(f"{formation.id}: speed {leader_cost} is outside member limits; reduce or detach")
                 continue
@@ -527,53 +617,97 @@ def expand_movement_orders(
             if not route or position != route[-1]:
                 route.append(position)
         target_spacing = order.spacing or formation.spacing
+        previous_ship_speed = leader_cost
+        previous_final_index = len(route) - 1
+        follower_number = 0
         for member_index, ship in enumerate(members):
             if ship.id == leader.id:
+                continue
+            if turn_mode == "synchronized":
+                generated.append(MovementOrder(
+                    ship_id=ship.id,
+                    plan=plan,
+                    speed=leader_cost,
+                    formation_emergency_stop=emergency_stop and leader_cost == 0,
+                ))
                 continue
             try:
                 start_index = max(index for index, position in enumerate(route) if position == ship.position)
             except ValueError:
                 errors.append(f"{formation.id}: {ship.id} ({ship.name}) is no longer on the guide trail")
                 continue
-            final_index = max(start_index, len(route) - 1 - member_index * target_spacing)
-            hex_path = route[start_index + 1:final_index + 1]
-            try:
-                commands = engine.path_to_commands(ship, hex_path)
-                # End bow-on to the next guide segment. A trailing ship that
-                # reaches a bend but keeps its old heading would need to turn
-                # before its mandatory first advance next turn (illegal under
-                # IBS-R-06). A final 60-degree turn is free and preserves the
-                # exact wake for the next formation order.
-                if final_index + 1 < len(route) and not ship.forced_straight_turns:
-                    _program, final_heading = engine._movement_program(
-                        ship.position, ship.heading, commands,
-                        columns=state.map_columns, rows=state.map_rows,
-                    )
-                    desired_heading = engine._bearing_between(route[final_index], route[final_index + 1])
-                    relative = (desired_heading - final_heading) % 6
-                    if relative == 1:
-                        commands.append("turn_starboard_60")
-                    elif relative == 5:
-                        commands.append("turn_port_60")
-                if ship.forced_straight_turns and any(command != "advance" for command in commands):
-                    errors.append(f"{formation.id}: {ship.id} forced movement prevents formation following")
-                    continue
-                if ship.turn_limit_degrees == 60 and any(command.endswith("120") for command in commands):
-                    errors.append(f"{formation.id}: {ship.id} forced movement prevents formation following")
-                    continue
-                follower_plan = engine.commands_to_plan(commands)
-                follower_cost = engine.movement_cost(follower_plan, commands)
-                if commands and commands[0] != "advance":
-                    errors.append(f"{formation.id}: {ship.id} ({ship.name}) cannot follow guide trail before advancing")
-                    continue
-            except ValueError as error:
-                errors.append(f"{formation.id}: {ship.id} ({ship.name}) cannot follow guide trail: {error}")
+            follower_number += 1
+            desired_index = max(start_index, len(route) - 1 - follower_number * target_spacing)
+            maximum_final_index = previous_final_index - target_spacing
+            if maximum_final_index < start_index:
+                tail = next((item for item in reversed(members) if item.id != ship.id), None)
+                chase = _straggler_order(engine, state, formation, ship, tail)
+                generated.append(chase.model_copy(update={"formation_straggler": True}))
                 continue
             minimum, maximum = engine._legal_speed_range(ship, state.turn)
-            if not minimum <= follower_cost <= maximum:
-                errors.append(f"{formation.id}: {ship.id} ({ship.name}) follower speed {follower_cost} outside {minimum}-{maximum}")
+            response_minimum = max(minimum, previous_ship_speed - 2)
+            response_maximum = min(maximum, previous_ship_speed + 2)
+            candidates: list[tuple[tuple[int, int], int, int, str]] = []
+            blocked_reason: str | None = None
+            for final_index in range(start_index, maximum_final_index + 1):
+                try:
+                    commands = engine.path_to_commands(ship, route[start_index + 1:final_index + 1])
+                except ValueError as error:
+                    blocked_reason = f"cannot follow guide trail: {error}"
+                    continue
+                if ship.forced_straight_turns and any(command != "advance" for command in commands):
+                    blocked_reason = "forced movement prevents formation following"
+                    continue
+                if ship.turn_limit_degrees == 60 and any(command.endswith("120") for command in commands):
+                    blocked_reason = "forced movement prevents formation following"
+                    continue
+                try:
+                    if final_index + 1 < len(route) and not ship.forced_straight_turns:
+                        _program, final_heading = engine._movement_program(
+                            ship.position, ship.heading, commands,
+                            columns=state.map_columns, rows=state.map_rows,
+                        )
+                        desired_heading = engine._bearing_between(route[final_index], route[final_index + 1])
+                        relative = (desired_heading - final_heading) % 6
+                        if relative == 1:
+                            commands.append("turn_starboard_60")
+                        elif relative == 5:
+                            commands.append("turn_port_60")
+                    if commands and commands[0] != "advance":
+                        blocked_reason = "cannot follow guide trail before advancing"
+                        continue
+                    follower_plan = engine.commands_to_plan(commands)
+                    follower_cost = engine.movement_cost(follower_plan, commands)
+                except ValueError as error:
+                    blocked_reason = f"cannot follow guide trail: {error}"
+                    continue
+                if response_minimum <= follower_cost <= response_maximum:
+                    candidates.append((
+                        (abs(final_index - desired_index), -final_index),
+                        final_index, follower_cost, follower_plan,
+                    ))
+            if not candidates:
+                if blocked_reason:
+                    errors.append(f"{formation.id}: {ship.id} {blocked_reason}")
+                else:
+                    errors.append(
+                        f"{formation.id}: {ship.id} ({ship.name}) follower speed cannot respond within ±2 MF of preceding ship speed"
+                    )
+                continue
+            _score, final_index, follower_cost, follower_plan = min(candidates, key=lambda item: item[0])
+            if abs(follower_cost - previous_ship_speed) > 2:
+                errors.append(
+                    f"{formation.id}: {ship.id} ({ship.name}) speed {follower_cost} differs from preceding ship by more than 2 MF"
+                )
                 continue
             generated.append(MovementOrder(ship_id=ship.id, plan=follower_plan, speed=follower_cost, formation_emergency_stop=emergency_stop and follower_cost == 0))
+            previous_ship_speed = follower_cost
+            previous_final_index = final_index
+        attached_tail = members[-1]
+        for ship_id in formation.ship_ids:
+            ship = state.ships[ship_id]
+            if ship.position and not ship.sunk and ship.command_status == "straggling":
+                generated.append(_straggler_order(engine, state, formation, ship, attached_tail))
     for ship in state.ships.values():
         if ship.side == batch.side and ship.position and not ship.sunk and ship.command_status == "retreating":
             generated.append(_withdrawal_order(engine, state, ship))
@@ -589,7 +723,10 @@ def expand_movement_orders(
             ship.withdrawal_edge = edge
             generated.append(_withdrawal_order(engine, state, ship))
             ship.withdrawal_edge = original_edge
-    prepared.movement = generated
+    prepared.movement = [
+        order for order in generated
+        if not engine.captain_command_lost(state, state.ships[order.ship_id])
+    ]
     # Formation legality is a batch property: reject same-impulse same-hex and
     # hex swaps before the classic collision table is ever reached.
     paths: dict[str, list[HexCoord]] = {}
@@ -667,12 +804,19 @@ def refresh_command_chain(engine: "IronBottomEngine", state: GameState) -> None:
         return
     for formation in state.formations.values():
         flagship = state.ships.get(formation.flagship_id)
-        unavailable = not flagship or flagship.sunk or flagship.command_status in {"retreating", "withdrawn"} or flagship.captain_status == "killed"
+        unavailable = not flagship or flagship.sunk or flagship.command_status != "attached" or flagship.captain_status == "killed"
         if not unavailable:
             continue
         candidates = [formation.reserve_flagship_id] + formation.succession_order + formation.ship_ids
         new_flagship = next((ship_id for ship_id in candidates if ship_id != formation.flagship_id and ship_id in state.ships and not state.ships[ship_id].sunk and state.ships[ship_id].captain_status != "killed" and state.ships[ship_id].command_status == "attached"), None)
         if not new_flagship:
+            if any(
+                state.ships[ship_id].position and not state.ships[ship_id].sunk
+                and state.ships[ship_id].command_status == "straggling"
+                for ship_id in formation.ship_ids
+            ):
+                formation.status = "formed"
+                continue
             formation.status = "dissolved"
             # A dissolved formation must not leave attached ships without a
             # formation order.  Remaining survivors permanently enter the
@@ -716,8 +860,58 @@ def refresh_command_chain(engine: "IronBottomEngine", state: GameState) -> None:
 
 
 def after_movement(engine: "IronBottomEngine", state: GameState) -> None:
+    movement_key = f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}"
+    designated_stragglers = {
+        order.ship_id
+        for batch in state.sealed_orders.get(movement_key, {}).values()
+        for order in batch.movement
+        if order.formation_straggler
+    }
     for formation in state.formations.values():
+        stopped_ids = {
+            str(event.payload.get("ship_id"))
+            for event in state.events
+            if event.turn == state.turn and event.type == "movement_plan_resolved"
+            and event.payload.get("stopped_early")
+        }
+        for ship_id in formation.ship_ids:
+            ship = state.ships[ship_id]
+            if (ship_id in stopped_ids or ship_id in designated_stragglers) and ship.command_status == "attached" and ship.position and not ship.sunk:
+                ship.command_status = "straggling"
+                if ship_id in formation.ship_ids:
+                    formation.ship_ids.remove(ship_id)
+                    formation.ship_ids.append(ship_id)
+                engine._event(
+                    state, "formation_ship_straggling", f"{ship.name} 暂时掉队，自动追赶编队队尾",
+                    payload={"secret_side": formation.side.value, "ship_id": ship.id, "formation_id": formation.id},
+                    rule=engine._rule("IBS-R-RC-08", None, "真实模式：临时掉队与追队尾"),
+                )
         active = [state.ships[ship_id] for ship_id in formation.ship_ids if state.ships[ship_id].position and not state.ships[ship_id].sunk and state.ships[ship_id].command_status == "attached"]
+        if active:
+            tail = active[-1]
+            for ship_id in list(formation.ship_ids):
+                ship = state.ships[ship_id]
+                if ship.command_status != "straggling" or not ship.position or ship.sunk:
+                    continue
+                target = tail.position
+                for _ in range(formation.spacing):
+                    try:
+                        target = target.neighbor(_opposite(tail.heading), columns=state.map_columns, rows=state.map_rows)  # type: ignore[union-attr]
+                    except ValueError:
+                        target = tail.position  # type: ignore[assignment]
+                        break
+                if ship.position != target or ship_id in stopped_ids:
+                    continue
+                ship.command_status = "attached"
+                formation.ship_ids.remove(ship_id)
+                formation.ship_ids.append(ship_id)
+                active.append(ship)
+                tail = ship
+                engine._event(
+                    state, "formation_ship_rejoined", f"{ship.name} 追上编队队尾并归队",
+                    payload={"secret_side": formation.side.value, "ship_id": ship.id, "formation_id": formation.id},
+                    rule=engine._rule("IBS-R-RC-08", None, "真实模式：临时掉队与追队尾"),
+                )
         pending = [
             state.ships[ship_id] for ship_id in formation.ship_ids
             if state.ships[ship_id].position is None and not state.ships[ship_id].sunk
@@ -741,6 +935,12 @@ def after_movement(engine: "IronBottomEngine", state: GameState) -> None:
             # not destroyed.  Keep their private command chain so the ships
             # become an active formation when the scenario admits them later.
             formation.status = "assembling"
+        elif any(
+            state.ships[ship_id].position and not state.ships[ship_id].sunk
+            and state.ships[ship_id].command_status == "straggling"
+            for ship_id in formation.ship_ids
+        ):
+            formation.status = "formed"
         elif formation.status != "dissolved":
             formation.status = "dissolved"
     for ship_id, withdrawal in list(state.withdrawals.items()):
@@ -813,11 +1013,16 @@ class RealisticCommander:
             if formation.side != side or formation.status == "dissolved":
                 continue
             leader = state.ships.get(formation.leader_id)
-            if not leader or not leader.position or leader.sunk or leader.command_status != "attached":
+            if (
+                not leader or not leader.position or leader.sunk
+                or leader.command_status != "attached"
+                or engine.captain_command_lost(state, leader)
+            ):
                 leader = next((
                     state.ships[ship_id] for ship_id in formation.ship_ids
                     if state.ships[ship_id].position and not state.ships[ship_id].sunk
                     and state.ships[ship_id].command_status == "attached"
+                    and not engine.captain_command_lost(state, state.ships[ship_id])
                 ), None)
             if leader is None:
                 continue
@@ -858,6 +1063,7 @@ class RealisticCommander:
                 state.ships[ship_id] for ship_id in formation.ship_ids
                 if state.ships[ship_id].position and not state.ships[ship_id].sunk
                 and state.ships[ship_id].command_status == "attached"
+                and not engine.captain_command_lost(state, state.ships[ship_id])
             ]
             if not members:
                 continue
@@ -874,8 +1080,12 @@ class RealisticCommander:
                 # equal-cost straight programme; human previews remain free to
                 # use 120-degree turns when every follower can reach the bend.
                 leader_plan = str(engine.movement_cost(leader_plan, leader_commands))
-            minimum = max(engine._legal_speed_range(ship, state.turn)[0] for ship in members)
-            maximum = min(engine._legal_speed_range(ship, state.turn)[1] for ship in members)
+            speed_members = [ship for ship in members if not ship.forced_circle_turns] or [leader]
+            if formation.turn_mode == "column_follow":
+                minimum, maximum = engine._legal_speed_range(leader, state.turn)
+            else:
+                minimum = max(engine._legal_speed_range(ship, state.turn)[0] for ship in speed_members)
+                maximum = min(engine._legal_speed_range(ship, state.turn)[1] for ship in speed_members)
             if formation.disruption_turn == state.turn:
                 leader_plan = str(formation.locked_speed or 0)
                 intents[formation.id] = "指挥中断：按上轮航向和航速直航"
@@ -889,7 +1099,7 @@ class RealisticCommander:
                 intents[formation.id] = "领舰机动，后舰沿共享航迹尾随"
             else:
                 speed, detach = _best_formation_cohort(
-                    engine, state, formation, members,
+                    engine, state, formation, speed_members,
                 )
                 leader_plan = str(speed)
                 formation_orders.append(FormationMovementOrder(
@@ -905,6 +1115,37 @@ class RealisticCommander:
                 formation_id=formation.id,
                 leader_plan=leader_plan,
                 spacing=formation.spacing,
+            ))
+        covered_formations = {order.formation_id for order in formation_orders}
+        for formation in state.formations.values():
+            if formation.side != side or formation.status == "dissolved" or formation.id in covered_formations:
+                continue
+            active = [
+                state.ships[ship_id] for ship_id in formation.ship_ids
+                if state.ships[ship_id].position and not state.ships[ship_id].sunk
+                and state.ships[ship_id].command_status == "attached"
+                and not engine.captain_command_lost(state, state.ships[ship_id])
+            ]
+            if not active:
+                continue
+            leader = next((ship for ship in active if ship.id == formation.flagship_id), active[0])
+            speed_members = [ship for ship in active if not ship.forced_circle_turns] or [leader]
+            if formation.turn_mode == "column_follow":
+                minimum, maximum = engine._legal_speed_range(leader, state.turn)
+            else:
+                minimum = max(engine._legal_speed_range(ship, state.turn)[0] for ship in speed_members)
+                maximum = min(engine._legal_speed_range(ship, state.turn)[1] for ship in speed_members)
+            if minimum <= maximum:
+                speed = max(minimum, min(maximum, formation.speed))
+                decision = None
+            else:
+                speed, detach = _best_formation_cohort(engine, state, formation, speed_members)
+                decision = FormationSpeedDecision(
+                    formation_id=formation.id, action="detach", detach_ship_ids=detach,
+                )
+            formation_orders.append(FormationMovementOrder(
+                formation_id=formation.id, leader_plan=str(speed), spacing=formation.spacing,
+                speed_decision=decision,
             ))
         batch = OrderBatch(
             side=side, phase=state.phase,
@@ -928,9 +1169,15 @@ class RealisticCommander:
                     state.ships[ship_id] for ship_id in formation.ship_ids
                     if state.ships[ship_id].position and not state.ships[ship_id].sunk
                     and state.ships[ship_id].command_status == "attached"
+                    and not engine.captain_command_lost(state, state.ships[ship_id])
                 ]
-                minimum = max((engine._legal_speed_range(ship, state.turn)[0] for ship in members), default=0)
-                maximum = min((engine._legal_speed_range(ship, state.turn)[1] for ship in members), default=0)
+                leader = next((ship for ship in members if ship.id == formation.leader_id), members[0] if members else None)
+                speed_members = [ship for ship in members if not ship.forced_circle_turns] or ([leader] if leader else [])
+                if formation.turn_mode == "column_follow" and leader:
+                    minimum, maximum = engine._legal_speed_range(leader, state.turn)
+                else:
+                    minimum = max((engine._legal_speed_range(ship, state.turn)[0] for ship in speed_members), default=0)
+                    maximum = min((engine._legal_speed_range(ship, state.turn)[1] for ship in speed_members), default=0)
                 if minimum <= maximum:
                     speed = max(minimum, min(maximum, formation.speed))
                     safe_orders.append(FormationMovementOrder(
@@ -997,6 +1244,7 @@ class RealisticCommander:
                                 state.ships[ship_id] for ship_id in formation.ship_ids
                                 if state.ships[ship_id].position and not state.ships[ship_id].sunk
                                 and state.ships[ship_id].command_status == "attached"
+                                and not engine.captain_command_lost(state, state.ships[ship_id])
                             ]
                             minimum = max((engine._legal_speed_range(ship, state.turn)[0] for ship in members), default=0)
                             current = int(candidate.leader_plan) if candidate.leader_plan.isdigit() else formation.speed
@@ -1140,6 +1388,32 @@ class RealisticCommander:
                         continue
                 if not changed:
                     break
+        covered_formations = {order.formation_id for order in batch.formation_movement}
+        for formation in state.formations.values():
+            if formation.side != side or formation.status == "dissolved" or formation.id in covered_formations:
+                continue
+            active = [
+                state.ships[ship_id] for ship_id in formation.ship_ids
+                if state.ships[ship_id].position and not state.ships[ship_id].sunk
+                and state.ships[ship_id].command_status == "attached"
+                and not engine.captain_command_lost(state, state.ships[ship_id])
+            ]
+            if not active:
+                continue
+            minimum = max(engine._legal_speed_range(ship, state.turn)[0] for ship in active)
+            maximum = min(engine._legal_speed_range(ship, state.turn)[1] for ship in active)
+            if minimum <= maximum:
+                speed = max(minimum, min(maximum, formation.speed))
+                decision = None
+            else:
+                speed, detach = _best_formation_cohort(engine, state, formation, active)
+                decision = FormationSpeedDecision(
+                    formation_id=formation.id, action="detach", detach_ship_ids=detach,
+                )
+            batch.formation_movement.append(FormationMovementOrder(
+                formation_id=formation.id, leader_plan=str(speed), spacing=formation.spacing,
+                speed_decision=decision,
+            ))
         plan = AIPlanSheet(
             turn=state.turn, phase=state.phase,
             situation_summary="按编队指挥链评估共同航速与领舰航路。",

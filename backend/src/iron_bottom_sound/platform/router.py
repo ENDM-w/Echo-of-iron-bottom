@@ -15,6 +15,7 @@ from .models import (
     JudgeOrderOverrideRequest,
     JudgeRerollRequest,
     JudgeShipPatchRequest,
+    JudgeFormationCompositionRequest,
     JudgeVisibilityPatchRequest,
     LoginRequest,
     LoginResponse,
@@ -52,7 +53,7 @@ def build_router(service: PlatformService) -> APIRouter:
         if issued is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
         token, user = issued
-        return LoginResponse(token=token, user_id=user.user_id, username=user.username, is_referee=user.is_referee)
+        return LoginResponse(token=token, user_id=user.user_id, username=user.username, is_referee=user.is_referee, is_observer=user.is_observer)
 
     @router.get("/ships/import-schema")
     def ship_import_schema(authorization: Annotated[str | None, Header()] = None):
@@ -91,7 +92,10 @@ def build_router(service: PlatformService) -> APIRouter:
         if request.judge_user_id != user.user_id:
             raise HTTPException(status_code=403, detail="A referee may create only their own matches")
         try:
-            return service.create_match(request.scenario_id, request.seed, request.judge_user_id).model_dump(mode="json")
+            return service.create_match(
+                request.scenario_id, request.seed, request.judge_user_id,
+                realistic_command=request.realistic_command,
+            ).model_dump(mode="json")
         except (KeyError, ValueError, PermissionError) as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
 
@@ -100,8 +104,13 @@ def build_router(service: PlatformService) -> APIRouter:
         user = user_from_header(authorization)
         summary = service.summary(match_id)
         allowed = user.is_referee and user.user_id == summary.match.judge_user_id
-        if not allowed and not any(seat.user_id == user.user_id for seat in summary.seats):
+        observer = user.is_observer and service.repository.is_match_observer(match_id, user.user_id)
+        if not allowed and not observer and not any(seat.user_id == user.user_id for seat in summary.seats):
             raise HTTPException(status_code=403, detail="You are not assigned to this match")
+        if observer:
+            summary = summary.model_copy(
+                update={"match": service.player_match_record(summary.match), "seats": []}
+            )
         if not allowed:
             # A player learns only their own seat binding; other seat/user
             # assignments are referee information and must not become a map
@@ -160,6 +169,21 @@ def build_router(service: PlatformService) -> APIRouter:
         except PermissionError as error:
             raise HTTPException(status_code=403, detail=str(error)) from error
 
+    @router.get("/matches/{match_id}/seats/{seat_id}/ships/{ship_id}/field-of-fire")
+    def seat_field_of_fire(
+        match_id: str,
+        seat_id: str,
+        ship_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+    ):
+        user = user_from_header(authorization)
+        try:
+            return service.seat_field_of_fire(match_id, seat_id, ship_id, user)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except PermissionError as error:
+            raise HTTPException(status_code=403, detail=str(error)) from error
+
     @router.post("/matches/{match_id}/seats/{seat_id}/torpedo-candidates")
     def torpedo_candidate_preview(
         match_id: str,
@@ -170,12 +194,14 @@ def build_router(service: PlatformService) -> APIRouter:
         user = user_from_header(authorization)
         try:
             return service.torpedo_candidates_for_movement_draft(
-                match_id, seat_id, user, request.movement
+                match_id, seat_id, user, request.movement, request.formation_commands
             )
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except PermissionError as error:
             raise HTTPException(status_code=403, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
 
     @router.get("/matches/{match_id}/judge/view")
     def judge_view(
@@ -189,6 +215,46 @@ def build_router(service: PlatformService) -> APIRouter:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except PermissionError as error:
             raise HTTPException(status_code=403, detail=str(error)) from error
+
+    @router.get("/matches/{match_id}/spectator/view")
+    def observer_view(
+        match_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+    ):
+        user = user_from_header(authorization)
+        try:
+            return service.observer_observation(match_id, user).model_dump(mode="json")
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except PermissionError as error:
+            raise HTTPException(status_code=403, detail=str(error)) from error
+
+    @router.get("/matches/{match_id}/judge/observers")
+    def observer_accounts(
+        match_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+    ):
+        user = require_referee(authorization)
+        try:
+            return service.observer_accounts(match_id, user)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except PermissionError as error:
+            raise HTTPException(status_code=403, detail=str(error)) from error
+
+    @router.post("/matches/{match_id}/judge/observers", status_code=201)
+    def create_observer(
+        match_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+    ):
+        user = require_referee(authorization)
+        try:
+            account, password = service.create_observer(match_id, user)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except PermissionError as error:
+            raise HTTPException(status_code=403, detail=str(error)) from error
+        return {"user_id": account.user_id, "username": account.username, "password": password}
 
     @router.get("/matches/{match_id}/turn-archives")
     def turn_archives(
@@ -351,6 +417,22 @@ def build_router(service: PlatformService) -> APIRouter:
         user = require_referee(authorization)
         try:
             return service.judge_patch_ship(match_id, ship_id, user, request)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except PermissionError as error:
+            raise HTTPException(status_code=403, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @router.put("/matches/{match_id}/judge/formations")
+    def judge_reorganize_formations(
+        match_id: str,
+        request: JudgeFormationCompositionRequest,
+        authorization: Annotated[str | None, Header()] = None,
+    ):
+        user = require_referee(authorization)
+        try:
+            return service.judge_reorganize_formations(match_id, user, request)
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except PermissionError as error:

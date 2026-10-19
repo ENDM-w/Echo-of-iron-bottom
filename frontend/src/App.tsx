@@ -241,6 +241,7 @@ function rosterFormations(view: Observation, draft: string): Formation[] {
             reserve_flagship_id: string;
             spacing: 1 | 2;
             heading?: number | null;
+            turn_mode?: "column_follow" | "synchronized";
           }>;
         }
       ).formation_setup ?? [];
@@ -259,6 +260,7 @@ function rosterFormations(view: Observation, draft: string): Formation[] {
         ),
       ],
       spacing: order.spacing,
+      turn_mode: order.turn_mode ?? "column_follow",
       heading:
         order.heading ??
         view.ships.find((ship) => ship.id === order.leader_id)?.heading ??

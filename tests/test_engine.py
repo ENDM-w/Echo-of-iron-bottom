@@ -1,6 +1,7 @@
 from iron_bottom_sound.engine import D66_VALUES, IronBottomEngine
 from iron_bottom_sound.models import (
     GameOptions,
+    FiringArc,
     GunMountOrder,
     GunneryOrder,
     HexCoord,
@@ -987,6 +988,119 @@ def test_aoba_helena_rulebook_gunnery_example_aggregates_main_battery() -> None:
     assert attack.payload["hits"] == 2
 
 
+def _prepare_target_only_gunnery(engine: IronBottomEngine):
+    state = engine.reset("IBS-S-03", seed=19)
+    state.turn = 2
+    state.phase = Phase.GUNNERY
+    attacker = next(ship for ship in state.ships.values() if ship.side == Side.AXIS and ship.gun_mounts)
+    targets = [ship for ship in state.ships.values() if ship.side == Side.ALLIES and not ship.sunk]
+    primary, secondary = targets[:2]
+    attacker.position = HexCoord.from_label("M15")
+    attacker.heading = 1
+    primary.position = attacker.position.neighbor(1)
+    secondary.position = attacker.position.neighbor(4)
+    return state, attacker, primary, secondary
+
+
+def test_target_only_gunnery_uses_only_primary_when_any_mount_can_bear() -> None:
+    engine = IronBottomEngine()
+    state, attacker, primary, secondary = _prepare_target_only_gunnery(engine)
+    for index, mount in enumerate(attacker.gun_mounts):
+        mount.arcs = [FiringArc.BOW if index == 0 else FiringArc.STERN]
+    order = GunneryOrder(
+        ship_id=attacker.id,
+        primary_target=primary.id,
+        secondary_target=secondary.id,
+    )
+    validation = engine.validate_orders(
+        state.game_id,
+        OrderBatch(side=Side.AXIS, phase=Phase.GUNNERY, gunnery=[order]),
+    )
+    assert validation.valid, validation.errors
+    state.sealed_orders[f"{state.turn}:{Phase.GUNNERY.value}"] = {
+        Side.AXIS.value: OrderBatch(side=Side.AXIS, phase=Phase.GUNNERY, gunnery=[order]),
+        Side.ALLIES.value: OrderBatch(side=Side.ALLIES, phase=Phase.GUNNERY),
+    }
+
+    engine._resolve_gunnery(state)
+
+    attacks = [event for event in state.events if event.type == "gun_mount_attack"]
+    assert len(attacks) == 1
+    assert attacks[0].payload["target"] == primary.id
+    assert attacks[0].payload["mount_ids"] == [attacker.gun_mounts[0].id]
+
+
+def test_target_only_gunnery_falls_back_only_when_primary_has_no_bearing_mounts() -> None:
+    engine = IronBottomEngine()
+    state, attacker, primary, secondary = _prepare_target_only_gunnery(engine)
+    for mount in attacker.gun_mounts:
+        mount.arcs = [FiringArc.STERN]
+    order = GunneryOrder(
+        ship_id=attacker.id,
+        primary_target=primary.id,
+        secondary_target=secondary.id,
+    )
+    state.sealed_orders[f"{state.turn}:{Phase.GUNNERY.value}"] = {
+        Side.AXIS.value: OrderBatch(side=Side.AXIS, phase=Phase.GUNNERY, gunnery=[order]),
+        Side.ALLIES.value: OrderBatch(side=Side.ALLIES, phase=Phase.GUNNERY),
+    }
+
+    engine._resolve_gunnery(state)
+
+    attacks = [event for event in state.events if event.type == "gun_mount_attack"]
+    assert len(attacks) == 1
+    assert attacks[0].payload["target"] == secondary.id
+    assert set(attacks[0].payload["mount_ids"]) == {mount.id for mount in attacker.gun_mounts}
+
+
+def test_target_only_gunnery_is_valid_before_movement_and_uses_post_movement_bearing() -> None:
+    engine = IronBottomEngine()
+    state, attacker, primary, _secondary = _prepare_target_only_gunnery(engine)
+    for mount in attacker.gun_mounts:
+        mount.arcs = [FiringArc.STERN]
+    order = GunneryOrder(ship_id=attacker.id, primary_target=primary.id)
+    validation = engine.validate_orders(
+        state.game_id,
+        OrderBatch(side=Side.AXIS, phase=Phase.GUNNERY, gunnery=[order]),
+    )
+    assert validation.valid, validation.errors
+    attacker.heading = 4
+    state.sealed_orders[f"{state.turn}:{Phase.GUNNERY.value}"] = {
+        Side.AXIS.value: OrderBatch(side=Side.AXIS, phase=Phase.GUNNERY, gunnery=[order]),
+        Side.ALLIES.value: OrderBatch(side=Side.ALLIES, phase=Phase.GUNNERY),
+    }
+
+    engine._resolve_gunnery(state)
+
+    attack = next(event for event in state.events if event.type == "gun_mount_attack")
+    assert attack.payload["target"] == primary.id
+    assert set(attack.payload["mount_ids"]) == {mount.id for mount in attacker.gun_mounts}
+
+
+def test_target_only_gunnery_submits_when_guns_are_disabled_then_resolves_as_no_fire() -> None:
+    engine = IronBottomEngine()
+    state, attacker, primary, _secondary = _prepare_target_only_gunnery(engine)
+    attacker.guns_disabled_turns = 1
+    order = GunneryOrder(ship_id=attacker.id, primary_target=primary.id)
+    validation = engine.validate_orders(
+        state.game_id,
+        OrderBatch(side=Side.AXIS, phase=Phase.GUNNERY, gunnery=[order]),
+    )
+    assert validation.valid, validation.errors
+    state.sealed_orders[f"{state.turn}:{Phase.GUNNERY.value}"] = {
+        Side.AXIS.value: OrderBatch(side=Side.AXIS, phase=Phase.GUNNERY, gunnery=[order]),
+        Side.ALLIES.value: OrderBatch(side=Side.ALLIES, phase=Phase.GUNNERY),
+    }
+
+    engine._resolve_gunnery(state)
+
+    assert not [event for event in state.events if event.type == "gun_mount_attack"]
+    assert any(
+        event.type == "gunnery_rejected" and event.payload.get("attacker") == attacker.id
+        for event in state.events
+    )
+
+
 def test_torpedo_launches_at_planned_mf_moves_by_impulse_and_contacts_ship() -> None:
     engine = IronBottomEngine()
     state = engine.reset("IBS-S-03", seed=9)
@@ -1107,6 +1221,65 @@ def test_ship_driving_into_stopped_torpedo_hex_detects_contact() -> None:
     assert track.position == HexCoord.from_label("O17")
     assert track.contact_ship_ids == [target.id]
     assert any(event.type == "torpedo_contact" for event in state.events)
+
+
+def test_ship_and_torpedo_exchanging_hexes_detects_contact_at_ship_start_hex() -> None:
+    """A torpedo and ship that exchange adjacent hexes in one MF meet at the
+    ship's original hex, even though they do not share a post-movement hex."""
+    engine = IronBottomEngine()
+    state = engine.reset("IBS-S-03", seed=19)
+    attacker = state.ships["IBS-U-KM-KARL-GALSTER"]
+    target = state.ships["IBS-U-RN-JAVELIN"]
+    for side in Side:
+        assert engine.submit_orders(
+            state.game_id, OrderBatch(side=side, phase=Phase.REINFORCEMENT)
+        ).valid
+    engine.advance(state.game_id)
+
+    ship_start = HexCoord.from_label("O16")
+    torpedo_start = HexCoord.from_label("O15")
+    target.position = ship_start
+    target.heading = 6
+    state.torpedo_tracks.append(TorpedoTrack(
+        id="crossing-tt",
+        side=Side.AXIS,
+        launcher_ship_id=attacker.id,
+        torpedo_type="G7a",
+        position=torpedo_start,
+        heading=3,
+        speed_cycle=(1, 1, 1),
+        range_remaining=10,
+        launched_turn=state.turn,
+    ))
+
+    for side in Side:
+        own = [ship for ship in state.ships.values() if ship.side == side and ship.position]
+        movement = [
+            MovementOrder(ship_id=ship.id, plan="3" if ship.id == target.id else "0")
+            for ship in own
+        ]
+        assert engine.submit_orders(
+            state.game_id,
+            OrderBatch(side=side, phase=Phase.MOVEMENT_PLANNING, movement=movement),
+        ).valid
+    engine.advance(state.game_id)
+    for side in Side:
+        assert engine.submit_orders(
+            state.game_id, OrderBatch(side=side, phase=Phase.TORPEDO_PLANNING)
+        ).valid
+    engine.advance(state.game_id)
+    engine.advance(state.game_id)
+
+    track = next(track for track in state.torpedo_tracks if track.id == "crossing-tt")
+    assert target.position == torpedo_start
+    assert track.position == ship_start
+    assert track.contact_ship_ids == [target.id]
+    contact = next(
+        event for event in state.events
+        if event.type == "torpedo_contact" and event.payload.get("track_id") == track.id
+    )
+    assert contact.payload["crossing_targets"] == [target.id]
+    assert contact.payload["hit_hex"] == ship_start.label
 
 
 def test_late_torpedo_launch_has_reduced_first_turn_speed() -> None:

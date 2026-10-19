@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from copy import deepcopy
+import json
 import sqlite3
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from iron_bottom_sound.engine import IronBottomEngine
+from iron_bottom_sound.data import load_scenario, register_custom_scenario, unregister_custom_scenario
+from iron_bottom_sound.custom_scenarios import with_engine_default_formations
 from iron_bottom_sound.models import DiceRoll, GunMountOrder, GunneryOrder, HexCoord, IlluminationOrder, MarkerState, MovementOrder, OrderBatch, Phase, SearchlightOrder, Side, TorpedoOrder, TorpedoTrack, WreckState
 from iron_bottom_sound.platform.auth import PasswordHasher
 from iron_bottom_sound.platform.models import (
@@ -19,6 +25,7 @@ from iron_bottom_sound.platform.models import (
 )
 from iron_bottom_sound.platform.service import PlatformService
 from iron_bottom_sound.platform.repository import PlatformRepository
+from iron_bottom_sound.platform.router import build_router
 from iron_bottom_sound.storage import GameRepository
 
 
@@ -68,6 +75,40 @@ def test_password_hash_is_not_plaintext_and_verifies() -> None:
     assert not PasswordHasher.verify("wrong", encoded)
 
 
+def test_custom_formation_scenario_starts_online_match_in_formation_setup(tmp_path) -> None:
+    service, engine, judge, *_ = make_service(tmp_path)
+    scenario_id = "IBS-CUSTOM-PLATFORM-FORMATION-TEST"
+    definition = deepcopy(load_scenario("IBS-S-03"))
+    definition["id"] = scenario_id
+    definition["formations"] = {}
+    for side in (Side.AXIS.value, Side.ALLIES.value):
+        ship_ids = [ship["id"] for ship in definition["ships"] if ship["side"] == side]
+        definition["formations"][side] = [{
+            "formation_id": f"{side}-test-column",
+            "name": f"{side} test column",
+            "ship_ids": ship_ids,
+            "leader_id": ship_ids[0],
+            "flagship_id": ship_ids[0],
+            "reserve_flagship_id": ship_ids[1],
+            "spacing": 1,
+            "heading": 1,
+        }]
+    definition = with_engine_default_formations(definition)
+    register_custom_scenario(definition)
+    service.game_repository.save_custom_scenario(
+        scenario_id,
+        json.loads(json.dumps(definition, default=str)),
+    )
+    try:
+        match = service.create_match(scenario_id, 11, judge.user_id)
+        state = engine.get(match.game_id)
+        assert state.options.realistic_command
+        assert state.phase == Phase.FORMATION_SETUP
+        assert state.formation_resume_phase == Phase.REINFORCEMENT
+    finally:
+        unregister_custom_scenario(scenario_id)
+
+
 def test_seat_view_includes_other_friendly_ships_as_anonymous_contacts(tmp_path) -> None:
     service, engine, _, axis, _, match, axis_seat, _, _, axis_ship, _ = make_service(tmp_path)
     token, _ = service.issue_token("axis-player", "axis-password")
@@ -94,6 +135,28 @@ def test_seat_view_includes_other_friendly_ships_as_anonymous_contacts(tmp_path)
     assert near_friend.id not in view.model_dump_json()
     assert not view.visible_enemy_ship_ids
     assert distant_friend.id not in {ship.id for ship in view.ships}
+
+
+def test_seat_field_of_fire_preview_is_limited_to_controlled_ship(tmp_path) -> None:
+    service, engine, _, axis, _, match, axis_seat, _, _, axis_ship, allies_ship = make_service(tmp_path)
+    token, _ = service.issue_token("axis-player", "axis-password")
+    user = service.authenticate(token)
+    assert user
+
+    preview = service.seat_field_of_fire(match.match_id, axis_seat.seat_id, axis_ship.id, user)
+    assert preview["viewer"] == Side.AXIS.value
+    assert preview["sides"][Side.AXIS.value]["ships"][0]["ship_id"] == axis_ship.id
+    assert preview["sides"][Side.ALLIES.value]["ships"] == []
+    assert allies_ship.id not in str(preview)
+
+    another_axis = next(
+        ship for ship in engine.get(match.game_id).ships.values()
+        if ship.side == Side.AXIS and ship.position and ship.id != axis_ship.id
+    )
+    with pytest.raises(PermissionError, match="本席位控制"):
+        service.seat_field_of_fire(match.match_id, axis_seat.seat_id, another_axis.id, user)
+    with pytest.raises(PermissionError):
+        service.seat_field_of_fire(match.match_id, axis_seat.seat_id, allies_ship.id, user)
 
 
 def test_seat_gunnery_candidates_are_scoped_and_use_public_contact_ids(tmp_path) -> None:
@@ -262,7 +325,7 @@ def test_hidden_contacts_uses_two_range_anonymous_signal_band(tmp_path) -> None:
     state.markers.append(MarkerState(
         id=f"GUNFIRE-{state.turn}-{friendly_signal.id}",
         kind="gunfire",
-        position=friendly_signal.position,
+        position=HexCoord(q=10, r=5),
         ship_id=friendly_signal.id,
         expires_turn=state.turn + 1,
     ))
@@ -351,6 +414,10 @@ def test_hidden_contacts_uses_two_range_anonymous_signal_band(tmp_path) -> None:
         marker.kind == "gunfire" and marker.position == friendly_signal.position
         for marker in view.markers
     ) == 1
+    assert not any(
+        marker.kind == "gunfire" and marker.position == HexCoord(q=10, r=5)
+        for marker in view.markers
+    )
     assert not any(marker.kind == "searchlight" and marker.position == beyond_light.position for marker in view.markers)
     assert all("IBS-U-" not in marker.id for marker in view.markers)
     assert all(marker.ship_id is None and marker.target_ship_id is None for marker in view.markers)
@@ -509,7 +576,12 @@ def test_referee_observation_includes_full_tactical_map(tmp_path) -> None:
     assert axis_ship.position
     expected_marker_kinds = {"fire", "gunfire", "smoke", "star_shell", "searchlight", "squall", "torpedo_hit", "sunk"}
     state.markers.extend(
-        MarkerState(id=f"judge-{kind}", kind=kind, position=axis_ship.position)
+            MarkerState(
+                id=f"judge-{kind}",
+                kind=kind,
+                position=axis_ship.position,
+                ship_id=axis_ship.id if kind == "gunfire" else None,
+            )
         for kind in expected_marker_kinds
     )
     state.markers.append(MarkerState(id="judge-contact", kind="contact", position=axis_ship.position))
@@ -624,6 +696,9 @@ def test_resolved_gunfire_marker_reaches_referee_and_only_observing_player(tmp_p
         if item.kind == "gunfire" and item.ship_id == axis_ship.id
     )
     assert marker.position == axis_ship.position
+    firing_position = marker.position
+    axis_ship.position = HexCoord(q=axis_ship.position.q + 1, r=axis_ship.position.r)
+    assert marker.position == firing_position
 
     player = service.authenticate(service.issue_token("axis-player", "axis-password")[0])
     opponent = service.authenticate(service.issue_token("allies-player", "allies-password")[0])
@@ -632,9 +707,15 @@ def test_resolved_gunfire_marker_reaches_referee_and_only_observing_player(tmp_p
     player_view = service.observation(match.match_id, axis_seat.seat_id, player)
     opponent_view = service.observation(match.match_id, allies_seat.seat_id, opponent)
     judge_view = service.judge_observation(match.match_id, judge)
-    assert any(item.kind == "gunfire" and item.position == marker.position for item in player_view.markers)
-    assert any(item.kind == "gunfire" and item.position == marker.position for item in opponent_view.markers)
-    assert any(item.kind == "gunfire" and item.position == marker.position for item in judge_view.markers)
+    assert any(item.kind == "gunfire" and item.position == axis_ship.position for item in player_view.markers)
+    assert any(item.kind == "gunfire" and item.position == axis_ship.position for item in opponent_view.markers)
+    assert any(item.kind == "gunfire" and item.position == axis_ship.position for item in judge_view.markers)
+    assert all(
+        item.position != firing_position
+        for view in (player_view, opponent_view, judge_view)
+        for item in view.markers
+        if item.kind == "gunfire"
+    )
 
     axis_ship.position = HexCoord(q=35, r=30)
     distant_player_view = service.observation(match.match_id, allies_seat.seat_id, opponent)
@@ -1381,4 +1462,47 @@ def test_seat_validation_errors_do_not_name_foreign_ships(tmp_path) -> None:
     # ④ 本方舰名必须保留：脱敏只针对非本席位舰船，不做无差别遮蔽
     kept = service._redact_foreign_ship_identities(match, axis_seat, [f"{axis_ship.name} 舰长失能：示例"])
     assert axis_ship.name in kept[0]
+
+
+def test_observer_is_match_scoped_read_only_and_gets_full_view(tmp_path) -> None:
+    service, engine, _judge, *_rest = make_service(tmp_path)
+    match = service.repository.connection.execute("SELECT match_id FROM platform_matches").fetchone()["match_id"]
+    other_match = service.create_match("IBS-S-03", 9, service.repository.user_by_username("judge").user_id)
+    app = FastAPI()
+    app.include_router(build_router(service))
+    client = TestClient(app)
+    judge_token, _ = service.issue_token("judge", "judge-password") or (None, None)
+    assert judge_token
+
+    created = client.post(
+        f"/platform/matches/{match}/judge/observers",
+        headers={"Authorization": f"Bearer {judge_token}"},
+    )
+    assert created.status_code == 201
+    credentials = created.json()
+    assert credentials["username"].startswith("observer-")
+    assert "password" in credentials
+
+    login = client.post("/platform/auth/login", json={"username": credentials["username"], "password": credentials["password"]})
+    assert login.status_code == 200
+    observer_token = login.json()["token"]
+    assert login.json()["is_observer"] is True
+    assert login.json()["is_referee"] is False
+
+    summary = client.get(f"/platform/matches/{match}", headers={"Authorization": f"Bearer {observer_token}"})
+    assert summary.status_code == 200
+    assert summary.json()["seats"] == []
+
+    observation = client.get(f"/platform/matches/{match}/spectator/view", headers={"Authorization": f"Bearer {observer_token}"})
+    assert observation.status_code == 200
+    assert len(observation.json()["referee_ship_states"]) == len(engine.get(service.repository.match(match).game_id).ships)
+    assert observation.json()["recent_events"] == []
+    assert observation.json()["rerollable_events"] == []
+
+    assert client.get(f"/platform/matches/{match}/judge/view", headers={"Authorization": f"Bearer {observer_token}"}).status_code == 403
+    assert client.get(f"/platform/matches/{match}/review", headers={"Authorization": f"Bearer {observer_token}"}).status_code == 403
+    assert client.get(f"/platform/matches/{match}/judge/observers", headers={"Authorization": f"Bearer {observer_token}"}).status_code == 403
+    assert client.get(f"/platform/matches/{other_match.match_id}/spectator/view", headers={"Authorization": f"Bearer {observer_token}"}).status_code == 403
+    seat_id = service.repository.seats(match)[0].seat_id
+    assert client.get(f"/platform/matches/{match}/seats/{seat_id}/view", headers={"Authorization": f"Bearer {observer_token}"}).status_code == 403
 

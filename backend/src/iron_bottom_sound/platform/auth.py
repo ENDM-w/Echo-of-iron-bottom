@@ -14,6 +14,7 @@ class AuthenticatedUser:
     user_id: str
     username: str
     is_referee: bool
+    is_observer: bool = False
 
 
 class PasswordHasher:
@@ -51,7 +52,7 @@ class SessionStore:
 
     def issue(self, user: UserRecord) -> str:
         token = secrets.token_urlsafe(32)
-        self._tokens[token] = AuthenticatedUser(user.user_id, user.username, user.is_referee)
+        self._tokens[token] = AuthenticatedUser(user.user_id, user.username, user.is_referee, user.is_observer)
         return token
 
     def get(self, token: str | None) -> AuthenticatedUser | None:

@@ -29,6 +29,7 @@ class UserRecord(BaseModel):
     username: str
     password_hash: str
     is_referee: bool = False
+    is_observer: bool = False
     disabled: bool = False
 
 
@@ -77,6 +78,14 @@ class SeatObservation(BaseModel):
     visibility_allies: int | None = None
     storm: bool = False
     optional_rules: dict[str, bool] = Field(default_factory=dict)
+    realistic_command: bool = False
+    # Seat entries contain command metadata only, never other hull identities,
+    # positions, status or trails. Referee entries retain the complete roster.
+    formations: list[dict[str, Any]] = Field(default_factory=list)
+    # Fleet-mate reports come from the previous completed turn and are not
+    # included in ships/map observation or any current visibility calculation.
+    formation_reports: list[dict[str, Any]] = Field(default_factory=list)
+    formation_roster: list[dict[str, Any]] = Field(default_factory=list)
     ships: list[PublicShip] = Field(default_factory=list)
     # Populated only by judge_observation; never include authoritative hidden
     # state in a player seat response.
@@ -108,16 +117,27 @@ class SeatObservation(BaseModel):
     gunnery_candidates: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class SeatFormationCommand(BaseModel):
+    formation_id: str = Field(min_length=1, max_length=64)
+    leader_plan: str = "0"
+    spacing: int = Field(default=1, ge=1, le=2)
+    heading: int | None = Field(default=None, ge=1, le=6)
+    turn_mode: str = Field(default="column_follow", pattern="^(column_follow|synchronized)$")
+    reduce_speed: int | None = Field(default=None, ge=0, le=8)
+
+
 class SeatOrderSubmission(BaseModel):
     phase: Phase
     batch: OrderBatch
     scope: str = Field(default="phase", pattern="^(phase|turn)$")
     request_id: str = Field(min_length=1, max_length=120)
     ignore_validation_errors: bool = False
+    formation_commands: list[SeatFormationCommand] = Field(default_factory=list)
 
 
 class TorpedoCandidatePreviewRequest(BaseModel):
     movement: list[MovementOrder] = Field(default_factory=list)
+    formation_commands: list[SeatFormationCommand] = Field(default_factory=list)
 
 
 class TelegramSubmission(BaseModel):
@@ -169,10 +189,28 @@ class JudgeOrderOverrideRequest(BaseModel):
     scope: str = Field(default="phase", pattern="^(phase|turn)$")
     reason: str = Field(min_length=1, max_length=500)
     expected_version: int = Field(ge=0)
+    formation_commands: list[SeatFormationCommand] = Field(default_factory=list)
 
 
 class JudgeShipPatchRequest(BaseModel):
     patch: dict[str, Any] = Field(min_length=1)
+    reason: str = Field(min_length=1, max_length=500)
+    expected_version: int = Field(ge=0)
+
+
+class JudgeFormationGroup(BaseModel):
+    formation_id: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=40)
+    ship_ids: list[str] = Field(min_length=2)
+    flagship_id: str
+    reserve_flagship_id: str
+    spacing: int = Field(default=1, ge=1, le=2)
+    turn_mode: str = Field(default="column_follow", pattern="^(column_follow|synchronized)$")
+
+
+class JudgeFormationCompositionRequest(BaseModel):
+    side: Side
+    formations: list[JudgeFormationGroup] = Field(min_length=1, max_length=8)
     reason: str = Field(min_length=1, max_length=500)
     expected_version: int = Field(ge=0)
 
@@ -223,6 +261,7 @@ class LoginResponse(BaseModel):
     user_id: str
     username: str
     is_referee: bool
+    is_observer: bool = False
 
 
 class UserCreateRequest(BaseModel):
@@ -235,6 +274,7 @@ class MatchCreateRequest(BaseModel):
     scenario_id: str = "IBS-S-03"
     seed: int = 1
     judge_user_id: str
+    realistic_command: bool | None = None
 
 
 class SeatCreateRequest(BaseModel):

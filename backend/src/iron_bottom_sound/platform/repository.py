@@ -25,6 +25,7 @@ class PlatformRepository:
               username TEXT NOT NULL UNIQUE,
               password_hash TEXT NOT NULL,
               is_referee INTEGER NOT NULL DEFAULT 0,
+              is_observer INTEGER NOT NULL DEFAULT 0,
               disabled INTEGER NOT NULL DEFAULT 0,
               created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
@@ -53,6 +54,14 @@ class PlatformRepository:
               FOREIGN KEY (user_id) REFERENCES platform_users(user_id),
               UNIQUE (match_id, user_id),
               UNIQUE (match_id, side, controlled_ship_ids_json)
+            );
+            CREATE TABLE IF NOT EXISTS platform_observers (
+              match_id TEXT NOT NULL,
+              user_id TEXT NOT NULL,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (match_id, user_id),
+              FOREIGN KEY (match_id) REFERENCES platform_matches(match_id),
+              FOREIGN KEY (user_id) REFERENCES platform_users(user_id)
             );
             CREATE TABLE IF NOT EXISTS platform_orders (
               match_id TEXT NOT NULL,
@@ -168,6 +177,10 @@ class PlatformRepository:
         except sqlite3.OperationalError:
             pass
         try:
+            self.connection.execute("ALTER TABLE platform_users ADD COLUMN is_observer INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        try:
             self.connection.execute(
                 "ALTER TABLE platform_telegram_deliveries ADD COLUMN hit_count INTEGER NOT NULL DEFAULT 0"
             )
@@ -197,27 +210,49 @@ class PlatformRepository:
     def create_user(self, user: UserRecord) -> UserRecord:
         with self.connection:
             self.connection.execute(
-                "INSERT INTO platform_users(user_id, username, password_hash, is_referee, disabled) VALUES (?, ?, ?, ?, ?)",
-                (user.user_id, user.username, user.password_hash, int(user.is_referee), int(user.disabled)),
+                "INSERT INTO platform_users(user_id, username, password_hash, is_referee, is_observer, disabled) VALUES (?, ?, ?, ?, ?, ?)",
+                (user.user_id, user.username, user.password_hash, int(user.is_referee), int(user.is_observer), int(user.disabled)),
             )
         return user
 
     def user_by_username(self, username: str) -> UserRecord | None:
         row = self.connection.execute(
-            "SELECT user_id, username, password_hash, is_referee, disabled FROM platform_users WHERE username = ?",
+            "SELECT user_id, username, password_hash, is_referee, is_observer, disabled FROM platform_users WHERE username = ?",
             (username,),
         ).fetchone()
         return _user(row) if row else None
 
     def user_by_id(self, user_id: str) -> UserRecord | None:
         row = self.connection.execute(
-            "SELECT user_id, username, password_hash, is_referee, disabled FROM platform_users WHERE user_id = ?",
+            "SELECT user_id, username, password_hash, is_referee, is_observer, disabled FROM platform_users WHERE user_id = ?",
             (user_id,),
         ).fetchone()
         return _user(row) if row else None
 
     def has_users(self) -> bool:
         return self.connection.execute("SELECT 1 FROM platform_users LIMIT 1").fetchone() is not None
+
+    def add_observer(self, match_id: str, user_id: str) -> None:
+        with self.connection:
+            self.connection.execute(
+                "INSERT INTO platform_observers(match_id, user_id) VALUES (?, ?)",
+                (match_id, user_id),
+            )
+
+    def is_match_observer(self, match_id: str, user_id: str) -> bool:
+        return self.connection.execute(
+            "SELECT 1 FROM platform_observers WHERE match_id = ? AND user_id = ?",
+            (match_id, user_id),
+        ).fetchone() is not None
+
+    def observers(self, match_id: str) -> list[dict[str, str]]:
+        rows = self.connection.execute(
+            """SELECT u.user_id, u.username FROM platform_observers o
+               JOIN platform_users u ON u.user_id = o.user_id
+               WHERE o.match_id = ? ORDER BY o.created_at, u.username""",
+            (match_id,),
+        ).fetchall()
+        return [{"user_id": row["user_id"], "username": row["username"]} for row in rows]
 
     def save_match(self, match: MatchRecord) -> None:
         with self.connection:
@@ -652,6 +687,7 @@ def _user(row: sqlite3.Row) -> UserRecord:
         username=row["username"],
         password_hash=row["password_hash"],
         is_referee=bool(row["is_referee"]),
+        is_observer=bool(row["is_observer"]) if "is_observer" in row.keys() else False,
         disabled=bool(row["disabled"]),
     )
 

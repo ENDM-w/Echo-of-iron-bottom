@@ -5,6 +5,7 @@ import {
   platformCreateMatch,
   platformJudgeOrder,
   platformJudgePatchShip,
+  platformJudgeReorganizeFormations,
   platformJudgePatchVisibility,
   platformJudgeReroll,
   platformLogin,
@@ -13,11 +14,15 @@ import {
   platformReject,
   platformReview,
   platformSeatView,
+  platformSeatFieldOfFire,
   platformTorpedoCandidatePreview,
   platformSubmitOrder,
   platformSubmitTelegram,
   platformTelegramInbox,
   platformJudgeTelegrams,
+  platformObserverView,
+  platformJudgeObservers,
+  platformJudgeCreateObserver,
   platformTurnArchives,
   platformDownloadTurnArchive,
   platformSummary,
@@ -29,11 +34,15 @@ import {
   type PlatformSummary,
   type PlatformTelegramInbox,
   type PlatformView,
+  type PlatformFormationCommand,
+  type PlatformJudgeFormationGroup,
 } from "./api";
+import { PlatformFormationPanel } from "./PlatformFormationPanel";
+import { PlatformFormationCompositionEditor } from "./PlatformFormationCompositionEditor";
 import { HexMap } from "./HexMap";
 import { hexFromLabel, hexLabel } from "./hexGeometry";
 import { CustomScenarioEditor } from "./CustomScenarioEditor";
-import type { Marker, Ship, Side as GameSide, TorpedoTrack, Wreck } from "./types";
+import type { FireHeatmapResponse, Marker, Ship, Side as GameSide, TorpedoTrack, Wreck } from "./types";
 import "./PlatformPortal.css";
 import "./PlatformPortalDownloads.css";
 import "./TelegramPanel.css";
@@ -44,8 +53,8 @@ type JsonRecord = Record<string, unknown>;
 type PlatformTorpedoCandidate = {
   ship_id: string;
   blocked_reason?: string | null;
-  launchers: Array<{ launcher_id: string; loaded: number; sides: string[]; angles: string[] }>;
-  launch_positions: Array<{ mf: number; hex: { q: number; r: number }; heading: number }>;
+  launchers: Array<{ launcher_id: string; loaded?: number; sides: string[]; angles: string[] }>;
+  launch_positions: Array<{ mf: number; hex?: { q: number; r: number }; heading?: number }>;
   settings: Array<{ index: number; speed: number[]; range: number }>;
 };
 const pretty = (value: unknown) => JSON.stringify(value, null, 2);
@@ -110,19 +119,21 @@ const emptyBatch = (side: Side, phase: string) =>
     formation_setup: [],
     formation_movement: [],
     formation_speed_decisions: [],
+    formation_commands: [],
     confirmation: { ready: true },
   });
 const orderDraftFields = [
   "reinforcements", "movement", "gunnery", "torpedoes",
   "smoke_ships", "smoke", "illumination", "searchlights", "formation_setup",
   "formation_movement", "formation_speed_decisions",
+  "formation_commands",
 ] as const;
 const submittedFieldsByPhase: Record<string, string[]> = {
   reinforcement: ["reinforcements"],
-  movement_planning: ["movement", "formation_movement", "formation_speed_decisions"],
+  movement_planning: ["movement", "formation_movement", "formation_speed_decisions", "formation_commands"],
   torpedo_planning: ["torpedoes"],
   gunnery: ["gunnery", "smoke", "smoke_ships", "illumination", "searchlights"],
-  formation_setup: ["formation_setup"],
+  formation_setup: ["formation_setup", "formation_commands"],
 };
 const orderDraftKey = (matchId: string, seatId: string, turn: number) =>
   `ibs-order-draft:${matchId}:${seatId}:${turn}`;
@@ -142,6 +153,7 @@ const restoreOrderDraft = (side: Side, phase: string, matchId: string, seatId: s
   try {
     const saved = JSON.parse(localStorage.getItem(orderDraftKey(matchId, seatId, turn)) ?? "null") as JsonRecord | null;
     if (saved) for (const field of orderDraftFields) {
+      if (field === "formation_commands" && saved.formation_command_scope !== (phase === "formation_setup" ? "setup" : "movement")) continue;
       if (Array.isArray(saved[field])) base[field] = saved[field];
     }
   } catch {
@@ -233,10 +245,12 @@ function PlatformMap({
   view,
   fullMap,
   onSelect,
+  fireHeatmaps,
 }: {
   view?: PlatformView;
   fullMap: boolean;
   onSelect: (ship: Ship) => void;
+  fireHeatmaps?: FireHeatmapResponse;
 }) {
   if (!view)
     return (
@@ -275,6 +289,9 @@ function PlatformMap({
             map_infinite: view.map_infinite,
           }}
           showVisibility={!fullMap}
+          lastTurnTrajectories={view.ship_trajectories}
+          fireHeatmaps={fireHeatmaps}
+          fireHeatmapMode={fireHeatmaps ? "ship" : "off"}
         />
       </div>
     </section>
@@ -293,6 +310,7 @@ export function PlatformPortal({ onClose }: Props) {
   const [telegramInbox, setTelegramInbox] = useState<PlatformTelegramInbox>();
   const [telegramDraft, setTelegramDraft] = useState("");
   const [judgeTelegrams, setJudgeTelegrams] = useState<PlatformJudgeTelegramRecord[]>([]);
+  const [observerAccounts, setObserverAccounts] = useState<Array<{user_id:string;username:string}>>([]);
   const [turnArchives, setTurnArchives] = useState<PlatformTurnArchive[]>([]);
   const [selectedSeatId, setSelectedSeatId] = useState("");
   const [orderSeatId, setOrderSeatId] = useState("");
@@ -305,6 +323,7 @@ export function PlatformPortal({ onClose }: Props) {
   const [busy, setBusy] = useState(false);
   const [scenarioId, setScenarioId] = useState("");
   const [seed, setSeed] = useState("1");
+  const [formationEnabled, setFormationEnabled] = useState(false);
   const [patchShipId, setPatchShipId] = useState("");
   const [patchText, setPatchText] = useState('{"hull": 1}');
   const [rerollSequence, setRerollSequence] = useState("");
@@ -315,6 +334,8 @@ export function PlatformPortal({ onClose }: Props) {
   const [scenarioWorkshopOpen, setScenarioWorkshopOpen] = useState(false);
   const [actionShipId, setActionShipId] = useState("");
   const [actionTargetId, setActionTargetId] = useState("");
+  const [actionSecondaryTargetId, setActionSecondaryTargetId] = useState("");
+  const [fireHeatmaps, setFireHeatmaps] = useState<FireHeatmapResponse>();
   const [movementPlan, setMovementPlan] = useState("0");
   const [movementSpeed, setMovementSpeed] = useState("");
   const [torpedoLauncherId, setTorpedoLauncherId] = useState("");
@@ -377,6 +398,12 @@ export function PlatformPortal({ onClose }: Props) {
       const next = await platformSummary(session.token, matchId.trim());
       setSummary(next);
       setScenarioId(next.match.scenario_id);
+      if (session.is_observer) {
+        setJudgeView(await platformObserverView(session.token, next.match.match_id));
+        setView(undefined);
+        setObserverAccounts([]);
+        return;
+      }
       const seat =
         next.seats.find((item) => item.user_id === session.user_id) ??
         next.seats[0];
@@ -407,6 +434,7 @@ export function PlatformPortal({ onClose }: Props) {
         }
       }
       if (session.is_referee) {
+        setObserverAccounts(await platformJudgeObservers(session.token, next.match.match_id));
         setReview(await platformReview(session.token, next.match.match_id));
         setJudgeTelegrams(await platformJudgeTelegrams(session.token, next.match.match_id));
         setTurnArchives(await platformTurnArchives(session.token, next.match.match_id));
@@ -416,6 +444,33 @@ export function PlatformPortal({ onClose }: Props) {
       }
     });
   };
+  const refreshObserverView = () => {
+    if (!session?.is_observer || !summary) return;
+    void run(async () => setJudgeView(await platformObserverView(session.token, summary.match.match_id)));
+  };
+  useEffect(() => {
+    if (!session?.is_observer || !summary) return;
+    let active = true;
+    const refresh = async () => {
+      if (pollInFlight.current) return;
+      pollInFlight.current = true;
+      try {
+        const next = await platformObserverView(session.token, summary.match.match_id);
+        if (active && next.version !== judgeView?.version) {
+          setJudgeView(next);
+          setSummary((current) => current && current.match.match_id === next.match_id
+            ? { ...current, match: { ...current.match, phase: next.phase, stage: next.stage, version: next.version } }
+            : current);
+        }
+      } catch {
+        // Keep the last full-map snapshot if a poll fails temporarily.
+      } finally {
+        pollInFlight.current = false;
+      }
+    };
+    const timer = window.setInterval(() => void refresh(), 5000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [session, summary?.match.match_id, judgeView?.version]);
   const refreshView = (seatId = selectedSeatId) => {
     if (!session || !summary || !seatId) return;
     void run(async () => {
@@ -495,6 +550,7 @@ export function PlatformPortal({ onClose }: Props) {
         scenario_id: scenarioId,
         seed: Number(seed) || 1,
         judge_user_id: session.user_id,
+        realistic_command: formationEnabled,
       });
       const nextSummary = await platformSummary(session.token, next.match_id);
       setMatchId(next.match_id);
@@ -514,6 +570,22 @@ export function PlatformPortal({ onClose }: Props) {
         archiveMessage = "；本回合存档可在下方手动下载";
       }
       setMessage(`对局已创建：${next.match_id}，自动生成 ${nextSummary.seats.length} 个席位${archiveMessage}`);
+    });
+  };
+  const addObserver = () => {
+    if (!session?.is_referee || !summary) return;
+    void run(async () => {
+      const credentials = await platformJudgeCreateObserver(session.token, summary.match.match_id);
+      setObserverAccounts(await platformJudgeObservers(session.token, summary.match.match_id));
+      const text = [
+        "铁底湾多人网推 - 只读观众席",
+        `对局 ID：${summary.match.match_id}`,
+        `账号：${credentials.username}`,
+        `密码：${credentials.password}`,
+        "权限：只读全图与全舰状态",
+      ].join("\r\n");
+      saveDownload(new Blob(["\uFEFF", text], { type: "text/plain;charset=utf-8" }), `观众席账密-${summary.match.match_id}.txt`);
+      setMessage(`已创建观众席 ${credentials.username}，账密 TXT 已下载`);
     });
   };
   const downloadSeatCredentials = () => {
@@ -561,11 +633,12 @@ export function PlatformPortal({ onClose }: Props) {
     if (!session || !summary || !selectedSeatId) return;
     const rows = Array.isArray(batch.torpedoes) ? batch.torpedoes as JsonRecord[] : [];
     const movement = Array.isArray(batch.movement) ? batch.movement : [];
-    if (!rows.length || !movement.length) return;
+    const formationCommands = Array.isArray(batch.formation_commands) ? batch.formation_commands : [];
+    if (!rows.length || (!movement.length && !view?.realistic_command)) return;
     let candidates: PlatformTorpedoCandidate[];
     try {
       candidates = await platformTorpedoCandidatePreview(
-        session.token, summary.match.match_id, selectedSeatId, movement,
+        session.token, summary.match.match_id, selectedSeatId, movement, formationCommands,
       ) as unknown as PlatformTorpedoCandidate[];
     } catch {
       return;
@@ -574,7 +647,7 @@ export function PlatformPortal({ onClose }: Props) {
     for (const candidate of candidates) {
       const positions = new Map<number, { hex: { q: number; r: number }; heading: number }>();
       for (const position of candidate.launch_positions) {
-        positions.set(position.mf, { hex: position.hex, heading: position.heading });
+        if (position.hex && position.heading != null) positions.set(position.mf, { hex: position.hex, heading: position.heading });
       }
       positionsByShip.set(candidate.ship_id, positions);
     }
@@ -604,9 +677,11 @@ export function PlatformPortal({ onClose }: Props) {
   };
   const dropTorpedoRowsWithoutHex = (batch: JsonRecord): number => {
     const rows = Array.isArray(batch.torpedoes) ? (batch.torpedoes as JsonRecord[]) : [];
+    const remotelyCommanded = new Set((view?.formation_roster ?? []).flatMap((formation) => formation.ships.map((ship) => String(ship.id))));
     const keep = rows.filter((row) => {
       const hex = row.launch_hex as JsonRecord | null | undefined;
-      return Boolean(hex && Number.isInteger(Number(hex.q)) && Number.isInteger(Number(hex.r)));
+      return remotelyCommanded.has(String(row.ship_id ?? ""))
+        || Boolean(hex && Number.isInteger(Number(hex.q)) && Number.isInteger(Number(hex.r)));
     });
     if (keep.length !== rows.length) batch.torpedoes = keep;
     return rows.length - keep.length;
@@ -656,6 +731,7 @@ export function PlatformPortal({ onClose }: Props) {
           {
             phase: view.phase,
             batch: submittedBatch,
+            formation_commands: submittedBatch.formation_commands ?? [],
             scope: view.phase === "reinforcement" ? "turn" : "phase",
             request_id: `web-${Date.now()}`,
             ignore_validation_errors: ignoreValidationErrors,
@@ -751,6 +827,7 @@ export function PlatformPortal({ onClose }: Props) {
         {
           phase: summary.match.phase,
           batch: JSON.parse(orderText) as JsonRecord,
+          formation_commands: (JSON.parse(orderText) as JsonRecord).formation_commands ?? [],
           scope: review?.orders.find((item) => item.seat_id === orderSeatId)?.scope
             ?? (summary.match.phase === "reinforcement" ? "turn" : "phase"),
           reason: note || "裁判修订行动",
@@ -784,6 +861,16 @@ export function PlatformPortal({ onClose }: Props) {
           plan: String(ship.max_legal_speed ?? 0),
           speed: ship.max_legal_speed ?? 0,
         }));
+      if (judgeView.realistic_command) {
+        const groupedIds = new Set((judgeView.formations ?? []).flatMap((formation) => formation.ship_ids ?? []));
+        batch.movement = (batch.movement as JsonRecord[]).filter((row) => !groupedIds.has(String(row.ship_id)));
+        batch.formation_commands = reviewFormations.filter((formation) => formation.role === "flagship").map((formation) => {
+          const members = judgeShips.filter((ship) => formation.ship_ids?.includes(ship.id) && !ship.sunk && ship.position);
+          const speed = Math.min(...members.map((ship) => ship.max_legal_speed ?? ship.current_speed ?? 0));
+          return { formation_id: formation.formation_id, leader_plan: String(Number.isFinite(speed) ? speed : 0), spacing: formation.spacing,
+            turn_mode: formation.turn_mode, reduce_speed: Number.isFinite(speed) ? speed : null };
+        });
+      }
     }
     if (phase === "reinforcement" || phase === "gunnery") {
       const candidates = judgeView.gunnery_candidates ?? [];
@@ -810,6 +897,7 @@ export function PlatformPortal({ onClose }: Props) {
         phase,
         batch,
         scope,
+        formation_commands: batch.formation_commands ?? [],
         reason: "裁判快速覆盖：最高合法速度直航，并复用上次炮击目标",
         expected_version: summary.match.version,
       });
@@ -845,6 +933,8 @@ export function PlatformPortal({ onClose }: Props) {
         expected_version: summary.match.version,
       });
       setSummary({ ...summary, match: published });
+      if (selectedOrderSeat) setOrderText(emptyBatch(selectedOrderSeat.side, published.phase));
+      setOrderValidationErrors([]);
       setReview(await platformReview(session.token, summary.match.match_id));
       setJudgeTelegrams(await platformJudgeTelegrams(session.token, summary.match.match_id));
       setTurnArchives(await platformTurnArchives(session.token, summary.match.match_id));
@@ -894,6 +984,23 @@ export function PlatformPortal({ onClose }: Props) {
         match: result.match as PlatformSummary["match"],
       });
       setMessage(`舰船状态已覆盖：${patchShipId.trim()}`);
+    });
+  };
+  const reorganizeFormations = (side: Side, formations: PlatformJudgeFormationGroup[]) => {
+    if (!session || !summary) return;
+    void run(async () => {
+      await platformJudgeReorganizeFormations(session.token, summary.match.match_id, {
+        side, formations, reason: note || "裁判调整编队组成", expected_version: summary.match.version,
+      });
+      const [nextSummary, nextView, nextReview] = await Promise.all([
+        platformSummary(session.token, summary.match.match_id),
+        platformJudgeView(session.token, summary.match.match_id),
+        platformReview(session.token, summary.match.match_id),
+      ]);
+      setSummary(nextSummary);
+      setJudgeView(nextView);
+      setReview(nextReview);
+      setMessage(`已保存${side === "axis" ? "轴心" : "同盟"}编队组成；当前阶段旧订单已作废，请按新领舰席位重新提交。`);
     });
   };
   const patchVisibility = () => {
@@ -961,6 +1068,36 @@ export function PlatformPortal({ onClose }: Props) {
       (ship) => view.own_ship_ids.includes(ship.id) && !ship.sunk,
     );
   }, [view]);
+  const commandableShips = useMemo(() => {
+    if (!view?.realistic_command) return ownShips;
+    const roster = new Map<string, JsonRecord>();
+    for (const formation of view.formation_roster ?? []) {
+      for (const ship of formation.ships) roster.set(String(ship.id), ship);
+    }
+    const reports = new Map<string, JsonRecord>();
+    for (const report of view.formation_reports ?? []) {
+      for (const ship of report.ships) reports.set(String(ship.id), ship);
+    }
+    return [...ownShips, ...[...roster.entries()].map(([id, staticShip]) => {
+      const reported = reports.get(id);
+      return {
+        ...staticShip,
+        ...reported,
+        position: null,
+        heading: reported?.heading ?? 1,
+        current_speed: reported?.current_speed ?? 0,
+        hull: reported?.hull ?? null,
+        max_hull: reported?.max_hull ?? null,
+        fire_markers: reported?.fire_markers ?? 0,
+        fired: reported?.fired ?? false,
+        sunk: reported?.sunk ?? false,
+        gun_mounts: reported?.gun_mounts ?? staticShip.gun_mounts ?? [],
+        torpedo_launchers: reported?.torpedo_launchers ?? staticShip.torpedo_launchers ?? [],
+        captain_command_lost: reported?.captain_command_lost ?? false,
+        _delayed_report_turn: view.formation_reports?.find((item) => item.ships.some((member) => String(member.id) === id))?.turn,
+      } as unknown as Ship;
+    })];
+  }, [view, ownShips]);
   const visibleTargets = useMemo(() => {
     if (!view) return [] as Ship[];
     return (view.ships as unknown as Ship[]).filter(
@@ -968,7 +1105,7 @@ export function PlatformPortal({ onClose }: Props) {
     );
   }, [view]);
   const selectedActionShip =
-    ownShips.find((ship) => ship.id === actionShipId) ?? ownShips[0];
+    commandableShips.find((ship) => ship.id === actionShipId) ?? ownShips[0] ?? commandableShips[0];
   const movementCostPreview = movementPlanCost(movementPlan);
   const movementPlanWarnings = selectedActionShip ? [
     movementCostPreview.error,
@@ -983,6 +1120,12 @@ export function PlatformPortal({ onClose }: Props) {
   const captainCommandLost = Boolean(selectedActionShip?.captain_command_lost);
   const selectedActionTarget =
     visibleTargets.find((ship) => ship.id === actionTargetId) ?? visibleTargets[0];
+  const selectedGunneryPrimaryTarget = visibleTargets.find(
+    (ship) => ship.id === actionTargetId,
+  );
+  const selectedActionSecondaryTarget = visibleTargets.find(
+    (ship) => ship.id === actionSecondaryTargetId,
+  );
   const selectedLauncher = selectedActionShip?.torpedo_launchers.find(
     (launcher) => launcher.id === torpedoLauncherId,
   ) ?? selectedActionShip?.torpedo_launchers.find((launcher) => !launcher.destroyed && launcher.loaded > 0);
@@ -996,7 +1139,17 @@ export function PlatformPortal({ onClose }: Props) {
     (candidate) => candidate.target_id === selectedActionTarget?.id,
   );
   const fireableMountIds = new Set(gunneryTarget?.mount_ids ?? []);
-  const fireableMounts = availableMounts.filter((mount) => fireableMountIds.has(mount.id));
+  const toggleFieldOfFire = () => void run(async () => {
+    if (fireHeatmaps) {
+      setFireHeatmaps(undefined);
+      return;
+    }
+    if (!session || !matchId || !selectedSeatId || !selectedActionShip) return;
+    const heatmap = await platformSeatFieldOfFire(
+      session.token, matchId, selectedSeatId, selectedActionShip.id,
+    );
+    setFireHeatmaps(heatmap);
+  });
   const illuminationDrafts = useMemo(() => {
     try {
       const batch = JSON.parse(orderText) as JsonRecord;
@@ -1034,19 +1187,21 @@ export function PlatformPortal({ onClose }: Props) {
     }
   }, [orderText]);
   useEffect(() => {
-    if (!session || session.is_referee || !summary || !selectedSeatId || view?.phase !== "reinforcement") {
+    if (!session || session.is_referee || !summary || !selectedSeatId || !["reinforcement", "torpedo_planning"].includes(view?.phase ?? "")) {
       setTorpedoDraftCandidates(undefined);
       return;
     }
     let movement: unknown[];
+    let formationCommands: unknown[];
     try {
       const batch = JSON.parse(orderText) as JsonRecord;
       movement = Array.isArray(batch.movement) ? batch.movement : [];
+      formationCommands = Array.isArray(batch.formation_commands) ? batch.formation_commands : [];
     } catch {
       setTorpedoDraftCandidates([]);
       return;
     }
-    if (movement.length === 0) {
+    if (movement.length === 0 && !view?.realistic_command) {
       setTorpedoDraftCandidates(undefined);
       return;
     }
@@ -1054,7 +1209,7 @@ export function PlatformPortal({ onClose }: Props) {
     setTorpedoDraftCandidates([]);
     const timer = window.setTimeout(() => {
       void platformTorpedoCandidatePreview(
-        session.token, summary.match.match_id, selectedSeatId, movement,
+        session.token, summary.match.match_id, selectedSeatId, movement, formationCommands,
       ).then((candidates) => {
         if (active) setTorpedoDraftCandidates(candidates as unknown as PlatformTorpedoCandidate[]);
       }).catch(() => {
@@ -1106,7 +1261,7 @@ export function PlatformPortal({ onClose }: Props) {
   const launcherOptions = selectedTorpedoCandidate?.launchers.length
     ? selectedTorpedoCandidate.launchers.map((candidate) => ({
         id: candidate.launcher_id,
-        label: `${candidate.launcher_id} · 可用 ${candidate.loaded} 枚`,
+        label: `${candidate.launcher_id}${candidate.loaded == null ? "" : ` · 可用 ${candidate.loaded} 枚`}`,
       }))
     : (selectedActionShip?.torpedo_launchers ?? [])
         .filter((launcher) => !launcher.destroyed && launcher.loaded > 0)
@@ -1128,6 +1283,7 @@ export function PlatformPortal({ onClose }: Props) {
       if (view && summary && selectedSeatId) {
         const draft: JsonRecord = {};
         for (const field of orderDraftFields) draft[field] = batch[field] ?? [];
+        draft.formation_command_scope = view.phase === "formation_setup" ? "setup" : "movement";
         try {
           localStorage.setItem(
             orderDraftKey(summary.match.match_id, selectedSeatId, view.turn),
@@ -1167,12 +1323,31 @@ export function PlatformPortal({ onClose }: Props) {
   const orderSeatShips = judgeShips.filter((ship) => selectedOrderSeat?.controlled_ship_ids.includes(ship.id));
   const defaultOrderShipId = selectedOrderSeat?.controlled_ship_ids[0] ?? judgeShips[0]?.id ?? "";
   const defaultOrderShip = judgeShips.find((ship) => ship.id === defaultOrderShipId);
+  const playerFormations = view?.formations ?? [];
+  const formationCommandedShipIds = new Set((view?.formation_roster ?? []).flatMap((formation) => formation.ships.map((ship) => String(ship.id))));
+  const followerOnlySeat = Boolean(view?.realistic_command && playerFormations.length > 0 && !playerFormations.some((formation) => formation.role === "flagship"));
+  const reviewFormations = (judgeView?.formations ?? [])
+    .filter((formation) => formation.ship_ids?.some((id) => selectedOrderSeat?.controlled_ship_ids.includes(id)))
+    .map((formation) => ({ ...formation,
+      role: selectedOrderSeat?.controlled_ship_ids.includes(formation.flagship_id ?? "") ? "flagship" as const : "follower" as const,
+      commanding_ship_id: formation.flagship_id,
+      own_ship_ids: formation.ship_ids?.filter((id) => selectedOrderSeat?.controlled_ship_ids.includes(id)),
+    }));
+  const writeFormationCommand = (command: PlatformFormationCommand) => updateOrderDraft((batch) => {
+    const previous = Array.isArray(batch.formation_commands) ? batch.formation_commands as JsonRecord[] : [];
+    batch.formation_commands = [...previous.filter((row) => row.formation_id !== command.formation_id), command];
+    for (const field of ["formation_setup", "formation_movement", "formation_speed_decisions"]) {
+      if (Array.isArray(batch[field])) batch[field] = (batch[field] as JsonRecord[]).filter((row) => row.formation_id !== command.formation_id);
+    }
+  }, summary?.match.phase === "formation_setup" ? "已写入编队设置" : "已写入旗舰航路，跟随舰移动由引擎生成");
   const defaultTargetId = judgeShips.find((ship) => ship.id !== defaultOrderShipId)?.id ?? judgeShips[0]?.id ?? "";
   const judgeShipLabel = (shipId: unknown) => {
     const id = String(shipId ?? "");
     const ship = judgeShips.find((item) => item.id === id);
     return ship ? `${ship.name} · ${ship.id}` : id || "未指定舰船";
   };
+  const judgeShipListLabel = (shipIds: string[]) =>
+    shipIds.length ? shipIds.map(judgeShipLabel).join("、") : "未绑定舰船";
   const draftRows = (key: string) => (
     Array.isArray(orderDraft?.[key])
       ? (orderDraft?.[key] as unknown[]).filter(
@@ -1180,9 +1355,18 @@ export function PlatformPortal({ onClose }: Props) {
         )
       : []
   );
-  const draftShipName = (shipId: unknown) =>
-    ownShips.find((ship) => ship.id === String(shipId ?? ""))?.name
-      ?? String(shipId ?? "本舰");
+  const formationDrafts = draftRows("formation_commands") as unknown as PlatformFormationCommand[];
+  const reviewFormationDrafts = [
+    ...draftRows("formation_setup").map((row) => ({ formation_id: String(row.formation_id), leader_plan: "0", spacing: row.spacing ?? 1, heading: row.heading, turn_mode: row.turn_mode ?? "column_follow" })),
+    ...draftRows("formation_movement").map((row) => ({ formation_id: String(row.formation_id), leader_plan: String(row.leader_plan ?? "0"), spacing: row.spacing ?? 1, turn_mode: row.turn_mode ?? "column_follow", reduce_speed: (row.speed_decision as JsonRecord | undefined)?.speed })),
+    ...formationDrafts,
+  ] as PlatformFormationCommand[];
+  const draftShipName = (shipId: unknown) => {
+    const id = String(shipId ?? "");
+    const judgeShip = judgeShips.find((ship) => ship.id === id);
+    if (judgeShip) return `${judgeShip.name} · ${judgeShip.id}`;
+    return ownShips.find((ship) => ship.id === id)?.name ?? (id || "本舰");
+  };
   const draftTargetName = (targetId: unknown) => {
     const target = visibleTargets.find((ship) => ship.id === String(targetId ?? ""));
     return target ? targetLabel(target) : String(targetId ?? "目标待刷新");
@@ -1199,6 +1383,7 @@ export function PlatformPortal({ onClose }: Props) {
     formation_setup: "编队设置",
     formation_movement: "编队移动",
     formation_speed_decisions: "编队速度",
+    formation_commands: "旗舰编队",
   };
   const draftCommandDescription = (field: string, value: unknown) => {
     const row = value && typeof value === "object" ? value as JsonRecord : { ship_id: value };
@@ -1206,7 +1391,7 @@ export function PlatformPortal({ onClose }: Props) {
     switch (field) {
       case "reinforcements": return `${ship} · ${positionLabel(row.entry_hex ?? row.position)}`;
       case "movement": return `${ship} · ${String(row.plan ?? "未设航路")}${row.speed == null ? "" : ` · ${String(row.speed)} MF`}`;
-      case "gunnery": return `${ship} → ${draftTargetName(row.primary_target)} · ${Array.isArray(row.mounts) ? row.mounts.length : 0} 个炮位`;
+      case "gunnery": return `${ship} · 主目标 ${draftTargetName(row.primary_target)} · 副目标 ${draftTargetName(row.secondary_target)}`;
       case "torpedoes": return `${ship} · ${String(row.launcher_id ?? "发射器未指定")} · ${String(row.count ?? 1)} 枚 · MF ${String(row.launch_at_mf ?? "?")}`;
       case "illumination": return `${ship} · ${String(row.mount_id ?? "自动炮位")} → ${positionLabel(row.target_hex)}`;
       case "searchlights": return `${ship} → ${draftTargetName(row.target_id)}`;
@@ -1215,6 +1400,7 @@ export function PlatformPortal({ onClose }: Props) {
       case "formation_setup":
       case "formation_movement":
       case "formation_speed_decisions": return String(row.name ?? row.formation_id ?? row.ship_id ?? "编队行动");
+      case "formation_commands": return `${row.turn_mode === "synchronized" ? "同步转向" : "鱼贯转向"} · ${view?.phase === "formation_setup" ? `间距 ${String(row.spacing)} 格` : `旗舰航路 ${String(row.leader_plan ?? "0")}`}`;
       default: return ship;
     }
   };
@@ -1225,7 +1411,7 @@ export function PlatformPortal({ onClose }: Props) {
       describe: (row: JsonRecord) => `${draftShipName(row.ship_id)} · ${positionLabel(row.entry_hex ?? row.position)}`,
     },
     {
-      key: "movement", label: "移动", visible: view.phase === "reinforcement" || view.phase === "movement_planning",
+      key: "movement", label: "移动", visible: !view.realistic_command && (view.phase === "reinforcement" || view.phase === "movement_planning"),
       rows: draftRows("movement"),
       describe: (row: JsonRecord) => `${draftShipName(row.ship_id)} · ${String(row.plan ?? "未设航路")}${row.speed == null ? "" : ` · ${String(row.speed)} MF`}`,
     },
@@ -1233,8 +1419,7 @@ export function PlatformPortal({ onClose }: Props) {
       key: "gunnery", label: "炮击", visible: view.phase === "reinforcement" || view.phase === "gunnery",
       rows: draftRows("gunnery"),
       describe: (row: JsonRecord) => {
-        const mounts = Array.isArray(row.mounts) ? row.mounts.length : 0;
-        return `${draftShipName(row.ship_id)} → ${draftTargetName(row.primary_target)} · ${mounts} 个炮位`;
+        return `${draftShipName(row.ship_id)} · 主目标 ${draftTargetName(row.primary_target)} · 副目标 ${draftTargetName(row.secondary_target)}`;
       },
     },
     {
@@ -1262,9 +1447,9 @@ export function PlatformPortal({ onClose }: Props) {
       describe: (row: JsonRecord) => draftShipName(row.ship_id),
     },
     {
-      key: "formations", label: "编队", visible: view.phase === "formation_setup" || view.phase === "movement_planning",
-      rows: ["formation_setup", "formation_movement", "formation_speed_decisions"].flatMap((key) => draftRows(key)),
-      describe: (row: JsonRecord) => String(row.name ?? row.formation_id ?? row.ship_id ?? "编队行动"),
+      key: "formations", label: "编队", visible: playerFormations.some((formation) => formation.role === "flagship"),
+      rows: ["formation_setup", "formation_movement", "formation_speed_decisions", "formation_commands"].flatMap((key) => draftRows(key)),
+      describe: (row: JsonRecord) => `${row.turn_mode === "synchronized" ? "同步转向" : "鱼贯转向"} · ${view.phase === "formation_setup" ? `间距 ${String(row.spacing ?? 1)} 格` : `旗舰航路 ${String(row.leader_plan ?? "0")}`}`,
     },
   ].filter((section) => section.visible) : [];
   const nextJudgeTorpedoLauncher = defaultOrderShip?.torpedo_launchers.find((launcher) =>
@@ -1423,20 +1608,19 @@ export function PlatformPortal({ onClose }: Props) {
   };
   const writeGunneryOrder = () => {
     const ship = selectedActionShip;
-    const target = selectedActionTarget;
-    if (!ship || !target) return;
-    const mountIds = fireableMounts.map((mount) => mount.id);
+    const target = selectedGunneryPrimaryTarget;
+    if (!ship || (!target && !selectedActionSecondaryTarget)) return;
     replaceShipOrder(
       "gunnery",
       ship.id,
       {
         ship_id: ship.id,
-        primary_target: target.id,
-        secondary_target: null,
+        primary_target: target?.id ?? null,
+        secondary_target: selectedActionSecondaryTarget?.id ?? null,
         searchlight_target: null,
-        mounts: mountIds.map((mountId) => ({ mount_id: mountId, target_id: target.id })),
+        mounts: [],
       },
-      `已写入 ${ship.name} → ${targetLabel(target)} 的炮击草稿`,
+      `已写入 ${ship.name} 的主/副目标炮击草稿`,
     );
   };
   const writeIlluminationOrder = () => {
@@ -1491,8 +1675,8 @@ export function PlatformPortal({ onClose }: Props) {
       speed: "fast",
       launcher_id: launcher.id,
       launch_at_mf: position.mf,
-      launch_hex: position.hex,
-      bearing: position.heading,
+      launch_hex: view?.own_ship_ids.includes(ship.id) ? position.hex : undefined,
+      bearing: view?.own_ship_ids.includes(ship.id) ? position.heading : null,
       launch_side: selectedLaunchSide,
       launch_angle: selectedLaunchAngle,
       setting_index: selectedSettingIndex,
@@ -1580,14 +1764,15 @@ export function PlatformPortal({ onClose }: Props) {
     );
 
   const isJudge = session.is_referee;
+  const isObserver = Boolean(session.is_observer);
   return (
     <main className="platform-shell">
       <header className="platform-header">
         <div>
           <p className="eyebrow">MULTI-PLAYER WAR ROOM</p>
-          <h1>{isJudge ? "裁判审理台" : "玩家指挥席"}</h1>
+          <h1>{isJudge ? "裁判审理台" : isObserver ? "观众席" : "玩家指挥席"}</h1>
           <p>
-            {session.username} · {isJudge ? "裁判权限" : "独立舰船席位"}
+            {session.username} · {isJudge ? "裁判权限" : isObserver ? "只读全图" : "独立舰船席位"}
           </p>
         </div>
         <div className="platform-header-actions">
@@ -1620,7 +1805,29 @@ export function PlatformPortal({ onClose }: Props) {
         </button>
         {message && <span className="platform-message">{message}</span>}
       </section>
-      {isJudge ? (
+      {isObserver ? (
+        <div className="platform-grid observer-grid">
+          <PlatformMap view={judgeView} fullMap onSelect={() => undefined} />
+          <section className="platform-panel judge-fleet-state">
+            <div className="panel-heading">
+              <div>
+                <span className="platform-kicker">READ-ONLY FLEET STATE</span>
+                <h2>全舰状态</h2>
+              </div>
+              <div className="observer-actions">
+                <span className="match-meta">{judgeView?.referee_ship_states?.length ?? 0} 艘</span>
+                <button className="quiet" onClick={refreshObserverView} disabled={busy || !summary}>刷新</button>
+              </div>
+            </div>
+            {judgeView?.referee_ship_states?.length ? (
+              <div className="judge-fleet-list">
+                {judgeView.referee_ship_states.map((ship) => <RefereeShipCard key={String(ship.id)} ship={ship} />)}
+              </div>
+            ) : <p className="empty-plan">载入裁判下发的对局 ID 后显示只读全图。</p>}
+            {judgeView && <p className="field-hint">第 {judgeView.turn}/{judgeView.max_turns} 回合 · {judgeView.phase} · {judgeView.stage}</p>}
+          </section>
+        </div>
+      ) : isJudge ? (
         <div className="platform-grid judge-grid">
           <PlatformMap
             view={judgeView}
@@ -1643,6 +1850,11 @@ export function PlatformPortal({ onClose }: Props) {
               <p className="empty-plan">载入对局后显示全体舰船的权威状态。</p>
             )}
           </section>
+          <PlatformFormationCompositionEditor
+            view={judgeView}
+            disabled={busy || awaitingPublication || summary?.match.stage === "resolving"}
+            onSave={reorganizeFormations}
+          />
           <section className="platform-panel">
             <div className="panel-heading">
               <div>
@@ -1670,8 +1882,10 @@ export function PlatformPortal({ onClose }: Props) {
                   onChange={(event) => setSeed(event.target.value)}
                 />
               </label>
+              <label className="check-label"><input type="checkbox" checked={formationEnabled} onChange={(event) => setFormationEnabled(event.target.checked)} />启用旗舰编队指挥</label>
               <button onClick={createMatch}>创建对局</button>
             </div>
+            {judgeView && <p className="field-hint">当前对局：{judgeView.realistic_command ? "旗舰编队指挥已启用" : "逐舰指挥；新建对局时可勾选旗舰编队指挥"}</p>}
             <div className="panel-divider" />
             {summary && (
               <>
@@ -1736,6 +1950,20 @@ export function PlatformPortal({ onClose }: Props) {
                     <p className="field-hint">载入对局后显示已保存的回合存档。</p>
                   )}
                 </section>
+                <section className="observer-management">
+                  <div className="turn-archive-heading">
+                    <div>
+                      <b>只读观众席</b>
+                      <span>观众可查看全图与全舰状态，不能提交订单或使用裁判工具。</span>
+                    </div>
+                    <button className="quiet" onClick={addObserver} disabled={busy || !summary}>新增并下载账密</button>
+                  </div>
+                  {observerAccounts.length ? (
+                    <div className="observer-account-list">
+                      {observerAccounts.map((account) => <span key={account.user_id}>{account.username}</span>)}
+                    </div>
+                  ) : <p className="field-hint">本局还没有观众席账号。</p>}
+                </section>
               </>
             )}
           </section>
@@ -1788,7 +2016,7 @@ export function PlatformPortal({ onClose }: Props) {
                       onClick={() => selectReviewSeat(seat.seat_id)}
                     >
                       <b>{seat.username ?? seat.seat_id.slice(0, 8)}</b>
-                      <span>{seat.side === "axis" ? "轴心" : "同盟"} · {seat.controlled_ship_ids.join(", ")}</span>
+                      <span>{seat.side === "axis" ? "轴心" : "同盟"} · {judgeShipListLabel(seat.controlled_ship_ids)}</span>
                       <small>{submitted ? "已提交，点击载入订单" : "未提交，点击查看空表"}</small>
                     </button>
                   );
@@ -1798,14 +2026,19 @@ export function PlatformPortal({ onClose }: Props) {
             {review?.orders.length ? (
               <div className="review-orders">
                 {review.orders.map((order) => (
-                  <button
-                    key={order.seat_id}
-                    className={orderSeatId === order.seat_id ? "selected" : ""}
-                    onClick={() => selectReviewSeat(order.seat_id)}
-                  >
-                    <b>{order.seat_id.slice(0, 8)}</b>
-                    <span>{order.validation_errors?.length ? `⚠ ${order.validation_errors.length} 项报错` : order.request_id}</span>
-                  </button>
+                  (() => {
+                    const seat = summary?.seats.find((item) => item.seat_id === order.seat_id);
+                    return (
+                      <button
+                        key={order.seat_id}
+                        className={orderSeatId === order.seat_id ? "selected" : ""}
+                        onClick={() => selectReviewSeat(order.seat_id)}
+                      >
+                        <b>{seat ? judgeShipListLabel(seat.controlled_ship_ids) : order.seat_id.slice(0, 8)}</b>
+                        <span>{seat?.username ?? order.seat_id.slice(0, 8)} · {order.validation_errors?.length ? `⚠ ${order.validation_errors.length} 项报错` : order.request_id}</span>
+                      </button>
+                    );
+                  })()
                 ))}
               </div>
             ) : (
@@ -1818,7 +2051,10 @@ export function PlatformPortal({ onClose }: Props) {
                     <span className="platform-kicker">VISUAL ORDER EDITOR</span>
                     <h3>可视化订单编辑</h3>
                   </div>
-                  <span>{review?.orders.find((item) => item.seat_id === orderSeatId)?.scope === "turn" ? "整回合订单" : "阶段订单"} · {String(orderDraft.side ?? "—")}</span>
+                  <span>
+                    {review?.orders.find((item) => item.seat_id === orderSeatId)?.scope === "turn" ? "整回合订单" : "阶段订单"}
+                    {" · "}{String(orderDraft.side ?? "—")}{" · "}{judgeShipListLabel(selectedOrderSeat?.controlled_ship_ids ?? [])}
+                  </span>
                 </div>
                 {Boolean(review?.orders.find((item) => item.seat_id === orderSeatId)?.validation_errors?.length) && (
                   <div className="review-error order-validation-note" role="alert">
@@ -1829,6 +2065,9 @@ export function PlatformPortal({ onClose }: Props) {
                     <p>请核对或覆盖订单；批准时规则引擎仍会执行最终合法性校验。</p>
                   </div>
                 )}
+                <PlatformFormationPanel formations={reviewFormations} commands={reviewFormationDrafts}
+                  ships={judgeShips} phase={summary?.match.phase ?? ""} turn={judgeView?.turn ?? 0} disabled={busy || awaitingPublication}
+                  onWrite={writeFormationCommand} />
                 <div className="referee-add-actions">
                   <span>添加行动</span>
                   <button type="button" className="quiet" disabled={!defaultOrderShipId} onClick={() => appendOrderRow("movement", { ship_id: defaultOrderShipId, plan: "0", speed: null })}>＋移动</button>
@@ -1964,7 +2203,7 @@ export function PlatformPortal({ onClose }: Props) {
                                 bearing: position?.heading ?? row.bearing,
                               });
                             }}>
-                              {launchPositions.map((item) => <option key={item.mf} value={item.mf}>MF {item.mf} · {hexLabel(item.hex)} · 航向 {item.heading}</option>)}
+                              {launchPositions.map((item) => <option key={item.mf} value={item.mf}>MF {item.mf}{item.hex ? ` · ${hexLabel(item.hex)}` : ""}{item.heading ? ` · 航向 ${item.heading}` : ""}</option>)}
                             </select>
                           ) : <input type="number" min="0" max="8" value={String(row.launch_at_mf ?? 0)} onChange={(event) => updateOrderRow("torpedoes", index, { launch_at_mf: Number(event.target.value) })} />}</label>
                           <label>舷侧<select value={String(row.launch_side ?? "")} onChange={(event) => updateOrderRow("torpedoes", index, { launch_side: event.target.value || null })}>
@@ -2051,7 +2290,7 @@ export function PlatformPortal({ onClose }: Props) {
                     ))}
                   </section>
                 )}
-                {!draftRows("movement").length && !draftRows("gunnery").length && !draftRows("torpedoes").length && !draftRows("illumination").length && !draftRows("searchlights").length && !draftRows("smoke").length && (
+                {!reviewFormations.length && !draftRows("movement").length && !draftRows("gunnery").length && !draftRows("torpedoes").length && !draftRows("illumination").length && !draftRows("searchlights").length && !draftRows("smoke").length && (
                   <p className="empty-plan">当前订单没有可视化行动项，可在高级 JSON 中查看确认字段。</p>
                 )}
               </section>
@@ -2286,6 +2525,7 @@ export function PlatformPortal({ onClose }: Props) {
           <PlatformMap
             view={view}
             fullMap={false}
+            fireHeatmaps={fireHeatmaps}
             onSelect={(ship) => setMessage(`已选中 ${ship.name}`)}
           />
           <section className="platform-panel player-seat-panel">
@@ -2407,6 +2647,21 @@ export function PlatformPortal({ onClose }: Props) {
                     );
                   })}
                 </div>
+                {view.realistic_command && playerFormations.length > 0 && (
+                  <section className="formation-delayed-report" aria-label="编队延迟状态报告">
+                    <header><b>编队成员状态</b><span>{view.formation_reports?.length ? `第 ${Math.max(...view.formation_reports.map((report) => report.turn))} 回合结算报告` : "暂无上回合报告"}</span></header>
+                    {view.formation_reports?.some((report) => report.ships.length) ? view.formation_reports.flatMap((report) => report.ships.map((ship) => ({ ship, turn: report.turn }))).map(({ ship, turn }) => {
+                      const guns = Array.isArray(ship.gun_mounts) ? ship.gun_mounts as Array<JsonRecord> : [];
+                      const launchers = Array.isArray(ship.torpedo_launchers) ? ship.torpedo_launchers as Array<JsonRecord> : [];
+                      return <article key={String(ship.id)}>
+                        <b>{String(ship.name ?? ship.id)} · {String(ship.id)}</b>
+                        <span>第 {turn} 回合 · {positionLabel(ship.position)} · 航速 {String(ship.current_speed ?? "—")} MF · 舰体 {String(ship.hull ?? "—")}/{String(ship.max_hull ?? "—")}</span>
+                        <span>{ship.sunk ? "沉没" : ship.command_status === "straggling" ? "掉队追赶" : "漂浮"} · 起火 {String(ship.fire_markers ?? 0)} · {ship.captain_status === "wounded" ? "舰长负伤" : ship.captain_status === "killed" ? "舰长阵亡" : "舰长正常"}</span>
+                        <small>炮位：{guns.length ? guns.map((mount) => `${String(mount.id)} ${mount.destroyed ? "损毁" : "可用"}`).join(" · ") : "—"}；鱼雷发射器：{launchers.length ? launchers.map((launcher) => `${String(launcher.id)} ${launcher.destroyed ? "损毁" : `装填 ${String(launcher.loaded)}/${String(launcher.torpedoes)}`}`).join(" · ") : "无"}</small>
+                      </article>;
+                    }) : <p className="field-hint">队员状态按上一回合结算存档延迟显示；地图、目标列表和视野仍只以领舰自身位置计算。</p>}
+                  </section>
+                )}
               </div>
             )}
           </section>
@@ -2421,9 +2676,13 @@ export function PlatformPortal({ onClose }: Props) {
             {view ? (
               <>
                 <div className="phase-banner">
-                  <b>{view.phase === "movement_planning" ? "移动阶段" : view.phase === "gunnery" ? "炮击阶段" : view.phase === "torpedo_planning" ? "鱼雷阶段" : view.phase === "reinforcement" ? "增援 / 预编排" : "本阶段确认"}</b>
+                  <b>{view.phase === "formation_setup" ? "编队初设" : view.phase === "movement_planning" ? "移动阶段" : view.phase === "gunnery" ? "炮击阶段" : view.phase === "torpedo_planning" ? "鱼雷阶段" : view.phase === "reinforcement" ? "增援 / 预编排" : "本阶段确认"}</b>
                   <span>
-                    {view.phase === "movement_planning"
+                    {followerOnlySeat ? "本席位为跟随舰，只显示上回合状态报告；本舰行动由领舰玩家遥控，本席位无需提交。" : view.phase === "formation_setup"
+                      ? "领舰席位提交转向方式、舰间距和初始航向；队员由裁判分组后自动归队。"
+                      : view.realistic_command && view.phase === "movement_planning"
+                        ? "编队队员沿旗舰航迹移动；鱼贯模式下各舰航速须在前舰本回合速度的 ±2 MF 内。"
+                      : view.phase === "movement_planning"
                       ? "为本席位的每条舰船写入航向计划；没有动作的舰船保持 0。"
                       : view.phase === "gunnery"
                         ? "选择可见接触和炮位。目标列表中的接触不区分阵营，误伤由规则核心照常裁定。"
@@ -2484,7 +2743,12 @@ export function PlatformPortal({ onClose }: Props) {
                     本回合舰长失能，无法下达人工行动。提交时该舰订单会自动移除，规则引擎将令其保持原速直航。
                   </div>
                 )}
-                {(view.phase === "movement_planning" || view.phase === "reinforcement") && (
+                <PlatformFormationPanel formations={playerFormations} commands={formationDrafts}
+                  ships={ownShips} phase={view.phase} turn={view.turn} disabled={busy || view.stage === "awaiting_publication"}
+                  onWrite={writeFormationCommand} />
+                {(view.phase === "movement_planning" || view.phase === "reinforcement")
+                  && !playerFormations.some((formation) => formation.own_ship_ids?.includes(selectedActionShip?.id ?? ""))
+                  && !formationCommandedShipIds.has(selectedActionShip?.id ?? "") && (
                   <section className="player-action-builder">
                     <div className="action-card">
                       <h3>{ownShips.length === 1 ? "本舰移动计划" : "舰船移动计划"}</h3>
@@ -2559,9 +2823,10 @@ export function PlatformPortal({ onClose }: Props) {
                             value={selectedActionShip?.id ?? ""}
                             onChange={(event) => {
                               setActionShipId(event.target.value);
+                              setFireHeatmaps(undefined);
                             }}
                           >
-                            {ownShips.map((ship) => (
+                            {commandableShips.map((ship) => (
                               <option key={ship.id} value={ship.id}>
                                 {ship.name} · {ship.id}
                               </option>
@@ -2569,11 +2834,12 @@ export function PlatformPortal({ onClose }: Props) {
                           </select>
                         </label>
                         <label>
-                          可见目标
+                          主目标
                           <select
-                            value={selectedActionTarget?.id ?? ""}
+                            value={selectedGunneryPrimaryTarget?.id ?? ""}
                             onChange={(event) => setActionTargetId(event.target.value)}
                           >
+                            <option value="">不指定</option>
                             {visibleTargets.map((ship) => (
                               <option key={ship.id} value={ship.id}>
                                 {targetLabel(ship)}
@@ -2581,24 +2847,27 @@ export function PlatformPortal({ onClose }: Props) {
                             ))}
                           </select>
                         </label>
+                        <label>
+                          副目标（主目标无炮位可射时）
+                          <select
+                            value={selectedActionSecondaryTarget?.id ?? ""}
+                            onChange={(event) => setActionSecondaryTargetId(event.target.value)}
+                          >
+                            <option value="">不指定</option>
+                            {visibleTargets.filter((ship) => ship.id !== selectedGunneryPrimaryTarget?.id).map((ship) => (
+                              <option key={ship.id} value={ship.id}>{targetLabel(ship)}</option>
+                            ))}
+                          </select>
+                        </label>
                       </div>
-                      <div className="mount-picker">
-                        <span>自动计算的可射炮位</span>
-                        {selectedActionShip?.gun_mounts.length ? selectedActionShip.gun_mounts.map((mount) => {
-                          const status = mount.destroyed
-                            ? "已损毁"
-                            : mount.fired_this_phase
-                              ? "已使用"
-                              : fireableMountIds.has(mount.id)
-                                ? "可射击"
-                                : "目标/视野条件不满足";
-                          return <small className={fireableMountIds.has(mount.id) ? "mount-ready" : "mount-unavailable"} key={mount.id}>
-                            {mount.id} · GF {mount.firepower} · {status}
-                          </small>;
-                        }) : <small>当前舰船没有炮位资料</small>}
+                      <p className="field-hint">裁决时先按移动后的舰位检查所有可用炮位。只要有一门炮能打主目标，就只炮击主目标；全部无法射击时才转向副目标。</p>
+                      <div className="field-of-fire-preview">
+                        <button type="button" onClick={toggleFieldOfFire} disabled={!selectedActionShip || !selectedSeatId || busy}>
+                          {fireHeatmaps ? "隐藏射界图" : "查看本舰射界图"}
+                        </button>
+                        <span className="field-hint">{fireHeatmaps ? "地图热力层显示当前舰位可覆盖区域；移动后以裁决时位置重新判定。" : "可在地图上预览当前舰位的射界与预期火力。"}</span>
                       </div>
-                      <p className="field-hint">选择目标后，炮位可射性由规则引擎按当前视野和射界自动计算；订单自动包含全部可射炮位。</p>
-                      <button onClick={writeGunneryOrder} disabled={!selectedActionShip || captainCommandLost || !selectedActionTarget || !fireableMounts.length}>
+                      <button onClick={writeGunneryOrder} disabled={!selectedActionShip || captainCommandLost || (!selectedGunneryPrimaryTarget && !selectedActionSecondaryTarget)}>
                         写入炮击草稿
                       </button>
                       <div className="special-fire-options">
@@ -2669,7 +2938,7 @@ export function PlatformPortal({ onClose }: Props) {
                         <div className="illumination-draft-list">
                           <b>本回合探照灯草稿（{searchlightDrafts.length}）</b>
                           {searchlightDrafts.length ? searchlightDrafts.map((order, index) => {
-                            const ship = ownShips.find((item) => item.id === order.ship_id);
+                            const ship = commandableShips.find((item) => item.id === order.ship_id);
                             const target = visibleTargets.find((item) => item.id === order.target_id);
                             return (
                               <div className="illumination-draft-row" key={`searchlight-${String(order.ship_id)}-${index}`}>
@@ -2696,7 +2965,7 @@ export function PlatformPortal({ onClose }: Props) {
                           <select
                             value={selectedActionShip?.id ?? ""}
                             onChange={(event) => {
-                              const ship = ownShips.find((item) => item.id === event.target.value);
+                              const ship = commandableShips.find((item) => item.id === event.target.value);
                               setActionShipId(event.target.value);
                               setTorpedoLauncherId(ship?.torpedo_launchers.find((launcher) => !launcher.destroyed && launcher.loaded > 0)?.id ?? "");
                               // 换舰船时清空发射器相关选择，避免沿用上一艘舰的舷侧/发射角/枚数。
@@ -2705,7 +2974,7 @@ export function PlatformPortal({ onClose }: Props) {
                               setTorpedoCount("1");
                             }}
                           >
-                            {ownShips.filter((ship) => ship.torpedo_launchers.some((launcher) => !launcher.destroyed && launcher.loaded > 0)).map((ship) => (
+                            {commandableShips.filter((ship) => ship.torpedo_launchers.some((launcher) => !launcher.destroyed && launcher.loaded > 0)).map((ship) => (
                               <option key={ship.id} value={ship.id}>
                                 {ship.name} · {ship.id}
                               </option>
@@ -2754,7 +3023,7 @@ export function PlatformPortal({ onClose }: Props) {
                             disabled={launchPositions.length === 0}
                             onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}
                           >
-                            {launchPositions.length === 0 && <option value="">请先在移动草稿里写出该舰航路</option>}
+                            {launchPositions.length === 0 && <option value="">{view.realistic_command ? "等待旗舰航路写入或提交" : "请先在移动草稿里写出该舰航路"}</option>}
                             {launchPositions.map((position) => (
                               <option key={position.mf} value={position.mf}>
                                 MF {position.mf} · {position.heading} 舰首
@@ -2789,6 +3058,7 @@ export function PlatformPortal({ onClose }: Props) {
                         鱼雷订单不指定目标：航迹与任何未沉没舰船重合时，规则核心会对重合的每条船分别进行命中裁决，不区分敌我。同一发射器可写入多条独立订单，累计枚数不能超过当前装载量（本发射器剩余 {selectedLauncherRemaining} 枚）。
                         {launchPositions.length > 0
                           ? " 发射格和舰首航向由规则核心从本回合移动草稿投影后自动带出；提交时仍会整体严格校验。"
+                          : view.realistic_command ? " 请先写入旗舰航路；跟随舰在旗舰席位提交后刷新视野，即可取得本舰沿编队航路的发射 MF。"
                           : " 当前拿不到合法 MF 列表：请先在本席位「移动草稿」里写出这艘舰的航路（计划与速度），MF 列表会随草稿自动出现。引擎要求鱼雷行的发射格必须等于该 MF 处的航路位置，所以这里不提供手填 MF——手填会产出没有发射格的行，提交时必然报 launch_hex 不符。"}
                         {selectedTorpedoCandidate?.blocked_reason ? ` 引擎当前判定：${selectedTorpedoCandidate.blocked_reason}。` : ""}
                       </p>
@@ -2837,7 +3107,7 @@ export function PlatformPortal({ onClose }: Props) {
                             onChange={(event) => setSmokeShipId(event.target.value)}
                           >
                             <option value="">选择舰船</option>
-                            {ownShips.map((ship) => (
+                            {commandableShips.map((ship) => (
                               <option key={ship.id} value={ship.id}>
                                 {ship.name} · {ship.id}
                               </option>
@@ -2866,7 +3136,7 @@ export function PlatformPortal({ onClose }: Props) {
                           {draftRows("smoke").map((item, index) => (
                             <div className="draft-order-row" key={`smoke-draft-${index}`}>
                               <span>
-                                {ownShips.find((ship) => ship.id === item.ship_id)?.name ?? String(item.ship_id ?? "")}
+                                {commandableShips.find((ship) => ship.id === item.ship_id)?.name ?? String(item.ship_id ?? "")}
                                 {" · "}
                                 {item.deploy === false ? "本回合不施放" : "施放"}
                               </span>
@@ -2908,6 +3178,7 @@ export function PlatformPortal({ onClose }: Props) {
                   onClick={() => submitOrder(false)}
                   disabled={
                     busy ||
+                    followerOnlySeat ||
                     view.stage === "resolving" ||
                     view.stage === "awaiting_publication" ||
                     view.stage === "complete"

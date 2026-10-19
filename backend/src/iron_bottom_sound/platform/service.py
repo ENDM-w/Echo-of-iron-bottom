@@ -6,7 +6,8 @@ import sqlite3
 import uuid
 from copy import copy
 from ..engine import ORDER_PHASES, IronBottomEngine
-from ..models import DiceRoll, GameEvent, GameOptions, GameState, HexCoord, MarkerState, MovementOrder, OrderBatch, Phase, PublicShip, ShipState, Side
+from ..data import load_scenario
+from ..models import DiceRoll, FormationMovementOrder, FormationSetupOrder, FormationSpeedDecision, FormationState, GameEvent, GameOptions, GameState, HexCoord, MarkerState, MovementOrder, OrderBatch, Phase, PublicShip, ShipState, Side
 from ..storage import GameRepository
 from ..ship_imports import ShipImportEnvelope
 from ..ship_records import clear_imported_ship_asset_cache, load_ship_catalog, load_ship_records
@@ -17,6 +18,7 @@ from .models import (
     JudgeOrderOverrideRequest,
     JudgeRerollRequest,
     JudgeShipPatchRequest,
+    JudgeFormationCompositionRequest,
     JudgeVisibilityPatchRequest,
     TelegramSubmission,
     TELEGRAM_RULE_ID,
@@ -25,6 +27,7 @@ from .models import (
     MatchSummary,
     SeatObservation,
     SeatOrderSubmission,
+    SeatFormationCommand,
     SeatRecord,
     UserRecord,
 )
@@ -90,6 +93,21 @@ class PlatformService:
         )
         return self.repository.create_user(user)
 
+    def create_observer(self, match_id: str, user: AuthenticatedUser) -> tuple[UserRecord, str]:
+        match = self.repository.match(match_id)
+        self._authorize_judge(match, user)
+        username = f"observer-{secrets.token_hex(5)}"
+        password = secrets.token_urlsafe(18)
+        account = UserRecord(
+            user_id=str(uuid.uuid4()),
+            username=username,
+            password_hash=PasswordHasher.hash(password),
+            is_observer=True,
+        )
+        self.repository.create_user(account)
+        self.repository.add_observer(match_id, account.user_id)
+        return account, password
+
     def issue_token(self, username: str, password: str) -> tuple[str, UserRecord] | None:
         user = self.repository.user_by_username(username)
         if user is None or user.disabled or not PasswordHasher.verify(password, user.password_hash):
@@ -120,11 +138,21 @@ class PlatformService:
             "complete": True,
         }
 
-    def create_match(self, scenario_id: str, seed: int, judge_user_id: str) -> MatchRecord:
+    def create_match(self, scenario_id: str, seed: int, judge_user_id: str, *, realistic_command: bool | None = None) -> MatchRecord:
         judge = self.repository.user_by_id(judge_user_id)
         if judge is None or not judge.is_referee:
             raise PermissionError("judge_user_id must reference a referee account")
-        state = self.engine.reset(scenario_id, seed, options=GameOptions(mode="hotseat"))
+        if realistic_command is None:
+            realistic_command = self._scenario_has_complete_formations(scenario_id)
+        if realistic_command:
+            definition = load_scenario(scenario_id)
+            if any(sum(ship.get("side") == side.value for ship in definition["ships"]) < 2 for side in Side):
+                raise ValueError("旗舰编队指挥要求双方各至少两艘舰船，请先在剧本工坊补齐舰船")
+        state = self.engine.reset(
+            scenario_id,
+            seed,
+            options=GameOptions(mode="hotseat", realistic_command=realistic_command),
+        )
         # Platform matches use the public multiplayer defaults; standalone
         # engine scenarios retain their scenario-authored visibility values.
         state.visibility = dict(DEFAULT_PLATFORM_VISIBILITY)
@@ -164,6 +192,35 @@ class PlatformService:
             )
         return self.repository.match(match.match_id)
 
+    def _scenario_has_complete_formations(self, scenario_id: str) -> bool:
+        """Enable online formation command only when authored groups cover both fleets."""
+        try:
+            definition = self.game_repository.custom_scenario(scenario_id)
+        except KeyError:
+            return False
+
+        ships_by_side = {
+            side: {str(ship.get("id")) for ship in definition.get("ships", []) if ship.get("side") == side}
+            for side in (Side.AXIS.value, Side.ALLIES.value)
+        }
+        formations = definition.get("formations") or {}
+        for side, ship_ids in ships_by_side.items():
+            authored = formations.get(side) or []
+            grouped_ids = [
+                str(ship_id)
+                for formation in authored
+                for ship_id in formation.get("ship_ids", [])
+            ]
+            if (
+                not ship_ids
+                or not authored
+                or any(len(formation.get("ship_ids", [])) < 2 for formation in authored)
+                or len(grouped_ids) != len(set(grouped_ids))
+                or set(grouped_ids) != ship_ids
+            ):
+                return False
+        return True
+
     def _scenario_seat_assignments(self, scenario_id: str) -> dict[str, dict[str, str]]:
         try:
             definition = self.game_repository.custom_scenario(scenario_id)
@@ -175,6 +232,300 @@ class PlatformService:
             for item in raw
             if isinstance(item, dict) and item.get("ship_id")
         }
+
+    def _formation_definitions(self, state: GameState):
+        if not state.options.realistic_command:
+            return []
+        if state.phase == Phase.FORMATION_SETUP:
+            from ..realistic_command import default_setup_orders
+            return [
+                order
+                for side in Side
+                for order in state.formation_setup_proposals.get(side.value, default_setup_orders(state, side))
+            ]
+        return list(state.formations.values())
+
+    @staticmethod
+    def _formation_side(state: GameState, formation) -> Side | None:
+        side = getattr(formation, "side", None)
+        if side is not None:
+            return side
+        flagship = state.ships.get(formation.flagship_id)
+        return flagship.side if flagship else None
+
+    def _active_command_seat_ids(self, match_id: str, state: GameState) -> list[str]:
+        """Only seats holding a flagship (or an ungrouped ship) submit orders."""
+        formations = self._formation_definitions(state)
+        command_ships = {
+            ship_id for formation in formations if getattr(formation, "status", None) != "dissolved"
+            for ship_id in formation.ship_ids if ship_id == formation.flagship_id
+        }
+        grouped = {
+            ship_id for formation in formations if getattr(formation, "status", None) != "dissolved"
+            for ship_id in formation.ship_ids
+        }
+        return [
+            seat.seat_id for seat in self.repository.seats(match_id)
+            if any(ship_id in command_ships or ship_id not in grouped for ship_id in seat.controlled_ship_ids)
+        ]
+
+    def _refresh_required_command_seats(self, match: MatchRecord, state: GameState) -> None:
+        match.required_seat_ids = self._active_command_seat_ids(match.match_id, state)
+
+    def _formation_reports(self, state: GameState, seat: SeatRecord) -> list[dict]:
+        """Return friendly member snapshots from exactly the preceding completed turn."""
+        if not state.options.realistic_command or state.turn <= 1:
+            return []
+        previous_turn = state.turn - 1
+        snapshots = [
+            (sequence, snapshot)
+            for sequence, snapshot in self.game_repository.snapshots(state.game_id)
+            if snapshot.turn == previous_turn
+        ]
+        if not snapshots:
+            return []
+        _sequence, archived = max(snapshots, key=lambda item: item[0])
+        result: list[dict] = []
+        owned = set(seat.controlled_ship_ids)
+        for formation in self._formation_definitions(state):
+            if formation.flagship_id not in owned or getattr(formation, "status", None) == "dissolved":
+                continue
+            reports = []
+            for ship_id in formation.ship_ids:
+                if ship_id == formation.flagship_id or ship_id not in archived.ships:
+                    continue
+                reports.append(archived.ships[ship_id].model_dump(mode="json"))
+            result.append({"formation_id": self._formation_token(state, seat, formation), "turn": previous_turn, "ships": reports})
+        return result
+
+    def _formation_roster(self, state: GameState, seat: SeatRecord) -> list[dict]:
+        """Expose friendly hull identity and static equipment without current status or position."""
+        owned = set(seat.controlled_ship_ids)
+        records = load_ship_records()
+        result = []
+        for formation in self._formation_definitions(state):
+            if formation.flagship_id not in owned or getattr(formation, "status", None) == "dissolved":
+                continue
+            members = []
+            for ship_id in formation.ship_ids:
+                if ship_id == formation.flagship_id:
+                    continue
+                ship = state.ships.get(ship_id)
+                record = records.get(ship_id)
+                if not ship or not record:
+                    continue
+                members.append({
+                    "id": ship.id, "name": ship.name, "side": ship.side.value,
+                    "ship_type": ship.ship_type, "asset": ship.asset,
+                    "gun_mounts": [
+                        {**mount.model_dump(mode="json"), "destroyed": False, "fired_this_phase": False}
+                        for mount in record.guns
+                    ],
+                    "torpedo_type": record.torpedo_type,
+                    "torpedo_launchers": [
+                        {**launcher.model_dump(mode="json"), "loaded": launcher.torpedoes,
+                         "reloads_remaining": launcher.reloads, "reload_turns_remaining": 0, "destroyed": False}
+                        for launcher in record.torpedo_launchers
+                    ],
+                })
+            result.append({"formation_id": self._formation_token(state, seat, formation), "ships": members})
+        return result
+
+    def _inherit_formation_actions(self, state: GameState, batch: OrderBatch) -> OrderBatch:
+        """Copy flagship combat/utility intent to followers with explicit hull overrides winning."""
+        if not state.options.realistic_command or state.phase == Phase.FORMATION_SETUP:
+            return batch
+        expanded = batch.model_copy(deep=True)
+        formations = [
+            item for item in self._formation_definitions(state)
+            if item.side == batch.side and getattr(item, "status", None) != "dissolved"
+        ]
+        for formation in formations:
+            leader_id = formation.flagship_id
+            leader = state.ships.get(leader_id)
+            if not leader or self.engine.captain_command_lost(state, leader):
+                continue
+            followers = [
+                state.ships[ship_id] for ship_id in formation.ship_ids
+                if ship_id != leader_id and ship_id in state.ships
+                and not state.ships[ship_id].sunk
+                and state.ships[ship_id].command_status in {"attached", "straggling"}
+                and not self.engine.captain_command_lost(state, state.ships[ship_id])
+            ]
+            leader_gunnery = next((item for item in expanded.gunnery if item.ship_id == leader_id), None)
+            if leader_gunnery:
+                for follower in followers:
+                    if not any(item.ship_id == follower.id for item in expanded.gunnery):
+                        expanded.gunnery.append(leader_gunnery.model_copy(update={"ship_id": follower.id}))
+            leader_searchlights = [item for item in expanded.searchlights if item.ship_id == leader_id]
+            for follower in followers:
+                if not any(item.ship_id == follower.id for item in expanded.searchlights):
+                    expanded.searchlights.extend(item.model_copy(update={"ship_id": follower.id}) for item in leader_searchlights)
+                if not any(item.ship_id == follower.id for item in expanded.smoke) and follower.ship_type in {"DD", "CL"}:
+                    if leader_id in expanded.smoke_ships or any(item.ship_id == leader_id and item.deploy for item in expanded.smoke):
+                        expanded.smoke_ships.append(follower.id)
+                leader_illumination = [item for item in expanded.illumination if item.ship_id == leader_id]
+                occupied = {item.mount_id for item in expanded.illumination if item.ship_id == follower.id}
+                candidates = sorted(
+                    (mount for mount in follower.gun_mounts if not mount.destroyed and not mount.fired_this_phase and mount.id not in occupied),
+                    key=lambda mount: (mount.firepower, mount.kind != "primary", mount.id),
+                )
+                for source, mount in zip(leader_illumination, candidates):
+                    expanded.illumination.append(source.model_copy(update={"ship_id": follower.id, "mount_id": mount.id}))
+            leader_torpedoes = [item for item in expanded.torpedoes if item.ship_id == leader_id]
+            if leader_torpedoes:
+                movement_orders = [order for order in expanded.movement]
+                if state.phase == Phase.TORPEDO_PLANNING:
+                    for stored in state.sealed_orders.get(f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}", {}).values():
+                        movement_orders.extend(stored.movement)
+                movement_by_ship = {order.ship_id: order for order in movement_orders}
+                if state.phase == Phase.REINFORCEMENT:
+                    from ..realistic_command import expand_movement_orders
+                    movement_batch, _errors, _detach = expand_movement_orders(self.engine, state.model_copy(deep=True), expanded)
+                    movement_by_ship.update({order.ship_id: order for order in movement_batch.movement})
+                for follower in followers:
+                    if any(item.ship_id == follower.id for item in expanded.torpedoes):
+                        continue
+                    movement = movement_by_ship.get(follower.id)
+                    if not movement:
+                        continue
+                    try:
+                        trajectory, _ = self.engine.movement_trajectory(
+                            follower, movement.plan, self.engine.movement_commands(movement),
+                            columns=state.map_columns, rows=state.map_rows,
+                        )
+                    except ValueError:
+                        continue
+                    available = [
+                        launcher for launcher in follower.torpedo_launchers
+                        if not launcher.destroyed and launcher.loaded > 0 and not launcher.reload_turns_remaining
+                    ]
+                    remaining = {item.id: item.loaded for item in available}
+                    for source in leader_torpedoes:
+                        launcher = next((item for item in available if source.launch_side and source.launch_side in {arc.value for arc in item.arcs} and remaining[item.id] >= source.count), None)
+                        if launcher is None:
+                            continue
+                        mf = source.launch_at_mf
+                        if mf > len(trajectory):
+                            continue
+                        hex_at_launch = follower.position if mf == 0 else trajectory[mf - 1][0]
+                        heading_at_launch = follower.heading if mf == 0 else trajectory[mf - 1][1]
+                        expanded.torpedoes.append(source.model_copy(update={
+                            "ship_id": follower.id, "launcher_id": launcher.id,
+                            "launch_hex": hex_at_launch, "bearing": heading_at_launch,
+                        }))
+                        remaining[launcher.id] -= source.count
+        if expanded.torpedoes and state.phase in {Phase.REINFORCEMENT, Phase.TORPEDO_PLANNING}:
+            movement_by_ship = {order.ship_id: order for order in expanded.movement}
+            if state.phase == Phase.TORPEDO_PLANNING:
+                for sealed in state.sealed_orders.get(f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}", {}).values():
+                    movement_by_ship.update({order.ship_id: order for order in sealed.movement})
+            else:
+                from ..realistic_command import expand_movement_orders
+                movement_batch, _errors, _detach = expand_movement_orders(self.engine, state.model_copy(deep=True), expanded)
+                movement_by_ship.update({order.ship_id: order for order in movement_batch.movement})
+            member_ids = {
+                ship_id for formation in formations for ship_id in formation.ship_ids
+            }
+            for order in expanded.torpedoes:
+                if order.ship_id not in member_ids:
+                    continue
+                ship = state.ships.get(order.ship_id)
+                movement = movement_by_ship.get(order.ship_id)
+                if not ship or not ship.position or not movement:
+                    continue
+                try:
+                    trajectory, _ = self.engine.movement_trajectory(
+                        ship, movement.plan, self.engine.movement_commands(movement),
+                        columns=state.map_columns, rows=state.map_rows,
+                    )
+                except ValueError:
+                    continue
+                mf = order.launch_at_mf
+                if mf > len(trajectory):
+                    continue
+                order.launch_hex = ship.position if mf == 0 else trajectory[mf - 1][0]
+                order.bearing = ship.heading if mf == 0 else trajectory[mf - 1][1]
+        return expanded
+
+    @staticmethod
+    def _formation_key(formation) -> str:
+        return getattr(formation, "formation_id", None) or formation.id
+
+    def _formation_token(self, state: GameState, seat: SeatRecord, formation) -> str:
+        return uuid.uuid5(uuid.NAMESPACE_URL, f"ibs:{state.game_id}:{seat.seat_id}:{self._formation_key(formation)}").hex
+
+    def _seat_formations(self, state: GameState, seat: SeatRecord) -> list[dict]:
+        owned = set(seat.controlled_ship_ids)
+        result = []
+        for formation in self._formation_definitions(state):
+            if not owned.intersection(formation.ship_ids):
+                continue
+            if getattr(formation, "status", None) == "dissolved":
+                continue
+            commanding = formation.flagship_id in owned
+            result.append({
+                "formation_id": self._formation_token(state, seat, formation),
+                "name": "本舰编队",
+                "role": "flagship" if commanding else "follower",
+                "commanding_ship_id": formation.flagship_id if commanding else None,
+                "own_ship_ids": sorted(owned.intersection(formation.ship_ids)),
+                "spacing": formation.spacing,
+                "turn_mode": formation.turn_mode,
+                "heading": formation.heading if commanding else None,
+            })
+        return result
+
+    def _apply_formation_commands(
+        self, state: GameState, seat: SeatRecord, batch: OrderBatch,
+        commands: list[SeatFormationCommand], *, referee: bool = False,
+    ) -> None:
+        if not referee and (batch.formation_setup or batch.formation_movement or batch.formation_speed_decisions):
+            raise PermissionError("请使用本席位的编队指挥入口提交编队行动")
+        if not commands:
+            return
+        if not state.options.realistic_command:
+            raise ValueError("本局未启用旗舰编队指挥，请由裁判新建编队对局")
+        if state.phase not in {Phase.FORMATION_SETUP, Phase.REINFORCEMENT, Phase.MOVEMENT_PLANNING}:
+            raise ValueError("当前阶段不能修改编队行动")
+        available = {}
+        for formation in self._formation_definitions(state):
+            if formation.flagship_id not in seat.controlled_ship_ids:
+                continue
+            if state.ships[formation.flagship_id].side != seat.side:
+                continue
+            available[self._formation_token(state, seat, formation)] = formation
+            if referee:
+                available[self._formation_key(formation)] = formation
+        seen = set()
+        for command in commands:
+            formation = available.get(command.formation_id)
+            if formation is None:
+                raise PermissionError("只有当前旗舰席位可以指挥所属编队")
+            key = self._formation_key(formation)
+            if key in seen:
+                raise ValueError("同一编队只能提交一条编队行动")
+            seen.add(key)
+            if state.phase == Phase.FORMATION_SETUP:
+                batch.formation_setup.append(formation.model_copy(update={
+                    "spacing": command.spacing,
+                    "heading": command.heading if command.heading is not None else formation.heading,
+                    "turn_mode": command.turn_mode,
+                }))
+            else:
+                decision = FormationSpeedDecision(formation_id=key, action="reduce", speed=command.reduce_speed) if command.reduce_speed is not None else None
+                batch.formation_movement.append(FormationMovementOrder(
+                    formation_id=key, leader_plan=command.leader_plan,
+                    spacing=command.spacing, turn_mode=command.turn_mode,
+                    speed_decision=decision,
+                ))
+
+    @staticmethod
+    def _formation_manages_movement(state: GameState, ship: ShipState) -> bool:
+        return bool(state.options.realistic_command and any(
+            ship.id in formation.ship_ids and formation.status != "dissolved"
+            for formation in state.formations.values()
+        ))
 
     def _provision_seat_user(self, username: str, password: str) -> UserRecord:
         existing = self.repository.user_by_username(username)
@@ -224,7 +575,7 @@ class PlatformService:
             controller_type=controller_type,
         )
         self.repository.create_seat(seat)
-        match.required_seat_ids.append(seat.seat_id)
+        self._refresh_required_command_seats(match, state)
         match.version += 1
         self.repository.save_match(match)
         return seat
@@ -438,7 +789,20 @@ class PlatformService:
         pending = self.repository.pending_adjudication(match_id)
         state = self._player_state(match)
         side_view = self.engine.observe(match.game_id, seat.side, state_override=state)
-        own_ids = set(seat.controlled_ship_ids)
+        controlled_ids = set(seat.controlled_ship_ids)
+        own_ids = controlled_ids
+        if state.options.realistic_command:
+            formations = self._formation_definitions(state)
+            grouped_ids = {
+                ship_id for formation in formations if getattr(formation, "status", None) != "dissolved"
+                for ship_id in formation.ship_ids
+            }
+            flagship_ids = {
+                formation.flagship_id for formation in formations
+                if getattr(formation, "status", None) != "dissolved"
+            }
+            own_ids = {ship_id for ship_id in controlled_ids if ship_id in flagship_ids or ship_id not in grouped_ids}
+        follower_only_seat = state.options.realistic_command and bool(controlled_ids) and not own_ids
         all_hidden_contact_positions = self._hidden_contact_positions(state)
         hidden_contact_positions = {
             ship_id: projection
@@ -845,16 +1209,20 @@ class PlatformService:
             visibility_allies=None,
             storm=bool(state.options.optional_rules.storm),
             optional_rules=state.options.optional_rules.model_dump(),
-            ships=ships,
-            torpedo_tracks=tracks,
-            markers=redacted_markers,
-            wrecks=redacted_wrecks,
+            realistic_command=state.options.realistic_command,
+            formations=self._seat_formations(state, seat),
+            formation_reports=self._formation_reports(state, seat),
+            formation_roster=self._formation_roster(state, seat),
+            ships=[] if follower_only_seat else ships,
+            torpedo_tracks=[] if follower_only_seat else tracks,
+            markers=[] if follower_only_seat else redacted_markers,
+            wrecks=[] if follower_only_seat else redacted_wrecks,
             score=side_view.score,
             # Player event feeds can reveal hidden actions even after message
             # redaction. Keep them referee-only; player updates use the phase
             # and their filtered observation fields above.
             recent_events=[],
-            ship_trajectories=ship_trajectories,
+            ship_trajectories={} if follower_only_seat else ship_trajectories,
             own_ship_ids=sorted(own_ids),
             # Kept for API compatibility; the legacy field must not disclose
             # which visible contacts are enemies.
@@ -864,11 +1232,33 @@ class PlatformService:
             seat_has_submitted=seat_id in pending["submitted_seat_ids"] if pending else seat_id in orders,
             winner=state.winner,
             victory_reason=state.victory_reason,
+            previous_gunnery_targets={
+                ship_id: target for ship_id, target in self._previous_gunnery_targets(state).items()
+                if ship_id in own_ids
+            },
             torpedo_candidates=self.engine._torpedo_candidates(
                 state, seat.side, ship_ids=own_ids
             ),
             gunnery_candidates=gunnery_candidates,
         )
+
+    def seat_field_of_fire(self, match_id: str, seat_id: str, ship_id: str, user: AuthenticatedUser) -> dict:
+        """Return a current-position heatmap for a ship controlled by this seat only."""
+        match = self.repository.match(match_id)
+        seat = self.repository.seat(seat_id)
+        self._authorize_seat(seat, user)
+        if seat.match_id != match_id:
+            raise PermissionError("Seat does not belong to this match")
+        state = self._player_state(match)
+        active_owned = set(seat.controlled_ship_ids)
+        if state.options.realistic_command:
+            formations = self._formation_definitions(state)
+            grouped = {item for formation in formations for item in formation.ship_ids}
+            flagships = {formation.flagship_id for formation in formations}
+            active_owned = {item for item in active_owned if item in flagships or item not in grouped}
+        if ship_id not in active_owned:
+            raise PermissionError("射界预览仅可查看本席位控制的舰船")
+        return self.engine.field_of_fire_heatmap(state, seat.side, ship_id=ship_id)
 
     def torpedo_candidates_for_movement_draft(
         self,
@@ -876,6 +1266,7 @@ class PlatformService:
         seat_id: str,
         user: AuthenticatedUser,
         movement_orders: list[MovementOrder],
+        formation_commands: list[SeatFormationCommand] | None = None,
     ) -> list[dict]:
         """Preview this seat's torpedo launch points against an uncommitted movement draft."""
         match = self.repository.match(match_id)
@@ -883,11 +1274,52 @@ class PlatformService:
         self._authorize_seat(seat, user)
         if seat.match_id != match_id:
             raise PermissionError("Seat does not belong to this match")
-        if any(order.ship_id not in seat.controlled_ship_ids for order in movement_orders):
+        remote_ship_ids = {
+            ship_id for formation in self._formation_definitions(self._player_state(match))
+            if formation.flagship_id in seat.controlled_ship_ids
+            for ship_id in formation.ship_ids
+        }
+        if any(order.ship_id not in set(seat.controlled_ship_ids) | remote_ship_ids for order in movement_orders):
             raise PermissionError("Movement preview may include only ships controlled by this seat")
 
         state = self._player_state(match).model_copy(deep=True)
+        if state.phase == Phase.TORPEDO_PLANNING:
+            commandable_ids = set(seat.controlled_ship_ids) | remote_ship_ids
+            candidates = self.engine._torpedo_candidates(state, seat.side, ship_ids=commandable_ids)
+            for candidate in candidates:
+                if candidate["ship_id"] in seat.controlled_ship_ids:
+                    continue
+                candidate.pop("blocked_reason", None)
+                candidate["launchers"] = [
+                    {key: value for key, value in launcher.items() if key != "loaded"}
+                    for launcher in candidate["launchers"]
+                ]
+                candidate["launch_positions"] = [{"mf": position["mf"]} for position in candidate["launch_positions"]]
+            return candidates
         movement = OrderBatch(side=seat.side, phase=Phase.MOVEMENT_PLANNING, movement=movement_orders)
+        if state.options.realistic_command:
+            from ..realistic_command import expand_movement_orders
+            relevant = {
+                key: formation for key, formation in state.formations.items()
+                if set(formation.ship_ids).intersection(seat.controlled_ship_ids)
+            }
+            stored = [batch for stored_id, (_, batch) in self.repository.orders(match_id, match.phase).items()
+                      if stored_id != seat_id and self.repository.seat(stored_id).side == seat.side]
+            if state.phase == Phase.TORPEDO_PLANNING:
+                movement_orders = [
+                    order for sealed in state.sealed_orders.get(f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}", {}).values()
+                    if sealed.side == seat.side
+                    for order in sealed.movement
+                ]
+            else:
+                self._apply_formation_commands(state, seat, movement, formation_commands or [])
+                movement.formation_movement.extend(order for batch in stored for order in batch.formation_movement
+                                                   if order.formation_id in relevant)
+                state.formations = relevant
+                movement, errors, _detach = expand_movement_orders(self.engine, state, movement)
+                if errors:
+                    movement.movement = []
+                movement_orders = movement.movement
         projected_orders = []
         for order in movement_orders:
             ship = state.ships.get(order.ship_id)
@@ -908,12 +1340,45 @@ class PlatformService:
             f"{state.turn}:{Phase.MOVEMENT_PLANNING.value}", {}
         )[seat.side.value] = movement
         state.phase = Phase.TORPEDO_PLANNING
-        return self.engine._torpedo_candidates(state, seat.side, ship_ids=seat.controlled_ship_ids)
+        commandable_ids = set(seat.controlled_ship_ids) | remote_ship_ids
+        candidates = self.engine._torpedo_candidates(state, seat.side, ship_ids=commandable_ids)
+        for candidate in candidates:
+            if candidate["ship_id"] in seat.controlled_ship_ids:
+                continue
+            candidate.pop("blocked_reason", None)
+            candidate["launchers"] = [
+                {key: value for key, value in launcher.items() if key != "loaded"}
+                for launcher in candidate["launchers"]
+            ]
+            candidate["launch_positions"] = [{"mf": position["mf"]} for position in candidate["launch_positions"]]
+        return candidates
 
     def judge_observation(self, match_id: str, user: AuthenticatedUser) -> SeatObservation:
         """Return the referee's full tactical map, including hidden positions."""
         match = self.repository.match(match_id)
         self._authorize_judge(match, user)
+        return self._full_observation(match_id, match)
+
+    def observer_observation(self, match_id: str, user: AuthenticatedUser) -> SeatObservation:
+        """Return a read-only full map only to an observer assigned to this match."""
+        match = self.repository.match(match_id)
+        if not user.is_observer or not self.repository.is_match_observer(match_id, user.user_id):
+            raise PermissionError("This account is not assigned as an observer for this match")
+        view = self._full_observation(match_id, match)
+        return view.model_copy(update={
+            "recent_events": [],
+            "rerollable_events": [],
+            "adjudication_turn": None,
+            "visibility_axis": None,
+            "visibility_allies": None,
+        })
+
+    def observer_accounts(self, match_id: str, user: AuthenticatedUser) -> list[dict[str, str]]:
+        match = self.repository.match(match_id)
+        self._authorize_judge(match, user)
+        return self.repository.observers(match_id)
+
+    def _full_observation(self, match_id: str, match: MatchRecord) -> SeatObservation:
         state = self._ensure_loaded(match.game_id)
         pending = self.repository.pending_adjudication(match_id)
         view = self.engine.observe(match.game_id, Side.AXIS, debug=True)
@@ -964,6 +1429,12 @@ class PlatformService:
             visibility_allies=int(state.visibility[Side.ALLIES.value]),
             storm=bool(state.options.optional_rules.storm),
             optional_rules=state.options.optional_rules.model_dump(),
+            realistic_command=state.options.realistic_command,
+            formations=[{
+                **formation.model_dump(mode="json"),
+                "formation_id": self._formation_key(formation),
+                "side": self._formation_side(state, formation).value if self._formation_side(state, formation) else None,
+            } for formation in self._formation_definitions(state)],
             ships=ships,
             referee_ship_states=[
                 state.ships[ship_id].model_dump(mode="json")
@@ -1143,8 +1614,12 @@ class PlatformService:
         for marker in source_markers:
             if marker.kind == "contact":
                 continue
-            position = marker.position
-            if position is None and marker.target_ship_id:
+            if marker.kind == "gunfire":
+                source = ships.get(marker.ship_id) if marker.ship_id else None
+                position = source.position if source else None
+            else:
+                position = marker.position
+            if marker.kind != "gunfire" and position is None and marker.target_ship_id:
                 target = ships.get(marker.target_ship_id)
                 position = target.position if target else None
             if position is None and marker.ship_id:
@@ -1212,12 +1687,15 @@ class PlatformService:
         match = self.repository.match(match_id)
         seat = self.repository.seat(seat_id)
         self._authorize_seat(seat, user)
+        state = self._ensure_loaded(match.game_id)
         if seat.match_id != match_id:
             raise PermissionError("Seat does not belong to this match")
         if match.stage not in {MatchStage.COLLECTING, MatchStage.READY_FOR_REVIEW}:
             raise ValueError("Orders are not being collected")
         if submission.phase != match.phase:
             raise ValueError(f"Orders belong to {submission.phase.value}, current phase is {match.phase.value}")
+        if seat_id not in match.required_seat_ids and state.options.realistic_command:
+            raise PermissionError("本舰为编队跟随舰，由领舰席位统一遥控，本席位无需单独提交")
         if submission.scope == "turn" and match.phase != Phase.REINFORCEMENT:
             raise ValueError("整回合订单只能在回合开始时提交")
         existing_scope = self.repository.order_scope(match_id, match.phase)
@@ -1231,7 +1709,8 @@ class PlatformService:
             raise PermissionError("Hidden contact deployment is managed by the referee")
         batch = self._resolve_contact_aliases(match_id, seat_id, batch)
         try:
-            self._assert_order_ownership(batch, seat)
+            self._apply_formation_commands(state, seat, batch, submission.formation_commands)
+            self._assert_order_ownership(batch, seat, state)
         except PermissionError as error:
             # 该文案会列出本席位无权指挥的舰船 id；对玩家而言这就是"点名"，
             # 因此与校验报错走同一道可见性脱敏（2026-10-12 信息泄露修复）。
@@ -1247,8 +1726,11 @@ class PlatformService:
                 ship.id for ship in state.ships.values()
                 if ship.side == seat.side and ship.id in seat.controlled_ship_ids
                 and not ship.sunk and ship.position is not None
+                and not self._formation_manages_movement(state, ship)
             }
             expected_ships.update(order.ship_id for order in batch.reinforcements)
+            expected_ships = {ship_id for ship_id in expected_ships
+                              if not self._formation_manages_movement(state, state.ships[ship_id])}
             submitted_ships = {order.ship_id for order in batch.movement}
             if expected_ships - submitted_ships:
                 validation_errors.append("本席位有舰船缺少移动计划，请补齐后再提交。")
@@ -1294,6 +1776,10 @@ class PlatformService:
         only_side: Side | None = None,
     ) -> list[str]:
         state = self._ensure_loaded(self.repository.match(match_id).game_id)
+        if state.options.realistic_command:
+            # The engine validates formation coverage and expands the leader's
+            # route. Followers must not supply duplicate per-hull movement.
+            return self._validate_turn_future_orders(match_id, orders, only_side, check_coverage=True)
         batches_by_side: dict[Side, list[OrderBatch]] = {side: [] for side in Side}
         for seat_id, (_, batch) in orders.items():
             batches_by_side[self.repository.seat(seat_id).side].append(batch)
@@ -1322,6 +1808,8 @@ class PlatformService:
         match_id: str,
         orders: dict[str, tuple[str, OrderBatch]],
         only_side: Side | None = None,
+        *,
+        check_coverage: bool = False,
     ) -> list[str]:
         """Validate all preplanned actions against isolated future-phase states.
 
@@ -1367,6 +1855,7 @@ class PlatformService:
                     continue
                 projected = [self._project_turn_batch(batch, phase) for batch in batches]
                 merged = self._merge_side_orders(phase, side, projected)
+                merged = self._inherit_formation_actions(state, merged)
                 if phase == Phase.MOVEMENT_PLANNING:
                     movement_for_simulation = merged
                     if state.options.realistic_command:
@@ -1376,7 +1865,7 @@ class PlatformService:
                         )
                         errors.extend(
                             error for error in expansion_errors
-                            if not self._is_coverage_error(error)
+                            if check_coverage or not self._is_coverage_error(error)
                         )
                     movement_batches[side] = movement_for_simulation
                     for order in movement_for_simulation.movement:
@@ -1406,7 +1895,7 @@ class PlatformService:
                 if not validation.valid:
                     errors.extend(
                         error for error in validation.errors
-                        if not self._is_coverage_error(error)
+                        if check_coverage or not self._is_coverage_error(error)
                     )
         return list(dict.fromkeys(errors))
 
@@ -1464,7 +1953,9 @@ class PlatformService:
         batch.phase = match.phase
         if batch.side != seat.side:
             raise PermissionError("Order side does not match the seat")
-        self._assert_order_ownership(batch, seat)
+        state = self._ensure_loaded(match.game_id)
+        self._apply_formation_commands(state, seat, batch, request.formation_commands, referee=True)
+        self._assert_order_ownership(batch, seat, state)
         previous = self.repository.orders(match_id, match.phase).get(seat_id)
         validation_errors = self._validate_pending_batch(match, seat_id, seat.side, batch, scope)
         if validation_errors:
@@ -1555,6 +2046,102 @@ class PlatformService:
         match.version += 1
         self.repository.save_match(match)
         return {"match": match.model_dump(mode="json"), "ship": after, "event": event.model_dump(mode="json"), "override": override.model_dump(mode="json")}
+
+    def judge_reorganize_formations(
+        self, match_id: str, user: AuthenticatedUser, request: JudgeFormationCompositionRequest,
+    ) -> dict:
+        """Replace one side's complete formation roster as an audited referee action."""
+        match = self.repository.match(match_id)
+        self._authorize_judge(match, user)
+        self._check_version(match, request.expected_version)
+        if match.stage in {MatchStage.RESOLVING, MatchStage.AWAITING_PUBLICATION}:
+            raise ValueError("请等待本次裁决发布后再调整编队")
+        state = self._ensure_loaded(match.game_id)
+        if not state.options.realistic_command:
+            raise ValueError("本局未启用旗舰编队指挥")
+        side = request.side
+        all_side_ids = {ship.id for ship in state.ships.values() if ship.side == side}
+        listed = [ship_id for group in request.formations for ship_id in group.ship_ids]
+        if set(listed) != all_side_ids or len(listed) != len(set(listed)):
+            raise ValueError("编组必须让本阵营每条舰船恰好归属一个编队")
+        if any(group.flagship_id not in group.ship_ids or group.reserve_flagship_id not in group.ship_ids
+               or group.flagship_id == group.reserve_flagship_id for group in request.formations):
+            raise ValueError("每个编队都必须选择不同的领舰和预备领舰")
+
+        before = [
+            {**item.model_dump(mode="json"), "side": side.value}
+            for item in self._formation_definitions(state) if self._formation_side(state, item) == side
+        ]
+        for seat_id, (request_id, batch) in self.repository.orders(match_id, match.phase).items():
+            self.repository.audit(match_id, match.phase, seat_id, request_id, batch, "rejected", "裁判调整编队组成，旧订单已作废")
+            self.repository.forget_markers(match_id, seat_id, self._marker_ids(batch))
+        self.repository.clear_orders(match_id, match.phase)
+        match.stage = MatchStage.COLLECTING
+        groups: list[FormationSetupOrder] = []
+        for group in request.formations:
+            ordered = [group.flagship_id, *(ship_id for ship_id in group.ship_ids if ship_id != group.flagship_id)]
+            existing = state.formations.get(group.formation_id)
+            heading = existing.heading if existing else state.ships[group.flagship_id].heading
+            groups.append(FormationSetupOrder(
+                formation_id=group.formation_id,
+                name=group.name,
+                ship_ids=ordered,
+                leader_id=group.flagship_id,
+                flagship_id=group.flagship_id,
+                reserve_flagship_id=group.reserve_flagship_id,
+                spacing=group.spacing,
+                heading=heading,
+                turn_mode=group.turn_mode,
+            ))
+
+        if state.phase == Phase.FORMATION_SETUP:
+            state.formation_setup_proposals[side.value] = groups
+        else:
+            old = {key: item for key, item in state.formations.items() if item.side == side}
+            updated = {key: item for key, item in state.formations.items() if item.side != side}
+            for group in groups:
+                previous = old.get(group.formation_id)
+                formation = FormationState(
+                    id=group.formation_id,
+                    name=group.name,
+                    side=side,
+                    ship_ids=list(group.ship_ids),
+                    leader_id=group.flagship_id,
+                    flagship_id=group.flagship_id,
+                    reserve_flagship_id=group.reserve_flagship_id,
+                    succession_order=[group.reserve_flagship_id, *[ship_id for ship_id in group.ship_ids if ship_id not in {group.flagship_id, group.reserve_flagship_id}]],
+                    spacing=group.spacing,
+                    heading=previous.heading if previous else (group.heading or state.ships[group.flagship_id].heading),
+                    speed=previous.speed if previous else state.ships[group.flagship_id].current_speed,
+                    status=previous.status if previous else "formed",
+                    disruption_turn=previous.disruption_turn if previous else None,
+                    locked_heading=previous.locked_heading if previous else None,
+                    locked_speed=previous.locked_speed if previous else None,
+                    guide_trail=list(previous.guide_trail) if previous else [],
+                    turn_mode=group.turn_mode,
+                )
+                updated[formation.id] = formation
+                for ship_id in group.ship_ids:
+                    state.ships[ship_id].formation_id = formation.id
+            state.formations = updated
+
+        after = [
+            {**item.model_dump(mode="json"), "side": side.value}
+            for item in self._formation_definitions(state) if self._formation_side(state, item) == side
+        ]
+        self._refresh_required_command_seats(match, state)
+        event = self.engine._event(
+            state, "judge_formation_reorganization", "裁判调整编队成员与领舰",
+            payload={"secret_side": "referee", "side": side.value, "formation_ids": [group.formation_id for group in groups], "reason": request.reason},
+        )
+        self.game_repository.save(state)
+        override = self.repository.save_override(
+            match_id, kind="formation_composition", target=side.value,
+            reason=request.reason, before={"formations": before}, after={"formations": after},
+        )
+        match.version += 1
+        self.repository.save_match(match)
+        return {"match": match.model_dump(mode="json"), "formations": after, "event": event.model_dump(mode="json"), "override": override.model_dump(mode="json")}
 
     def judge_reroll(
         self,
@@ -1871,6 +2458,10 @@ class PlatformService:
                     )
                     for side in Side
                 }
+                full_turn_orders = {
+                    side: self._inherit_formation_actions(state, batch)
+                    for side, batch in full_turn_orders.items()
+                }
                 _, events = self.engine.step(match.game_id, full_turn_orders)
             except Exception:
                 self.engine.games[match.game_id] = state_before
@@ -1897,6 +2488,7 @@ class PlatformService:
             )
             for side in Side
         }
+        merged = {side: self._inherit_formation_actions(state, batch) for side, batch in merged.items()}
         for batch in merged.values():
             validation = self.engine.validate_orders(match.game_id, batch)
             if not validation.valid:
@@ -2025,6 +2617,7 @@ class PlatformService:
         if scope == "turn":
             batches = [self._project_turn_batch(item, match.phase) for item in batches]
         merged = self._merge_side_orders(match.phase, side, batches)
+        merged = self._inherit_formation_actions(state, merged)
         validation = self.engine.validate_orders(match.game_id, merged)
         if validation.valid:
             return captain_errors
@@ -2041,11 +2634,13 @@ class PlatformService:
         errors: list[str] = []
         for field_name in fields:
             for order in getattr(batch, field_name):
-                ship_ids = [getattr(order, "ship_id")] if getattr(order, "ship_id", None) else []
-                ship_ids.extend(getattr(order, "ship_ids", []))
-                formation_id = getattr(order, "formation_id", None)
-                if formation_id and formation_id in state.formations:
-                    ship_ids.extend(state.formations[formation_id].ship_ids)
+                if field_name == "formation_setup":
+                    ship_ids = [order.flagship_id]
+                elif field_name in {"formation_movement", "formation_speed_decisions"}:
+                    formation = state.formations.get(order.formation_id)
+                    ship_ids = [formation.flagship_id] if formation else []
+                else:
+                    ship_ids = [getattr(order, "ship_id")] if getattr(order, "ship_id", None) else []
                 for ship_id in set(ship_ids):
                     ship = state.ships.get(ship_id)
                     if ship and self.engine.captain_command_lost(state, ship):
@@ -2104,12 +2699,21 @@ class PlatformService:
                 "The two real hidden contacts must partition every owned starting ship exactly once",
                 "Contact movement must cover all owned contacts;",
                 "Formation movement must cover active formations;",
+                "Every owned initial or reinforcement ship must belong to exactly one formation",
+                "Realistic command requires one to",
             )
         )
 
     @staticmethod
-    def _assert_order_ownership(batch: OrderBatch, seat: SeatRecord) -> None:
+    def _assert_order_ownership(batch: OrderBatch, seat: SeatRecord, state: GameState) -> None:
         owned = set(seat.controlled_ship_ids)
+        formations_by_ship = {
+            ship_id: formation for formation in state.formations.values()
+            if formation.side == seat.side and formation.status != "dissolved"
+            for ship_id in formation.ship_ids
+        }
+        if any(order.ship_id in formations_by_ship for order in batch.movement):
+            raise PermissionError("编队舰只移动由旗舰航路统一生成，不能单独提交移动订单")
         referenced: set[str] = set()
         for field_name in (
             "reinforcements", "movement", "gunnery", "torpedoes", "illumination", "searchlights", "smoke",
@@ -2119,15 +2723,22 @@ class PlatformService:
                 if ship_id:
                     referenced.add(ship_id)
         for formation in batch.formation_setup:
-            referenced.update(formation.ship_ids)
-            referenced.add(formation.leader_id)
             referenced.add(formation.flagship_id)
-            referenced.add(formation.reserve_flagship_id)
-        for formation in batch.formation_movement:
-            # Formation IDs are not ship IDs; the engine validates membership.
-            if not formation.formation_id:
-                raise ValueError("Formation ID is required")
-        foreign = referenced - owned
+            if any(ship_id not in state.ships or state.ships[ship_id].side != seat.side for ship_id in formation.ship_ids):
+                raise PermissionError("编队只能包含本阵营舰船")
+        for order in [*batch.formation_movement, *batch.formation_speed_decisions]:
+            formation = state.formations.get(order.formation_id)
+            if formation is None or formation.side != seat.side or formation.flagship_id not in owned:
+                raise PermissionError("只有当前旗舰席位可以指挥所属编队")
+        referenced.update(batch.smoke_ships)
+        remotely_commanded = {
+            ship_id
+            for formation in state.formations.values()
+            if formation.side == seat.side and formation.status != "dissolved"
+            and formation.flagship_id in owned
+            for ship_id in formation.ship_ids
+        }
+        foreign = referenced - owned - remotely_commanded
         if foreign:
             raise PermissionError(f"Seat cannot command ships: {sorted(foreign)}")
 

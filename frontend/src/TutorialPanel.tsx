@@ -20,7 +20,7 @@ const grand:Lesson[]=[
  {title:"读第一轮巨炮战报",summary:"逐舰核对攻击来源、穿甲、舰体和炮位损伤；教学固定战情会单独标识。",rule:"IBS-TUT-EM-05 · 教学脚本"},
  {title:"进入第二回合舰桥",summary:"先检查受损舰速度轨，再决定整条战列线怎样行动。",rule:"IBS-R-05 + IBS-R-RC-04"},
  {title:"处理共同航速危机",summary:"选择全队降速，或让无法跟队的受损舰永久脱队撤离。",rule:"IBS-R-RC-02 / IBS-R-RC-04"},
- {title:"观察战列线尾随",summary:"后舰沿领舰留下的共享航迹逐 MF 前进，不会瞬移到队形。",rule:"IBS-R-RC-02 / IBS-R-RC-03 / IBS-R-RC-06"},
+ {title:"观察战列线尾随",summary:"后舰沿领舰留下的共享航迹逐 MF 前进，不会瞬移到队形。",rule:"IBS-R-RC-02 / IBS-R-RC-04 / IBS-R-RC-06"},
  {title:"用火力掩护脱离",summary:"脱队舰仍在地图上撤退，直到真正从安全边缘离场。",rule:"IBS-R-RC-04 / IBS-R-RC-06"},
  {title:"以舰队司令视角复盘",summary:"结合舰体、主炮、雷达、火控和航速损失解释当前战损分。",rule:"IBS-S-EM-01-R4/R5"},
 ];
