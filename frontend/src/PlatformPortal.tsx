@@ -27,6 +27,7 @@ import {
   platformDownloadTurnArchive,
   platformSummary,
   PlatformOrderValidationError,
+  PlatformHttpError,
   type PlatformLogin,
   type PlatformTurnArchive,
   type PlatformReview,
@@ -137,6 +138,18 @@ const submittedFieldsByPhase: Record<string, string[]> = {
 };
 const orderDraftKey = (matchId: string, seatId: string, turn: number) =>
   `ibs-order-draft:${matchId}:${seatId}:${turn}`;
+// 鱼雷预览失败原因的人话版本。历史上这里被 catch 静默吞掉，玩家只看到「等待旗舰航路写入或提交」，
+// 无论真实原因是 401 会话过期、422 航路格式非法，还是草稿里确实没有编队命令。
+const describeTorpedoPreviewError = (error: unknown): string => {
+  if (error instanceof PlatformHttpError) {
+    if (error.status === 401) return "登录已过期：本页保存的席位会话已失效。请刷新页面（Ctrl+F5）后重新登录，再回来写鱼雷。";
+    if (error.status === 422) return `航路格式不合法：${error.message}。航路写法：数字=直航 MF，P/S=左/右转 60°，转向后必须再推进 1 MF（例如 3、1P2）。`;
+    if (error.status === 403) return `无权预览本席位鱼雷：${error.message}`;
+    return `鱼雷预览失败（HTTP ${error.status}）：${error.message}`;
+  }
+  if (error instanceof Error) return `鱼雷预览失败：${error.message}`;
+  return "鱼雷预览失败：未知错误，请刷新页面后重试。";
+};
 const batchForPhase = (batch: JsonRecord, phase: string): JsonRecord => {
   const submitted: JsonRecord = {
     side: batch.side,
@@ -316,6 +329,7 @@ export function PlatformPortal({ onClose }: Props) {
   const [orderSeatId, setOrderSeatId] = useState("");
   const [orderText, setOrderText] = useState("");
   const [torpedoDraftCandidates, setTorpedoDraftCandidates] = useState<PlatformTorpedoCandidate[]>();
+  const [torpedoPreviewError, setTorpedoPreviewError] = useState("");
   const [orderValidationErrors, setOrderValidationErrors] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -1195,6 +1209,7 @@ export function PlatformPortal({ onClose }: Props) {
   useEffect(() => {
     if (!session || session.is_referee || !summary || !selectedSeatId || !["reinforcement", "torpedo_planning"].includes(view?.phase ?? "")) {
       setTorpedoDraftCandidates(undefined);
+      setTorpedoPreviewError("");
       return;
     }
     let movement: unknown[];
@@ -1205,21 +1220,30 @@ export function PlatformPortal({ onClose }: Props) {
       formationCommands = Array.isArray(batch.formation_commands) ? batch.formation_commands : [];
     } catch {
       setTorpedoDraftCandidates([]);
+      setTorpedoPreviewError("当前订单草稿不是合法 JSON，无法预览鱼雷发射 MF；请先在高级 JSON 里修复。");
       return;
     }
     if (movement.length === 0 && !view?.realistic_command) {
       setTorpedoDraftCandidates(undefined);
+      setTorpedoPreviewError("");
       return;
     }
     let active = true;
     setTorpedoDraftCandidates([]);
+    setTorpedoPreviewError("");
     const timer = window.setTimeout(() => {
       void platformTorpedoCandidatePreview(
         session.token, summary.match.match_id, selectedSeatId, movement, formationCommands,
       ).then((candidates) => {
-        if (active) setTorpedoDraftCandidates(candidates as unknown as PlatformTorpedoCandidate[]);
-      }).catch(() => {
-        if (active) setTorpedoDraftCandidates([]);
+        if (active) {
+          setTorpedoDraftCandidates(candidates as unknown as PlatformTorpedoCandidate[]);
+          setTorpedoPreviewError("");
+        }
+      }).catch((reason) => {
+        if (active) {
+          setTorpedoDraftCandidates([]);
+          setTorpedoPreviewError(describeTorpedoPreviewError(reason));
+        }
       });
     }, 180);
     return () => {
@@ -2994,6 +3018,12 @@ export function PlatformPortal({ onClose }: Props) {
                   <section className="player-action-builder">
                     <div className="action-card">
                       <h3>鱼雷发射草稿</h3>
+                      {torpedoPreviewError && (
+                        <div className="review-error" role="alert">
+                          <strong>拿不到发射 MF</strong>
+                          <p>{torpedoPreviewError}</p>
+                        </div>
+                      )}
                       <div className="action-grid">
                         <label>
                           发射舰船
@@ -3058,7 +3088,7 @@ export function PlatformPortal({ onClose }: Props) {
                             disabled={launchPositions.length === 0}
                             onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}
                           >
-                            {launchPositions.length === 0 && <option value="">{view.realistic_command ? "等待旗舰航路写入或提交" : "请先在移动草稿里写出该舰航路"}</option>}
+                            {launchPositions.length === 0 && <option value="">{torpedoPreviewError ? "无法取得发射 MF（见上方原因）" : view.realistic_command ? "等待旗舰航路写入或提交" : "请先在移动草稿里写出该舰航路"}</option>}
                             {launchPositions.map((position) => (
                               <option key={position.mf} value={position.mf}>
                                 MF {position.mf} · {position.heading} 舰首
@@ -3093,7 +3123,7 @@ export function PlatformPortal({ onClose }: Props) {
                         鱼雷订单不指定目标：航迹与任何未沉没舰船重合时，规则核心会对重合的每条船分别进行命中裁决，不区分敌我。同一发射器可写入多条独立订单，累计枚数不能超过当前装载量（本发射器剩余 {selectedLauncherRemaining} 枚）。
                         {launchPositions.length > 0
                           ? " 发射格和舰首航向由规则核心从本回合移动草稿投影后自动带出；提交时仍会整体严格校验。"
-                          : view.realistic_command ? " 请先写入旗舰航路；跟随舰在旗舰席位提交后刷新视野，即可取得本舰沿编队航路的发射 MF。"
+                          : view.realistic_command ? ` 第 ${view.turn} 回合还没有可用的旗舰航路：请在上方「编队指挥」卡片里填写航路，点「写入本回合编队移动」；跟随舰需要等旗舰席位提交后才能取得本舰沿编队航路的发射 MF。`
                           : " 当前拿不到合法 MF 列表：请先在本席位「移动草稿」里写出这艘舰的航路（计划与速度），MF 列表会随草稿自动出现。引擎要求鱼雷行的发射格必须等于该 MF 处的航路位置，所以这里不提供手填 MF——手填会产出没有发射格的行，提交时必然报 launch_hex 不符。"}
                         {selectedTorpedoCandidate?.blocked_reason ? ` 引擎当前判定：${selectedTorpedoCandidate.blocked_reason}。` : ""}
                       </p>

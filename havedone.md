@@ -1467,3 +1467,12 @@
 - 改动：`models.py` 增加 `_hex_distance_cached`（`lru_cache(65536)`），`HexCoord.distance` 改为调用它，结果与原公式逐位一致；`ship_records.load_ship_records()` 增加进程级合并缓存 `_load_ship_records_merged`，`clear_imported_ship_asset_cache()` 一并失效，返回浅拷贝以免调用方污染缓存。
 - 验证：`tests/test_coordinates.py`+`test_bearing.py`+`test_snapshot_turn.py` 17 项通过；实测 `/view` 401ms → 341ms（累计从事故时 2491ms 降到 341ms，7.3 倍），后端 RSS 稳定 83MB。`tests/test_engine.py` 余 1 项失败 `test_ship_and_torpedo_exchanging_hexes_detects_contact_at_ship_start_hex`，在纯 HEAD 上即存在，与本批无关。
 - 未处理：`_terrain_blocks_sight`（地形遮挡）与 `_gunnery_modifier` 仍是主要剩余成本；隧道固定接入美西 lax，公网往返 1.5–4s 属网络路径问题。
+
+# 2026-10-19 鱼雷预览失败不再静默（纯前端热更新）
+
+- 现象：玩家端「发射 MF」下拉在拿不到候选时永远只显示「等待旗舰航路写入或提交」，即使玩家已经在编队面板写了旗舰航路。
+- 根因（线上实证）：预览请求失败被前端 `catch` 静默吞掉，只 `setTorpedoDraftCandidates([])`。三类真实原因都表现为同一句话：① 会话过期 401（`tiedi` 21:52:35 重启过，token 只在进程内存；日志里能代 `dbe8b62c` 784 次、高尾 `b2f0e92a` 651 次 401）；② 航路格式非法 422（实测 `leader_plan="3 1"` → `{"detail":"Invalid movement plan '3 1'"}`）；③ 草稿里确实没有 `formation_commands`（回环抓包对比：不带命令响应 5286 字节，带命令最小 5439 字节，纳普 `be480a3c` 当时为 5286）。
+- 改动：`api.ts` 新增携带 HTTP status 的 `PlatformHttpError` 并让 `platformRequest` 用它抛出（保留 `PlatformOrderValidationError` 行为）；`PlatformPortal.tsx` 新增 `torpedoPreviewError`，401 → 「登录已过期…请刷新重新登录」、422 → 「航路格式不合法：…」、其他 → HTTP 状态 + detail；鱼雷卡用红色提示块展示，占位选项改为「无法取得发射 MF（见上方原因）」；`realistic_command` 常规提示补上当前回合数并说明跟随舰需旗舰席位提交。
+- 验证：`tsc -b` 通过；`vite build --base=/tiedi/` 通过（56 modules，产物 `index-Cp_GdpBs.js` / `index-DW2Cjx2D.css`）；原子切换 `dist`，`tiedi` **MainPID 5956 前后一致（未重启、未踢人）**；`/tiedi/` 200、新 bundle 200、`/api/scenarios` 200；新 bundle 内含「拿不到发射 MF」「登录已过期」「航路格式不合法」「无法取得发射 MF」四段文案。
+- 生效方式：玩家刷新页面即加载新 bundle；不刷新则继续用内存里的旧包（不影响对局）。
+- 本批次提交：见 git log `fix(platform): surface torpedo preview failures instead of a silent empty list`。
