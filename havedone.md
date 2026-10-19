@@ -1,5 +1,12 @@
 # 已完成工作
 
+## 2026-10-19 编队默认间距 2 格 + 探照灯射程后置判定
+
+- `default_setup_orders` 的默认 `spacing` 由 1 改为 2；只影响编队初设生成的默认提议，不改已落库编队。
+- 探照灯：`validate_orders` 不再因超距或目标不可照射报 `illegal searchlight target`（仅保留舰不存在/火控损坏）；射程（轴心 14、同盟 12 格）改到 `_resolve_optional_gunnery` 结算时判定——结算后仍在射程内就照常点亮，超出则自动取消并记 `searchlight_cancelled` 事件。整回合订单提交时玩家看不到移动结算后的相对位置，因此不再拦截订单。
+- 验证：`pytest tests/test_engine.py -k searchlight` **3 项通过**（含新增的「超距自动取消」用例与原有「友舰可照射」用例）；`pytest tests/test_engine.py tests/test_platform.py` 全量跑，仅剩 HEAD 上既有的 `test_ship_and_torpedo_exchanging_hexes_detects_contact_at_ship_start_hex`（鱼雷换位接触）失败，与本批无关，与上一批 `/view` 记录的结论一致；`py_compile` 与 `git diff --check` 通过。
+- 提交：`63cc285`（默认间距）、`bec035a`（探照灯）。
+
 ## 2026-10-19 编队照明弹与探照灯发射舰选择
 
 - 玩家编队面板为照明弹和探照灯分别增加发射舰选择器，候选包括旗舰和可遥控队员；订单保存真实发射舰 ID，照明弹炮位按所选发射舰自动分配。
