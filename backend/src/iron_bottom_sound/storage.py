@@ -14,6 +14,8 @@ class GameRepository:
         self.path = str(path)
         self.connection = sqlite3.connect(self.path, check_same_thread=False)
         self.connection.row_factory = sqlite3.Row
+        # 按 (game_id, turn) 缓存的快照，供 /view 热路径直取；写入时整体清空。
+        self._turn_snapshot_cache: dict[tuple[str, int], tuple[int, GameState]] = {}
         self.connection.executescript(
             """
             PRAGMA journal_mode=WAL;
@@ -35,6 +37,7 @@ class GameRepository:
             CREATE TABLE IF NOT EXISTS snapshots (
               game_id TEXT NOT NULL,
               sequence INTEGER NOT NULL,
+              turn INTEGER,
               state_json TEXT NOT NULL,
               PRIMARY KEY (game_id, sequence)
             );
@@ -78,6 +81,21 @@ class GameRepository:
             self.connection.execute("ALTER TABLE imported_ship_records ADD COLUMN asset_mime TEXT")
         if "asset_data" not in columns:
             self.connection.execute("ALTER TABLE imported_ship_records ADD COLUMN asset_data BLOB")
+
+        # 快照补 turn 列：2026-10-19 复盘发现 /view 每请求都要把该局全部快照
+        # （单局 102 条 / 22MB）反序列化后再筛「上一回合」，单请求 2.5 秒，
+        # 16 个席位轮询即把整机拖死。加列后可按 (game_id, turn) 单行直取。
+        snapshot_columns = {row[1] for row in self.connection.execute("PRAGMA table_info(snapshots)")}
+        if "turn" not in snapshot_columns:
+            self.connection.execute("ALTER TABLE snapshots ADD COLUMN turn INTEGER")
+            pending = self.connection.execute(
+                "SELECT game_id, sequence, state_json FROM snapshots WHERE turn IS NULL"
+            ).fetchall()
+            with self.connection:
+                for row in pending:
+                    self._set_snapshot_turn(
+                        row["game_id"], int(row["sequence"]), row["state_json"]
+                    )
         asset_constraints = {
             row[1]: bool(row[3])
             for row in self.connection.execute("PRAGMA table_info(imported_ship_records)")
@@ -121,6 +139,17 @@ class GameRepository:
                 ),
             )
 
+    def _set_snapshot_turn(self, game_id: str, sequence: int, state_json: str) -> None:
+        """Backfill: derive the turn of one historical snapshot from its JSON."""
+        turn = GameState.model_validate_json(state_json).turn
+        self.connection.execute(
+            "UPDATE snapshots SET turn = ? WHERE game_id = ? AND sequence = ?",
+            (turn, game_id, sequence),
+        )
+
+    def _invalidate_turn_cache(self) -> None:
+        self._turn_snapshot_cache.clear()
+
     def save(self, state: GameState) -> None:
         state_json = state.model_dump_json()
         with self.connection:
@@ -136,9 +165,10 @@ class GameRepository:
             )
             sequence = state.events[-1].sequence if state.events else 0
             self.connection.execute(
-                "INSERT OR REPLACE INTO snapshots(game_id, sequence, state_json) VALUES (?, ?, ?)",
-                (state.game_id, sequence, state_json),
+                "INSERT OR REPLACE INTO snapshots(game_id, sequence, turn, state_json) VALUES (?, ?, ?, ?)",
+                (state.game_id, sequence, state.turn, state_json),
             )
+        self._invalidate_turn_cache()
 
     def replace_event(self, event: GameEvent, game_id: str) -> None:
         """Persist an explicit referee revision of an existing event."""
@@ -163,9 +193,10 @@ class GameRepository:
             )
             final_sequence = state.events[-1].sequence if state.events else 0
             self.connection.execute(
-                "INSERT OR REPLACE INTO snapshots(game_id, sequence, state_json) VALUES (?, ?, ?)",
-                (state.game_id, final_sequence, state.model_dump_json()),
+                "INSERT OR REPLACE INTO snapshots(game_id, sequence, turn, state_json) VALUES (?, ?, ?, ?)",
+                (state.game_id, final_sequence, state.turn, state.model_dump_json()),
             )
+        self._invalidate_turn_cache()
 
     def load(self, game_id: str) -> GameState:
         row = self.connection.execute("SELECT state_json FROM games WHERE game_id = ?", (game_id,)).fetchone()
@@ -238,6 +269,33 @@ class GameRepository:
             raise KeyError(f"Unknown snapshot for game {game_id}")
         return int(row["sequence"]), GameState.model_validate_json(row["state_json"])
 
+    def snapshot_for_turn(self, game_id: str, turn: int) -> tuple[int, GameState] | None:
+        """Return the newest snapshot of one turn, or None.
+
+        Hot path for /view: previously the caller pulled every snapshot of the
+        game (102 rows / 22 MB for one match) and parsed each into GameState
+        just to keep a single turn — 2.5 s per poll. The ``turn`` column makes
+        this a single-row read; results are cached per (game_id, turn) and the
+        cache is dropped on any write. Callers must treat the returned state as
+        read-only.
+        """
+        key = (game_id, turn)
+        cached = self._turn_snapshot_cache.get(key)
+        if cached is not None:
+            return cached
+        row = self.connection.execute(
+            """SELECT sequence, state_json FROM snapshots
+               WHERE game_id = ? AND turn = ? ORDER BY sequence DESC LIMIT 1""",
+            (game_id, turn),
+        ).fetchone()
+        if row is None:
+            return None
+        entry = (int(row["sequence"]), GameState.model_validate_json(row["state_json"]))
+        if len(self._turn_snapshot_cache) >= 8:
+            self._turn_snapshot_cache.clear()
+        self._turn_snapshot_cache[key] = entry
+        return entry
+
     def import_game(self, state: GameState, snapshots: list[tuple[int, GameState]]) -> None:
         """Atomically insert a validated portable save under a fresh game id."""
         if self.connection.execute(
@@ -254,12 +312,13 @@ class GameRepository:
                 [(state.game_id, event.sequence, event.model_dump_json()) for event in state.events],
             )
             self.connection.executemany(
-                "INSERT INTO snapshots(game_id, sequence, state_json) VALUES (?, ?, ?)",
+                "INSERT INTO snapshots(game_id, sequence, turn, state_json) VALUES (?, ?, ?, ?)",
                 [
-                    (state.game_id, sequence, snapshot.model_dump_json())
+                    (state.game_id, sequence, snapshot.turn, snapshot.model_dump_json())
                     for sequence, snapshot in snapshots
                 ],
             )
+        self._invalidate_turn_cache()
 
     def save_battle_entry(
         self,

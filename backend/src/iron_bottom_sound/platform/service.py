@@ -277,14 +277,12 @@ class PlatformService:
         if not state.options.realistic_command or state.turn <= 1:
             return []
         previous_turn = state.turn - 1
-        snapshots = [
-            (sequence, snapshot)
-            for sequence, snapshot in self.game_repository.snapshots(state.game_id)
-            if snapshot.turn == previous_turn
-        ]
-        if not snapshots:
+        # 只取上一回合的最新一条。此前这里拉全量快照再筛，单请求 2.5 秒
+        # （单局 102 条 / 22MB 全量反序列化），16 席位轮询会把整机拖死。
+        entry = self.game_repository.snapshot_for_turn(state.game_id, previous_turn)
+        if entry is None:
             return []
-        _sequence, archived = max(snapshots, key=lambda item: item[0])
+        _sequence, archived = entry
         result: list[dict] = []
         owned = set(seat.controlled_ship_ids)
         for formation in self._formation_definitions(state):

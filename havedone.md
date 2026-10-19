@@ -1444,3 +1444,12 @@
 - 根因：`defaultAnchor` 只按固定 2 行间隔散开各列，而纵队每舰占一格，3 艘以上的列必然压到下一列锚点；重叠只能在「海图」上拖开解决，进海图这一步却先用 `computeLayout().errors` 拦截，形成死锁。
 - 修法：进海图门槛改为只校验「所有舰都已编入纵队」，不再要求锚点/重叠合法；重叠与越界仍由拖拽时的 `tryAnchor` 和第 5 步开战前的整体 `computeLayout` 校验把关。
 - 验证：`pnpm exec tsc -b` 通过；`pnpm exec vite build --base=/tiedi/` 通过（`index-YR62fOpm.js` 490.76 kB）；原子替换 `/opt/tiedi/frontend/dist` 后未重启 `tiedi`，本机与公网 `/tiedi/` 均 200；`git diff --check` 通过。本批提交 `0554880`。
+
+## 2026-10-19 修复 /view 全量反序列化导致整机卡死
+
+- 现象：玩家端与裁判端明显卡顿；21:10–21:17 期间后端 python RSS 从 509MB 涨到 920MB，swap 用满 2000MB，磁盘 util 100%，load 3–6，整机僵死到连 `uptime` 都跑不完，随后被重启两次。
+- 定位：py-spy 采样（约 2700 样本）显示 `seat_view → observation → _formation_reports → storage.snapshots → GameState.model_validate_json`。`_formation_reports` 每次请求拉取该局全部快照（102 条 / 22MB）逐条反序列化，只为了保留「上一回合」的一条；串行实测单请求 2491ms。
+- 修法：`snapshots` 增加 `turn` 列（旧库打开时幂等 `ALTER` + 回填）；`save` / `replace_after` / `import_game` 写入 turn；新增 `snapshot_for_turn()` 单行查询，按 `(game_id, turn)` 缓存并在任何写入后失效；`_formation_reports` 改用它。未改裁决逻辑。
+- 验证：新增 `tests/test_snapshot_turn.py` 2 项（迁移回填、取最新、写后失效）；`tests/test_platform.py` 38 项、`tests/test_platform_formations.py` 8 项、`tests/test_savegame_api.py` 3 项全部通过。部署后实测 `/view` 平均 401ms（最大 995ms），后端 RSS 稳定在 162MB（此前峰值 920MB）；迁移后 140/140 行有 turn；公网 `/tiedi/` 200，哨兵 level=OK。
+- 剩余热点（未处理）：`_gunnery_candidates → _can_see` 的 O(n²) 视线判定仍占约 300ms/请求，`load_ship_records()` 冷启动 369ms，热调用约 15ms。
+- 部署方式：只同步 `storage.py` 与 `platform/service.py` 并重启 `tiedi`（同一工作区另有并行改动 `realistic_command.py`，本批未包含）。迁移前已备份 `/root/backups/state-pre-turncol-20261019-214502.sqlite3`。

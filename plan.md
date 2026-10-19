@@ -1,3 +1,19 @@
+# 当前问题：编队默认间距由 1 格改为 2 格（2026-10-19）
+
+状态：进行中。
+
+1. 起因：本局裁判把 16 个编队的间距统一改为 2 格后反馈「以后新建对局默认还是 1 格」；`default_setup_orders` 里 `spacing=1` 是硬编码。
+2. 修法：把该默认值改为 2。只影响编队初设阶段生成的默认提议，不改动已落库的编队 `spacing`。
+3. 验证：跑 `tests/test_realistic_command.py`、`tests/test_platform_formations.py`、`tests/test_custom_scenarios.py`，确认默认编队铺开后仍在本方海域内且不重叠。
+
+# 当前问题：/view 每次请求全量反序列化历史快照导致整机卡死（2026-10-19）
+
+状态：完成。`/view` 实测 2491ms → 401ms（6.2 倍），后端内存从峰值 920MB 降到 162MB 且不再增长；迁移 140/140 行回填 turn。
+
+1. 复盘：单次 `/view` 实测 2.5 秒（响应仅 65KB）。根因是 `_formation_reports` 调 `snapshots()` 拉该局全部快照（单局 102 条 / 22MB），逐条 `GameState.model_validate_json` 后只留「上一回合」一条。16 个领舰席位按 1.8s 轮询 → 每秒约 22 CPU-秒，线程池与内存同时打爆，swap 满、磁盘 100%、整机僵死。
+2. 修法：`snapshots` 增加 `turn` 列并在打开旧库时幂等回填；新增 `snapshot_for_turn()` 单行查询；按 `(game_id, turn)` 缓存并在任何写入后失效。只改存储/查询，不动裁决逻辑。
+3. 验证：新增 `tests/test_snapshot_turn.py`（迁移回填、取最新、写后失效）；`test_platform.py` 38 项、`test_platform_formations.py` 8 项、`test_savegame_api.py` 3 项通过；部署后实测 `/view` 延迟。
+
 # 当前问题：剧本工坊进海图被“船只重叠”拦截（2026-10-19）
 
 状态：完成。进海图门槛已放宽为「只校验所有舰都已编入纵队」；`tsc -b` 与 `vite build` 通过，原子替换 `dist` 后未重启服务，提交 `0554880`。
