@@ -3283,6 +3283,9 @@ class IronBottomEngine:
             + [0]
         )
         stopped: set[str] = set()
+        # 同一机动回合内，同一对舰船最多只会发生一次碰撞（6.4）：
+        # 已经撞出结果的一对后续再共格/互换格时不再重掷，避免一回合内反复掉血。
+        collided_pairs: set[frozenset[str]] = set()
         moved_tracks: dict[str, int] = {track.id: 0 for track in state.torpedo_tracks}
         movement_trace_start: dict[str, str] = {}
         movement_trace_tracks: dict[str, TorpedoTrack] = {}
@@ -3374,7 +3377,10 @@ class IronBottomEngine:
                     for right_id in ids[left_index + 1:]:
                         if left_id in stopped or right_id in stopped:
                             continue
-                        self._resolve_ship_collision(state, state.ships[left_id], state.ships[right_id])
+                        if frozenset((left_id, right_id)) in collided_pairs:
+                            continue
+                        if self._resolve_ship_collision(state, state.ships[left_id], state.ships[right_id]):
+                            collided_pairs.add(frozenset((left_id, right_id)))
             wreck_positions = {wreck.position: wreck for wreck in state.wrecks}
             for ship_id, destination in destinations.items():
                 if ship_id in stopped or destination not in wreck_positions:

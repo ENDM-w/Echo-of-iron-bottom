@@ -1725,6 +1725,37 @@ def test_collision_requires_five_or_six_then_uses_collision_table_for_both_ships
     assert all(event.rule and event.rule.rule_id == "IBS-T-THDT" for event in results)
 
 
+def test_same_pair_collides_at_most_once_per_movement_turn(monkeypatch) -> None:
+    """两舰一整回合最多撞一次：同格同向连走多个机动点也只掷一次碰撞。"""
+    engine = IronBottomEngine()
+    state = engine.reset("IBS-S-03", seed=3)
+    left = state.ships["IBS-U-KM-KARL-GALSTER"]
+    right = next(
+        ship for ship in state.ships.values()
+        if ship.side == left.side and ship.id != left.id and ship.position
+    )
+    right.position = left.position
+    right.heading = left.heading
+    state.sealed_orders["1:movement_planning"] = {
+        Side.AXIS.value: OrderBatch(
+            side=Side.AXIS, phase=Phase.MOVEMENT_PLANNING,
+            movement=[
+                MovementOrder(ship_id=left.id, plan="2"),
+                MovementOrder(ship_id=right.id, plan="2"),
+            ],
+        ),
+    }
+    calls: list[tuple[str, str]] = []
+
+    def always_collide(self, game_state, first, second):
+        calls.append((first.id, second.id))
+        return True
+
+    monkeypatch.setattr(IronBottomEngine, "_resolve_ship_collision", always_collide)
+    engine._resolve_movement(state)
+    assert len(calls) == 1, calls
+
+
 def test_moving_sunk_ship_drifts_one_hex_at_next_movement_then_creates_wreck() -> None:
     engine = IronBottomEngine()
     state = engine.reset("IBS-S-03", seed=1)
