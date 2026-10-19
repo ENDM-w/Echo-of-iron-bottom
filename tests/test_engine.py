@@ -1969,6 +1969,48 @@ def test_optional_searchlight_allows_friendly_target() -> None:
     assert marker.target_ship_id == friendly.id
 
 
+def test_optional_searchlight_out_of_range_is_cancelled_at_resolution() -> None:
+    engine = IronBottomEngine()
+    options = GameOptions(optional_rules=OptionalRules(searchlights=True))
+    state = engine.reset("IBS-S-03", seed=1, options=options)
+    attacker = state.ships["IBS-U-KM-KARL-GALSTER"]
+    target = next(
+        ship for ship in state.ships.values()
+        if ship.side != attacker.side and ship.position
+    )
+    assert attacker.position and target.position
+    limit = 14 if attacker.side == Side.AXIS else 12
+    far = None
+    for heading in range(1, 7):
+        position = attacker.position
+        try:
+            for _ in range(limit + 1):
+                position = position.neighbor(
+                    heading, columns=state.map_columns, rows=state.map_rows
+                )
+        except ValueError:
+            continue
+        far = position
+        break
+    assert far is not None
+    target.position = far
+    state.phase = Phase.GUNNERY
+    batch = OrderBatch(
+        side=attacker.side,
+        phase=Phase.GUNNERY,
+        searchlights=[SearchlightOrder(ship_id=attacker.id, target_id=target.id)],
+    )
+    # 超距不再是订单错误：整回合订单在提交时看不到移动结算后的相对位置。
+    validation = engine.validate_orders(state.game_id, batch)
+    assert validation.valid, validation.errors
+    engine._resolve_optional_gunnery(state, [batch])
+    assert not [marker for marker in state.markers if marker.kind == "searchlight"]
+    cancelled = [event for event in state.events if event.type == "searchlight_cancelled"]
+    assert cancelled
+    assert cancelled[-1].payload["limit"] == limit
+    assert cancelled[-1].payload["ship_id"] == attacker.id
+
+
 def test_optional_silhouette_reveals_only_intervening_ship_during_current_fire() -> None:
     engine = IronBottomEngine()
     options = GameOptions(optional_rules=OptionalRules(silhouettes=True))

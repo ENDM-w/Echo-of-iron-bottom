@@ -1743,14 +1743,8 @@ class IronBottomEngine:
                     errors.append(f"{order.ship_id}: cannot fire star shell from {order.mount_id}")
             for order in batch.searchlights:
                 ship = owned.get(order.ship_id)
-                target = state.ships.get(order.target_id or "") if order.target_id else None
                 if not ship or ship.mfc_destroyed:
                     errors.append(f"{order.ship_id}: cannot use searchlight")
-                elif order.active and (
-                    not target or target.sunk or not ship.position or not target.position
-                    or ship.position.distance(target.position) > (14 if ship.side == Side.AXIS else 12)
-                ):
-                    errors.append(f"{order.ship_id}: illegal searchlight target {order.target_id}")
             smoke_ids = batch.smoke_ships + [order.ship_id for order in batch.smoke if order.deploy]
             for ship_id in smoke_ids:
                 ship = owned.get(ship_id)
@@ -3822,6 +3816,30 @@ class IronBottomEngine:
         if optional.searchlights:
             for order in [item for batch in batches for item in batch.searchlights if item.active and item.target_id and not self.captain_command_lost(state, state.ships[item.ship_id])]:
                 ship = state.ships[order.ship_id]
+                target = state.ships.get(order.target_id or "")
+                # 射程在移动结算之后判定：整回合订单提交时玩家看不到回合末位置，
+                # 因此超距不再作为订单错误，而是在这里静默取消（留一条事件轨迹）。
+                limit = 14 if ship.side == Side.AXIS else 12
+                cancelled = None
+                if target is None or target.sunk or not target.position or not ship.position:
+                    cancelled = "目标不可照射"
+                elif ship.position.distance(target.position) > limit:
+                    cancelled = f"距离 {ship.position.distance(target.position)} 格，超出 {limit} 格射程"
+                if cancelled:
+                    self._event(
+                        state,
+                        "searchlight_cancelled",
+                        f"{ship.name} 探照灯自动取消：{cancelled}",
+                        payload={
+                            "ship_id": ship.id,
+                            "target_id": order.target_id,
+                            "distance": ship.position.distance(target.position) if ship.position and target and target.position else None,
+                            "limit": limit,
+                            "reason": cancelled,
+                        },
+                        rule=self._rule("IBS-R-09.4", 13, "9.4 探照灯"),
+                    )
+                    continue
                 state.markers.append(
                     MarkerState(
                         id=f"SEARCH-{state.turn}-{ship.id}",
