@@ -125,10 +125,15 @@ export function CustomScenarioEditor({onClose,onLaunch,error}:Props){
    if(!bothSidesPresent)return "双方至少各需要 1 艘舰船";
    if(shipTotal<2)return "全剧至少需要 2 艘舰船";
   }
-  if(target===2){ // 进海图前保证所有舰都已入列且无重叠
+  if(target===2){ // 进海图只要求「所有舰都已入列」；锚点与避让正是下一步要做的事
    if(editorState.ships.length===0)return "还没有选任何舰船";
-   const errors=computeLayout(editorState).errors;
-   if(errors.length)return errors.join("；");
+   // 不能在这里用 computeLayout 的 errors 拦人：默认锚点按固定 2 行间隔散开，
+   // 而纵队每舰占一格，3 艘以上的列必然压到下一列；重叠/越界只能在「海图」上拖开解决。
+   // 在这里拦会形成死锁（船越多越必现）。拖拽时仍逐次校验，第 5 步开战前仍整体校验。
+   const listed=new Set<string>();
+   for(const side of SIDES)for(const column of editorState.columns[side])column.shipIds.forEach(id=>listed.add(id));
+   const stray=editorState.ships.filter(ship=>!listed.has(ship.id));
+   if(stray.length)return `还有 ${stray.length} 艘舰没有编入纵队：${stray.slice(0,5).map(ship=>ship.name).join("、")}${stray.length>5?"…":""}`;
   }
   if(target===4){
    if(!meta.title.trim())return "请先填写剧本名称";
