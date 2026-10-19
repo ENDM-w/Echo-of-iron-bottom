@@ -112,7 +112,9 @@ def default_setup_orders(state: GameState, side: Side) -> list[FormationSetupOrd
             leader_id=leader,
             flagship_id=flagship,
             reserve_flagship_id=reserve,
-            spacing=1,
+            # 默认编队间距 2 格（2026-10-19 由 1 改 2：玩家实际一致使用 2 格纵队，
+            # 1 格纵队在宽海图上会紧贴成一串，且默认值与玩家习惯不符）。
+            spacing=2,
             heading=heading,
         ))
     return result
