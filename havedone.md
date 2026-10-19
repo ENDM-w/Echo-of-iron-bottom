@@ -1437,3 +1437,10 @@
 - 从用户补充的 `日军算子.rar` 提取并按舰名绑定 32 张日舰 PNG；归档原始压缩包、提取图和来源清单。Washington、South Dakota 的速度损伤轨改为 `[5,4,3,2,1] / [4,3,2,1] / [4,3,2,1]`。
 - 更新结构化导入包与本机 SQLite；102 条导入记录均有算子图片，完整性检查 `ok`。来源清单为 472 个原始文件、473 个来源路径。
 - 验证：导入包 `--check-only` 通过；`py -m pytest tests/test_ship_records.py -q` 10 项通过；`git diff --check` 通过。本批提交 `e789e1f` 已推送至 origin/main。
+
+## 2026-10-19 剧本工坊进海图被“船只重叠”拦截
+
+- 现象：裁判在剧本工坊编组分队后点「去海图定初设」被拦下，提示某纵队与其它舰船重叠；船越多越必现，无法进入海图。
+- 根因：`defaultAnchor` 只按固定 2 行间隔散开各列，而纵队每舰占一格，3 艘以上的列必然压到下一列锚点；重叠只能在「海图」上拖开解决，进海图这一步却先用 `computeLayout().errors` 拦截，形成死锁。
+- 修法：进海图门槛改为只校验「所有舰都已编入纵队」，不再要求锚点/重叠合法；重叠与越界仍由拖拽时的 `tryAnchor` 和第 5 步开战前的整体 `computeLayout` 校验把关。
+- 验证：`pnpm exec tsc -b` 通过；`pnpm exec vite build --base=/tiedi/` 通过（`index-YR62fOpm.js` 490.76 kB）；原子替换 `/opt/tiedi/frontend/dist` 后未重启 `tiedi`，本机与公网 `/tiedi/` 均 200；`git diff --check` 通过。本批提交 `0554880`。
