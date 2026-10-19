@@ -1,4 +1,5 @@
 from pathlib import Path
+import sqlite3
 
 import yaml
 
@@ -7,10 +8,47 @@ from iron_bottom_sound.counter_assets import all_asset_bindings, validate_asset_
 from iron_bottom_sound.data import make_ship
 from iron_bottom_sound.models import FiringArc
 from iron_bottom_sound.ship_records import load_ship_catalog, load_ship_records
+from iron_bottom_sound.storage import GameRepository
 
 
 ROOT = Path(__file__).resolve().parents[1]
 STRUCTURED = ROOT / "resources" / "derived" / "structured"
+
+
+def test_repository_migrates_imported_ships_to_allow_missing_artwork(tmp_path: Path) -> None:
+    db_path = tmp_path / "ships.sqlite3"
+    connection = sqlite3.connect(db_path)
+    connection.execute(
+        """CREATE TABLE imported_ship_records (
+             ship_id TEXT PRIMARY KEY, catalog_json TEXT NOT NULL, record_json TEXT NOT NULL,
+             asset_mime TEXT NOT NULL, asset_data BLOB NOT NULL,
+             imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"""
+    )
+    connection.execute(
+        "INSERT INTO imported_ship_records (ship_id, catalog_json, record_json, asset_mime, asset_data) "
+        "VALUES ('existing', '{}', '{}', 'image/png', ?) ",
+        (sqlite3.Binary(b"existing-art"),),
+    )
+    connection.commit()
+    connection.close()
+
+    repository = GameRepository(db_path)
+    try:
+        constraints = {
+            row[1]: row[3]
+            for row in repository.connection.execute("PRAGMA table_info(imported_ship_records)")
+        }
+        assert constraints["asset_mime"] == constraints["asset_data"] == 0
+        assert repository.connection.execute(
+            "SELECT asset_data FROM imported_ship_records WHERE ship_id = 'existing'"
+        ).fetchone()[0] == b"existing-art"
+        repository.connection.execute(
+            "INSERT INTO imported_ship_records "
+            "(ship_id, catalog_json, record_json, asset_mime, asset_data) VALUES ('blank', '{}', '{}', NULL, NULL)"
+        )
+        repository.connection.commit()
+    finally:
+        repository.connection.close()
 
 
 def test_all_playable_and_reinforcement_ships_have_verified_records() -> None:

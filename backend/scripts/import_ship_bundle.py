@@ -37,16 +37,20 @@ def load_bundle(bundle_path: Path):
         })
         if request.record.id != ship_id:
             raise ValueError(f"Bundle key does not match record id: {ship_id}")
-        artwork = (ROOT / entry["artwork"]).resolve()
-        if not artwork.is_relative_to(ROOT):
-            raise ValueError(f"Artwork path escapes repository root: {entry['artwork']}")
-        if not artwork.is_file():
-            raise FileNotFoundError(artwork)
-        envelope = ShipImportEnvelope(
-            definition=request,
-            asset_image_base64=base64.b64encode(artwork.read_bytes()).decode("ascii"),
-        )
-        mime, asset = envelope.image_payload()
+        artwork_path = entry.get("artwork")
+        if artwork_path is None:
+            mime, asset = None, None
+        else:
+            artwork = (ROOT / artwork_path).resolve()
+            if not artwork.is_relative_to(ROOT):
+                raise ValueError(f"Artwork path escapes repository root: {artwork_path}")
+            if not artwork.is_file():
+                raise FileNotFoundError(artwork)
+            envelope = ShipImportEnvelope(
+                definition=request,
+                asset_image_base64=base64.b64encode(artwork.read_bytes()).decode("ascii"),
+            )
+            mime, asset = envelope.image_payload()
         validated.append((ship_id, request.catalog_payload(), request.record_payload(), mime, asset))
     return document, validated
 
@@ -97,7 +101,7 @@ def main() -> int:
                         json.dumps(catalog, ensure_ascii=False, separators=(",", ":")),
                         json.dumps(record, ensure_ascii=False, separators=(",", ":")),
                         mime,
-                        sqlite3.Binary(asset),
+                        sqlite3.Binary(asset) if asset is not None else None,
                     ),
                 )
     finally:

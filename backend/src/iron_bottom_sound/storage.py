@@ -67,8 +67,8 @@ class GameRepository:
               ship_id TEXT PRIMARY KEY,
               catalog_json TEXT NOT NULL,
               record_json TEXT NOT NULL,
-              asset_mime TEXT NOT NULL,
-              asset_data BLOB NOT NULL,
+              asset_mime TEXT,
+              asset_data BLOB,
               imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
             """
@@ -78,6 +78,32 @@ class GameRepository:
             self.connection.execute("ALTER TABLE imported_ship_records ADD COLUMN asset_mime TEXT")
         if "asset_data" not in columns:
             self.connection.execute("ALTER TABLE imported_ship_records ADD COLUMN asset_data BLOB")
+        asset_constraints = {
+            row[1]: bool(row[3])
+            for row in self.connection.execute("PRAGMA table_info(imported_ship_records)")
+        }
+        if asset_constraints.get("asset_mime") or asset_constraints.get("asset_data"):
+            # Older schema required an image for every ship. Rebuild in place so
+            # imported records can intentionally leave artwork blank, preserving
+            # existing catalog, record, image, and import timestamp values.
+            self.connection.executescript(
+                """
+                ALTER TABLE imported_ship_records RENAME TO imported_ship_records_legacy;
+                CREATE TABLE imported_ship_records (
+                  ship_id TEXT PRIMARY KEY,
+                  catalog_json TEXT NOT NULL,
+                  record_json TEXT NOT NULL,
+                  asset_mime TEXT,
+                  asset_data BLOB,
+                  imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                INSERT INTO imported_ship_records
+                  (ship_id, catalog_json, record_json, asset_mime, asset_data, imported_at)
+                SELECT ship_id, catalog_json, record_json, asset_mime, asset_data, imported_at
+                FROM imported_ship_records_legacy;
+                DROP TABLE imported_ship_records_legacy;
+                """
+            )
 
     def save_imported_ship(
         self, ship_id: str, catalog: dict, record: dict, asset_mime: str, asset_data: bytes

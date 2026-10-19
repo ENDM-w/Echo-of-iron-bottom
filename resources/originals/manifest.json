@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "source_root": "D:\\desktop\\铁底湾",
-  "canonical_file_count": 403,
-  "source_path_count": 404,
-  "total_bytes": 107078198,
+  "canonical_file_count": 439,
+  "source_path_count": 440,
+  "total_bytes": 111324348,
   "files": [
     {
       "path": "resources/originals/assets/images/1.png",
@@ -3021,8 +3021,8 @@
     },
     {
       "path": "resources/originals/ship-imports/genoa-2026/README.md",
-      "bytes": 2713,
-      "sha256": "fc6c3c8447eba8e80fb674499094d66c058eeed0ce8b9156865f2dcb69740ea2",
+      "bytes": 3075,
+      "sha256": "8756f114e83f47de60b96eed73e740ebdc1cb635201bd0ee4be0dc302f5df4be",
       "original_paths": [
         "D:\\desktop\\铁底湾\\README.md"
       ]
@@ -3219,6 +3219,294 @@
       "sha256": "bbb4206ecb400be9afb6d9b226a1a1e80ed0772a5def5daaed4c317eda844049",
       "original_paths": [
         "E:\\铁底湾在线网推\\新的船的资料\\使用文档(ai写的还没校对.docx"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/BB-华盛顿.png",
+      "bytes": 17887,
+      "sha256": "3455d787d9dcd8f94c2f21925558d54800e1bd5a874e2b7087989f72806862d7",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/BB-南达科他.png",
+      "bytes": 19344,
+      "sha256": "b8d3c50a0620434138d6aaa16209044b1b365bd8808f3edd31f23f7434ddc3b3",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/BB-新泽西.png",
+      "bytes": 16662,
+      "sha256": "6f6776fbb75b6691bc33fe0d3f43058243d83e7733f94b4c74d853e174c10947",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/BB-衣阿华.png",
+      "bytes": 16516,
+      "sha256": "7a6b7fa1caf06a82a699f4d277771b183fb5ecab583ae862e3ae329bb4a9635d",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/BB-阿拉巴马.png",
+      "bytes": 18557,
+      "sha256": "f4dfcb0e7976b3d92e1a89409140b40fd22099013e264f85b8ac27436f260898",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/BB-马萨诸塞.png",
+      "bytes": 19645,
+      "sha256": "a135f9630e0d97b86b2eaa73ce89207ae59dbeb81220c0473ca3b0d2461e50f3",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/CA-威奇塔.png",
+      "bytes": 20420,
+      "sha256": "2ffdaab74520674abe72adc763c1133a30f3bccdba6dc5913812d782c3e4b6be",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/CA-新奥尔良.png",
+      "bytes": 22046,
+      "sha256": "523c1ae98ec245a8193aa3f1e4e239b5167846f483c746bdd46bcb37c3c38628",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/CL-圣菲.png",
+      "bytes": 16583,
+      "sha256": "1d3070ebfae63072436df122ff33c922db341dff052bbb1733dc598cf063f936",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/CL-文森斯.png",
+      "bytes": 18000,
+      "sha256": "b55de69007d8b847016797e8a6af05133d8512bd193dc6c3e5cf3595a7a83cc1",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/CL-比洛克西.png",
+      "bytes": 18945,
+      "sha256": "e3027fd148036d5c9595db576221e42886159af15e9ccb7ab02b428e7fbbfa71",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/CL-莫比尔.png",
+      "bytes": 17867,
+      "sha256": "021be4f4698825fb1325dd71164e46000edbb38a3779326425b54392e24aaa09",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/CL-迈阿密.png",
+      "bytes": 18119,
+      "sha256": "a65e1a13eb87a1abfae17f86dbdba7ef7c64015d270d3b5b58079dac80ebe961",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-亨特.png",
+      "bytes": 15339,
+      "sha256": "b77a125a8263df41de26680f73b538962faaf311c6b2b7139b7f8595886f4d33",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-克拉伦斯·K·布朗森.png",
+      "bytes": 20618,
+      "sha256": "094341c32e7febbcbab2702e26e534d54aa8f90165b19235955ba674e1dd8eb5",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-刘易斯·汉考克.png",
+      "bytes": 21077,
+      "sha256": "cee314fbee24efb0391a82b45ed21afcb2d175478b24873521745dde0336a0bf",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-卡珀顿.png",
+      "bytes": 16649,
+      "sha256": "74049a30b4f3058115bebc58a619c1e80f12ab9c0f42c8e3c95a68fcb488b3b9",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-多奇.png",
+      "bytes": 15186,
+      "sha256": "21bbf8c133968bb00064bed69ed32705f109c0bea9cbbf3858642b1be46c3502",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-巴格利.png",
+      "bytes": 18996,
+      "sha256": "545ddc2cef77ea38ea2685bf2ff95f9d37840b96546ed924f796baa46cb91756",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-希利.png",
+      "bytes": 15542,
+      "sha256": "0054d07028de7d40b2323ed43ee27280524fee62f163b3b983f702520514717c",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-希科克斯.png",
+      "bytes": 18164,
+      "sha256": "ecefb76406628c3315107bb907911b71ef7cdc0869707575bd4e69c5f79ce326",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-帕特森.png",
+      "bytes": 19672,
+      "sha256": "762ae8502efd6897720669b8e694b46602acfdf25c21a0acb22d6d8855670cc8",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-廷吉.png",
+      "bytes": 15318,
+      "sha256": "65e6513aef3e1e487adf4dde65d8e2cb22d466ebe0acfdfc21dc34730bbb4a4a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-欧文.png",
+      "bytes": 15366,
+      "sha256": "c25673faaa09b8c08c711193e1453f39bea71ff122d77efd1e5bd8f87d95b9bd",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-沙利文兄弟.png",
+      "bytes": 19206,
+      "sha256": "241b22b71b68d5b763200b0a9af1e3f74454b37dc6a8c8d31a8d6653bc5a9cbe",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-科格斯·韦尔.png",
+      "bytes": 19683,
+      "sha256": "78eee5d9116baa19822c6a43e1debb1b52bd492dcb73de4a9baf7d964fa80e72",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-科滕.png",
+      "bytes": 15929,
+      "sha256": "b0ed188785964e17ea000d27a7cde1f3aa289cea5948eaee6215be5813e9563e",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-米勒.png",
+      "bytes": 15844,
+      "sha256": "51ca3c7270a3e7d81095c478dad8fce0b464a82c2362ed0c9df606bc799d366c",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-纳普.png",
+      "bytes": 15717,
+      "sha256": "06d916fe6e253df1794f0f686443698c77638f6458551b4a4a185e7def7ec193",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-英格索尔.png",
+      "bytes": 18585,
+      "sha256": "a11be0f009b0f5ad4e54617d5d55a61fec4ddc90471e96242c3939820c0b1087",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/operator-art/us/美军算子/DD-马歇尔.png",
+      "bytes": 16721,
+      "sha256": "b4be14f4e991cd2027964807e46fc28126ef0623309e351c127f4314ba07d71d",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/README.md",
+      "bytes": 714,
+      "sha256": "bd369eed9deb3b2fec2aef4bd77337fbac8c463de40d073721fdd84554aeea7b",
+      "original_paths": [
+        "D:\\desktop\\铁底湾\\README.md"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/source-images/ship-table-1.png",
+      "bytes": 581335,
+      "sha256": "6dbfe42bb3e3831dc5b89bc92c4ee56a6c77280444949f70b9b5513aa0439472",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\微信图片_20261019000528_41_98.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/source-images/ship-table-2.png",
+      "bytes": 1502427,
+      "sha256": "078a4576b3ff86082b5a132cb7641ba58928a4762ad9d49fd898900f2678f03a",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\微信图片_20261019000529_42_98.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/source-images/ship-table-3.png",
+      "bytes": 1051015,
+      "sha256": "f6781c4474623a3f49a8891d0f7a4124ececf55374eb5dc9e62195ef21721117",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\微信图片_20261019000547_43_98.png"
+      ]
+    },
+    {
+      "path": "resources/originals/ship-imports/leyte-1944/美军算子.rar",
+      "bytes": 556094,
+      "sha256": "4a6573ed21b63e4931f922711e634dea1476758483954577f4076e564a6ce6a4",
+      "original_paths": [
+        "E:\\铁底湾在线网推\\新的船的资料\\莱特湾\\美军算子.rar"
       ]
     },
     {
