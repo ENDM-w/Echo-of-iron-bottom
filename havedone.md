@@ -1453,3 +1453,10 @@
 - 验证：新增 `tests/test_snapshot_turn.py` 2 项（迁移回填、取最新、写后失效）；`tests/test_platform.py` 38 项、`tests/test_platform_formations.py` 8 项、`tests/test_savegame_api.py` 3 项全部通过。部署后实测 `/view` 平均 401ms（最大 995ms），后端 RSS 稳定在 162MB（此前峰值 920MB）；迁移后 140/140 行有 turn；公网 `/tiedi/` 200，哨兵 level=OK。
 - 剩余热点（未处理）：`_gunnery_candidates → _can_see` 的 O(n²) 视线判定仍占约 300ms/请求，`load_ship_records()` 冷启动 369ms，热调用约 15ms。
 - 部署方式：只同步 `storage.py` 与 `platform/service.py` 并重启 `tiedi`（同一工作区另有并行改动 `realistic_command.py`，本批未包含）。迁移前已备份 `/root/backups/state-pre-turncol-20261019-214502.sqlite3`。
+
+## 2026-10-19 /view 热路径缓存：distance 与舰船档案
+
+- cProfile：单请求 `HexCoord.distance()` 约 10.9 万次调用（153ms），实际仅约 4 千个不同坐标对；`_terrain_blocks_sight` 6937 次；`_gunnery_candidates` 单侧 463ms。
+- 改动：`models.py` 增加 `_hex_distance_cached`（`lru_cache(65536)`），`HexCoord.distance` 改为调用它，结果与原公式逐位一致；`ship_records.load_ship_records()` 增加进程级合并缓存 `_load_ship_records_merged`，`clear_imported_ship_asset_cache()` 一并失效，返回浅拷贝以免调用方污染缓存。
+- 验证：`tests/test_coordinates.py`+`test_bearing.py`+`test_snapshot_turn.py` 17 项通过；实测 `/view` 401ms → 341ms（累计从事故时 2491ms 降到 341ms，7.3 倍），后端 RSS 稳定 83MB。`tests/test_engine.py` 余 1 项失败 `test_ship_and_torpedo_exchanging_hexes_detects_contact_at_ship_start_hex`，在纯 HEAD 上即存在，与本批无关。
+- 未处理：`_terrain_blocks_sight`（地形遮挡）与 `_gunnery_modifier` 仍是主要剩余成本；隧道固定接入美西 lax，公网往返 1.5–4s 属网络路径问题。

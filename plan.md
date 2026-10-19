@@ -1,3 +1,11 @@
+# 当前问题：/view 热路径的 distance() 与舰船档案被重复计算（2026-10-19）
+
+状态：完成。`/view` 401ms → 341ms，后端 RSS 稳定 83MB。
+
+1. cProfile 显示单请求 `HexCoord.distance()` 被调用约 10.9 万次（153ms），而实际只有约 4 千个不同坐标对；`_terrain_blocks_sight` 6937 次。
+2. `distance()` 改为纯函数 `lru_cache(65536)`，结果逐位一致；`load_ship_records()` 冷启动 369ms 且每请求重复解析 102 条导入记录，改为进程级缓存 + 导入后失效（返回浅拷贝以免污染）。
+3. 验证：`test_coordinates`/`test_bearing`/`test_snapshot_turn` 17 项通过；`test_engine.py` 仅剩 1 项在纯 HEAD 上既有的失败（鱼雷换位接触），与本次无关。
+
 # 当前问题：编队默认间距由 1 格改为 2 格（2026-10-19）
 
 状态：进行中。

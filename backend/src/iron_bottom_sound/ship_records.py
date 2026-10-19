@@ -67,6 +67,7 @@ def imported_ship_has_asset(ship_id: str) -> bool:
 
 def clear_imported_ship_asset_cache() -> None:
     _imported_asset_ids_cached.cache_clear()
+    _load_ship_records_merged.cache_clear()
 
 
 def load_imported_ship_asset(ship_id: str) -> tuple[str, bytes] | None:
@@ -123,14 +124,24 @@ def _load_ship_records_cached() -> dict[str, ShipRecord]:
     return records
 
 
-def load_ship_records() -> dict[str, ShipRecord]:
-    """Return verified static records plus referee-imported database records."""
+@lru_cache(maxsize=1)
+def _load_ship_records_merged() -> dict[str, ShipRecord]:
+    """静态名录 + 数据库导入记录的合并结果（按进程缓存）。"""
     records = _load_ship_records_cached().copy()
     for ship_id, _, payload in _imported_ship_rows():
         if ship_id in records:
             raise ValueError(f"Imported ship record collides with static ship record {ship_id}")
         records[ship_id] = ShipRecord.model_validate(payload)
     return records
+
+
+def load_ship_records() -> dict[str, ShipRecord]:
+    """Return verified static records plus referee-imported database records.
+
+    结果按进程缓存：`/view` 等热路径每请求都会调用，冷启动需解析 102 条导入
+    记录（369ms）。返回浅拷贝，调用方可安全增删，不会污染缓存。
+    """
+    return _load_ship_records_merged().copy()
 
 
 def load_ship_catalog() -> dict[str, dict[str, Any]]:
