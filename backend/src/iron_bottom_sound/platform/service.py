@@ -276,13 +276,8 @@ class PlatformService:
         """Return friendly member snapshots from exactly the preceding completed turn."""
         if not state.options.realistic_command or state.turn <= 1:
             return []
-        previous_turn = state.turn - 1
-        # 只取上一回合的最新一条。此前这里拉全量快照再筛，单请求 2.5 秒
-        # （单局 102 条 / 22MB 全量反序列化），16 席位轮询会把整机拖死。
-        entry = self.game_repository.snapshot_for_turn(state.game_id, previous_turn)
-        if entry is None:
-            return []
-        _sequence, archived = entry
+        # 2026-10-20 裁判裁决：取消"旗舰看编队其他船延迟一回合"的设定，
+        # 直接返回本回合的实时状态（旗舰已可指挥本编队全部舰船）。
         result: list[dict] = []
         owned = set(seat.controlled_ship_ids)
         for formation in self._formation_definitions(state):
@@ -290,10 +285,12 @@ class PlatformService:
                 continue
             reports = []
             for ship_id in formation.ship_ids:
-                if ship_id == formation.flagship_id or ship_id not in archived.ships:
+                if ship_id == formation.flagship_id or ship_id not in state.ships:
                     continue
-                reports.append(archived.ships[ship_id].model_dump(mode="json"))
-            result.append({"formation_id": self._formation_token(state, seat, formation), "turn": previous_turn, "ships": reports})
+                if state.ships[ship_id].sunk:
+                    continue
+                reports.append(state.ships[ship_id].model_dump(mode="json"))
+            result.append({"formation_id": self._formation_token(state, seat, formation), "turn": state.turn, "ships": reports})
         return result
 
     def _formation_roster(self, state: GameState, seat: SeatRecord) -> list[dict]:
