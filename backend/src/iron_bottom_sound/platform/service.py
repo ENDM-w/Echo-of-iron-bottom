@@ -383,6 +383,10 @@ class PlatformService:
                     movement_batch, _errors, _detach = expand_movement_orders(self.engine, state.model_copy(deep=True), expanded)
                     movement_by_ship.update({order.ship_id: order for order in movement_batch.movement})
                 for follower in followers:
+                    # 掉队舰不继承旗舰的鱼雷意图：它们已脱离队形指挥链，
+                    # 鱼雷校验会以 "detached ships may not receive torpedo orders" 拒绝。
+                    if follower.command_status != "attached":
+                        continue
                     if any(item.ship_id == follower.id for item in expanded.torpedoes):
                         continue
                     movement = movement_by_ship.get(follower.id)

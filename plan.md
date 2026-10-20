@@ -1,3 +1,7 @@
+# 当前问题：掉队舰不继承旗舰鱼雷意图（2026-10-20）
+
+状态：完成。`_inherit_formation_actions` 在鱼雷继承时跳过 `command_status != "attached"` 的舰，避免 `detached ships may not receive torpedo orders` 卡住批准；快照上 dry-run `approve` 通过。
+
 # 当前问题：掉队舰够不到队尾时应继续前进（2026-10-20）
 
 状态：完成。`_straggler_order` 在队尾一回合内不可达时，改为沿与队尾的直线按最大合法速度前进（原来回退到最小速度，等于原地停船）。新增测试 `test_straggler_advances_toward_tail_when_tail_is_out_of_reach`；`tests/test_realistic_command.py` 中 ERMA/S01 回归种子为既有失败（stash 后同样失败）。
