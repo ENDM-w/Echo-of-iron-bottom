@@ -2453,6 +2453,18 @@ class PlatformService:
         self.repository.save_match(match)
         return match
 
+    def review_orders(self, match_id: str) -> dict:
+        """当前阶段订单；沉船/离场席位自动补一份空订单（视为已交）。"""
+        match = self.repository.match(match_id)
+        state = self._ensure_loaded(match.game_id)
+        orders = dict(self.repository.orders(match_id, match.phase))
+        for seat_id in self._inactive_seat_ids(match, state):
+            if seat_id in orders:
+                continue
+            seat = self.repository.seat(seat_id)
+            orders[seat_id] = (match.phase, OrderBatch(side=seat.side, phase=match.phase))
+        return orders
+
     def _inactive_seat_ids(self, match: MatchRecord, state: GameState) -> set[str]:
         """没有可指挥舰船的席位：其所有受控舰都已沉没或不在场。"""
         inactive: set[str] = set()
@@ -2470,10 +2482,9 @@ class PlatformService:
         self._check_version(match, expected_version)
         if match.stage != MatchStage.READY_FOR_REVIEW:
             raise ValueError("The phase is not ready for referee approval")
-        current_orders = self.repository.orders(match_id, match.phase)
-        # 2026-10-20：逐舰模式下，席位所属舰船全部沉没/离场的席位自动视为已交
-        # （无人需要为沉船下单），不再阻塞批准。
-        required_seats = set(match.required_seat_ids) - self._inactive_seat_ids(match, self._ensure_loaded(match.game_id))
+        # 沉船/离场席位由 review_orders 自动补空订单，等同已交。
+        current_orders = self.review_orders(match_id)
+        required_seats = set(match.required_seat_ids)
         if set(current_orders) < required_seats:
             raise ValueError("All required seats must submit before approval")
         state = self._ensure_loaded(match.game_id)

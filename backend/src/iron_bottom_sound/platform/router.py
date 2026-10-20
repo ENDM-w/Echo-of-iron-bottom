@@ -359,7 +359,7 @@ def build_router(service: PlatformService) -> APIRouter:
         summary = service.summary(match_id)
         if summary.match.judge_user_id != user.user_id:
             raise HTTPException(status_code=403, detail="Only the assigned referee may review")
-        orders = service.repository.orders(match_id, summary.match.phase)
+        orders = service.review_orders(match_id)
         return {
             "match": summary.match.model_dump(mode="json"),
             "orders": [
