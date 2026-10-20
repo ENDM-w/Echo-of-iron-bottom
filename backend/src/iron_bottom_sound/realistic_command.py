@@ -527,10 +527,8 @@ def expand_movement_orders(
     orders = {order.formation_id: order for order in batch.formation_movement}
     owned_formations = [formation for formation in state.formations.values() if formation.side == batch.side and formation.status != "dissolved"]
     formation_ship_ids = {ship_id for formation in owned_formations for ship_id in formation.ship_ids}
-    independent_formation_orders = formation_ship_ids & {order.ship_id for order in batch.movement}
-    if independent_formation_orders:
-        errors.append(f"Formation ships cannot receive independent movement orders: {sorted(independent_formation_orders)}")
-        return prepared, errors, detach_ids
+    # 2026-10-20 裁判裁决：编队舰允许逐舰提交移动令（显式移动优先于编队自动跟随）。
+    _independent_formation_orders = formation_ship_ids & {order.ship_id for order in batch.movement}
     # 2026-10-20：旗舰舰长失能的编队由引擎自动按原速直航，不接受玩家/裁判订单；
     # 这类编队不能计入"必须提交编队机动"的覆盖要求，否则永远批不了。
     def _commandable(formation) -> bool:
@@ -546,7 +544,20 @@ def expand_movement_orders(
             for item in formation.ship_ids
         )
 
-    expected = {formation.id for formation in owned_formations if _commandable(formation)}
+    explicit_ship_ids = {order.ship_id for order in batch.movement}
+
+    def _fully_explicit(formation) -> bool:
+        attached = [
+            ship_id for ship_id in formation.ship_ids
+            if ship_id in state.ships and state.ships[ship_id].position
+            and not state.ships[ship_id].sunk and state.ships[ship_id].command_status == "attached"
+        ]
+        return bool(attached) and all(ship_id in explicit_ship_ids for ship_id in attached)
+
+    expected = {
+        formation.id for formation in owned_formations
+        if _commandable(formation) and not _fully_explicit(formation)
+    }
     if set(orders) != expected:
         errors.append(f"Formation movement must cover active formations; missing={sorted(expected-set(orders))}, extra={sorted(set(orders)-expected)}")
         return prepared, errors, detach_ids
@@ -792,9 +803,13 @@ def expand_movement_orders(
             ship.withdrawal_edge = edge
             generated.append(_withdrawal_order(engine, state, ship))
             ship.withdrawal_edge = original_edge
-    prepared.movement = [
+    # 2026-10-20 裁判裁决：玩家在控件里逐舰填写的移动令优先于编队自动跟随/同步生成的结果。
+    explicit_orders = list(batch.movement)
+    explicit_ids = {order.ship_id for order in explicit_orders}
+    prepared.movement = explicit_orders + [
         order for order in generated
-        if not engine.captain_command_lost(state, state.ships[order.ship_id])
+        if order.ship_id not in explicit_ids
+        and not engine.captain_command_lost(state, state.ships[order.ship_id])
     ]
     # Formation legality is a batch property: reject same-impulse same-hex and
     # hex swaps before the classic collision table is ever reached.

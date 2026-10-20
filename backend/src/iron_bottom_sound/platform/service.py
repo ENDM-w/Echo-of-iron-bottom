@@ -2767,10 +2767,8 @@ class PlatformService:
             if formation.side == seat.side and formation.status != "dissolved"
             for ship_id in formation.ship_ids
         }
-        # 只有真实模式（旗舰编队指挥）才禁止给编队舰单独下移动单；
-        # 逐舰模式（realistic_command=False）下编队已失效，允许逐舰下单。
-        if state.options.realistic_command and any(order.ship_id in formations_by_ship for order in batch.movement):
-            raise PermissionError("编队舰只移动由旗舰航路统一生成，不能单独提交移动订单")
+        # 2026-10-20 裁判裁决：编队舰的移动改由玩家逐舰填写，编队机动只做兜底，
+        # 因此不再禁止给编队舰单独提交移动订单。
         referenced: set[str] = set()
         for field_name in (
             "reinforcements", "movement", "gunnery", "torpedoes", "illumination", "searchlights", "smoke",
