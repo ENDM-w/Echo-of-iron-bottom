@@ -485,7 +485,7 @@ class TorpedoOrder(BaseModel):
     #   after_move  该 MF 移动完成后（默认/历史口径）
     #   before_turn 转向机动的这一 MF 里、转向之前（转向格 + 旧航向）
     #   after_turn  同一 MF 转向之后（转向格 + 新航向）
-    launch_timing: Literal["after_move", "before_turn", "after_turn"] = "after_move"
+    launch_timing: Literal["after_move", "before_turn", "mid_turn", "after_turn"] = "after_move"
     launch_hex: HexCoord | None = None
     bearing: int | None = Field(default=None, ge=1, le=6)
     launch_side: Literal["port", "starboard"] | None = None

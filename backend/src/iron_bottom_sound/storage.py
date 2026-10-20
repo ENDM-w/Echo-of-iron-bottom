@@ -41,6 +41,10 @@ class GameRepository:
               state_json TEXT NOT NULL,
               PRIMARY KEY (game_id, sequence)
             );
+            -- 按回合取最新快照（裁判端回合列表 / 上一回合队形报告）走这条索引，
+            -- 避免全表扫描 + 逐行反序列化。
+            CREATE INDEX IF NOT EXISTS idx_snapshots_game_turn
+              ON snapshots(game_id, turn, sequence);
             CREATE TABLE IF NOT EXISTS battle_report (
               game_id TEXT NOT NULL,
               sequence INTEGER NOT NULL,

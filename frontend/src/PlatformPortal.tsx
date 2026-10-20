@@ -142,6 +142,7 @@ const orderDraftKey = (matchId: string, seatId: string, turn: number) =>
 const launchTimingLabel = (timing?: string): string => {
   if (timing === "before_turn") return "转向前";
   if (timing === "after_turn") return "转向后";
+  if (timing === "mid_turn") return "转向中 60°";
   return "移动后";
 };
 const launchPositionKey = (position: { mf: number; timing?: string }): string =>

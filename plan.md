@@ -1,3 +1,7 @@
+# 当前问题：120° 转向可在中间 60° 释放鱼雷（2026-10-20）
+
+状态：完成。`_torpedo_launch_points` 对一次转 120°（delta=2/4）额外生成 `mid_turn` 释放点（转向格 + 中间 60° 航向）；`TorpedoOrder.launch_timing` 增加 `mid_turn`；前端增加"转向中 60°"标签。实测 `1PP3` 在 MF2 得到 before_turn(3)/mid_turn(2)/after_turn(1)。
+
 # 当前问题：取消"旗舰看编队其他船延迟一回合"（2026-10-20）
 
 状态：完成。`_formation_reports` 不再读上一回合快照，直接返回本回合实时状态（旗舰已可指挥本编队全部舰船）。实测矢矧席位报告 turn=5、位置为当前实时位置。

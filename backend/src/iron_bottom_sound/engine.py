@@ -1128,6 +1128,12 @@ class IronBottomEngine:
             if heading != previous_heading and previous_position is not None:
                 turn_hex = previous_position.model_dump(mode="json")
                 points.append({"mf": index, "hex": turn_hex, "heading": previous_heading, "timing": "before_turn"})
+                # 120° 转向（一次转两格）时，中间那 60° 也是一个合法释放时机。
+                delta = (heading - previous_heading) % 6
+                if delta in (2, 4):
+                    middle = previous_heading + (1 if delta == 2 else -1)
+                    middle = ((middle - 1) % 6) + 1
+                    points.append({"mf": index, "hex": turn_hex, "heading": middle, "timing": "mid_turn"})
                 points.append({"mf": index, "hex": turn_hex, "heading": heading, "timing": "after_turn"})
             points.append({
                 "mf": index,
