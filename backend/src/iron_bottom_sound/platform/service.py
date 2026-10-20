@@ -807,7 +807,19 @@ class PlatformService:
                 formation.flagship_id for formation in formations
                 if getattr(formation, "status", None) != "dissolved"
             }
-            own_ids = {ship_id for ship_id in controlled_ids if ship_id in flagship_ids or ship_id not in grouped_ids}
+            # 2026-10-20 裁判裁决：旗舰席位可以指挥本编队全部舰船（逐舰填移动），
+            # 因此"指挥中的编队"里的舰也计入 own_ids。
+            commanded_ids = {
+                ship_id
+                for formation in formations
+                if getattr(formation, "status", None) != "dissolved"
+                and formation.flagship_id in controlled_ids
+                for ship_id in formation.ship_ids
+            }
+            own_ids = {
+                ship_id for ship_id in controlled_ids
+                if ship_id in flagship_ids or ship_id in commanded_ids or ship_id not in grouped_ids
+            }
         follower_only_seat = state.options.realistic_command and bool(controlled_ids) and not own_ids
         all_hidden_contact_positions = self._hidden_contact_positions(state)
         hidden_contact_positions = {
@@ -1688,14 +1700,10 @@ class PlatformService:
         """List the newest persisted game snapshot for each turn, referee only."""
         match = self.repository.match(match_id)
         self._authorize_judge(match, user)
-        latest_by_turn: dict[int, tuple[int, GameState]] = {}
-        for sequence, snapshot in self.game_repository.snapshots(match.game_id):
-            current = latest_by_turn.get(snapshot.turn)
-            if current is None or sequence > current[0]:
-                latest_by_turn[snapshot.turn] = (sequence, snapshot)
+        latest_by_turn = self.game_repository.turn_archive_rows(match.game_id)
         return [
             {"turn": turn, "sequence": sequence, "phase": snapshot.phase.value}
-            for turn, (sequence, snapshot) in sorted(latest_by_turn.items())
+            for turn, sequence, snapshot in latest_by_turn
         ]
 
     def turn_archive_state(
@@ -1704,14 +1712,11 @@ class PlatformService:
         """Return a detached latest-in-turn snapshot after referee authorization."""
         match = self.repository.match(match_id)
         self._authorize_judge(match, user)
-        candidates = [
-            (sequence, snapshot)
-            for sequence, snapshot in self.game_repository.snapshots(match.game_id)
-            if snapshot.turn == turn
-        ]
-        if not candidates:
+        entry = self.game_repository.snapshot_for_turn(match.game_id, turn)
+        if entry is None:
             raise KeyError(f"No saved archive for turn {turn}")
-        return max(candidates, key=lambda item: item[0])[1]
+        # 返回副本，避免调用方改动污染仓库缓存
+        return entry[1].model_copy(deep=True)
 
     def submit_order(self, match_id: str, seat_id: str, user: AuthenticatedUser, submission: SeatOrderSubmission) -> MatchRecord:
         match = self.repository.match(match_id)

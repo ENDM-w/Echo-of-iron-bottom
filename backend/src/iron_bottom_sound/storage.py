@@ -296,6 +296,28 @@ class GameRepository:
         self._turn_snapshot_cache[key] = entry
         return entry
 
+    def turn_archive_rows(self, game_id: str) -> list[tuple[int, int, GameState]]:
+        """每回合最新一条快照，供裁判端回合列表使用。
+
+        只解析「每回合 1 条」，而不是像 `snapshots()` 那样把全部历史都
+        反序列化（单局 102 条 / 22MB，足以让裁判端加载超时）。
+        """
+        rows = self.connection.execute(
+            """SELECT s.turn AS turn, s.sequence AS sequence, s.state_json AS state_json
+               FROM snapshots s
+               WHERE s.game_id = ? AND s.turn IS NOT NULL
+                 AND s.sequence = (
+                   SELECT MAX(t.sequence) FROM snapshots t
+                   WHERE t.game_id = s.game_id AND t.turn = s.turn
+                 )
+               ORDER BY s.turn""",
+            (game_id,),
+        ).fetchall()
+        return [
+            (int(row["turn"]), int(row["sequence"]), GameState.model_validate_json(row["state_json"]))
+            for row in rows
+        ]
+
     def import_game(self, state: GameState, snapshots: list[tuple[int, GameState]]) -> None:
         """Atomically insert a validated portable save under a fresh game id."""
         if self.connection.execute(
