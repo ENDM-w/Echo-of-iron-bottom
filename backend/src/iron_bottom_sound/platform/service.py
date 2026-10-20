@@ -1321,6 +1321,21 @@ class PlatformService:
                     for order in sealed.movement
                 ]
             else:
+                if not formation_commands:
+                    # 2026-10-20 裁判反馈：玩家还没写编队机动时，鱼雷预览拿不到"已封存的移动计划"，
+                    # 发射 MF 下拉是空的。这里用编队当前状态（原地）补一条默认机动，保证预览可用。
+                    formation_commands = [
+                        SeatFormationCommand(
+                            formation_id=self._formation_token(state, seat, formation),
+                            leader_plan="0",
+                            spacing=formation.spacing,
+                            turn_mode=formation.turn_mode,
+                        )
+                        for formation in self._formation_definitions(state)
+                        if formation.flagship_id in seat.controlled_ship_ids
+                        and formation.flagship_id in state.ships
+                        and state.ships[formation.flagship_id].side == seat.side
+                    ]
                 self._apply_formation_commands(state, seat, movement, formation_commands or [])
                 movement.formation_movement.extend(order for batch in stored for order in batch.formation_movement
                                                    if order.formation_id in relevant)

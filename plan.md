@@ -1,3 +1,7 @@
+# 当前问题：没有编队机动草稿时鱼雷发射 MF 预览为空（2026-10-20）
+
+状态：完成。`torpedo_candidates_for_movement_draft` 在 `formation_commands` 为空时，用编队当前状态补一条原地机动（leader_plan="0"），避免 `缺少已封存的移动计划` 导致发射 MF 下拉为空。以真实席位账号验证：矢矧席位 MF 0、纳普席位 MF 0-2 可选。
+
 # 当前问题：掉队舰追队尾应追"队尾的计划终点"（2026-10-20）
 
 状态：完成。`_straggler_order` 新增 `target_hex` 参数，展开时传入队尾当回合轨迹的终点，避免掉队舰朝队伍后方跑（此前用队尾起点，出现"阿拉巴马在 OO38、掉队舰却跑去 SS43"）。修正 `test_straggler_gets_automatic_legal_chase_order_and_rejoins_at_tail` 中按 spacing 计算队尾位置的偏移。
