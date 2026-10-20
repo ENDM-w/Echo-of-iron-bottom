@@ -1485,3 +1485,12 @@
 - 验证：① 后端归属实测（离线副本，KNAPP 旗舰席位）：跟随舰 CAPERTON 的鱼雷订单**允许**、跟随舰独立移动**拒绝**（"编队舰只移动由旗舰航路统一生成"）、敌方舰订单**拒绝**；② `tsc -b` 通过；③ `vite build --base=/tiedi/` 通过（56 modules，产物 `index-B9bwi1QM.js`）；④ 原子切换 `dist`，`tiedi` **MainPID 5956 前后一致（未重启、未踢人）**；⑤ `/tiedi/` 200、新 bundle 200、`/api/scenarios` 200、公网 `https://wangchuanlvren.space/tiedi/` 200。
 - 生效方式：裁判刷新页面即加载新 bundle。
 - 本批次提交：见 git log `fix(platform): let referee order editor target formation followers`。
+
+# 2026-10-20 修复"写了旗舰航路仍无鱼雷 MF"（跟随舰错误连坐旗舰）
+
+- 现象：编队局里旗舰席位写了旗舰航路，鱼雷卡片仍无 MF；玩家反馈"写了也没用"。数据库显示该局 7 条订单 `formation_commands` 全为 0。
+- 定位：用 nginx 临时探针抓到玩家真实预览载荷（`leader_plan` 分别为 `3S2P`、`1S3P1`），再以 service 完整路径复现：`expand_movement_orders` 对某个编队报 `axis-col-22-15: IBS-U-IJN-AKISHIMO cannot follow guide trail before advancing`（秋霜与领舰的队形几何不一致：成员 `q=34/32/30/28` 而 `r=2/3/3/4`），而 `torpedo_candidates_for_movement_draft` 只要 `errors` 非空就 `movement.movement = []` —— **一个跟随舰失败会把整条编队（含旗舰）的航路一起丢掉**，于是旗舰也拿不到发射 MF。
+- 修复：仅当"一条航路都没生成"时才清空；保留已生成的航路，跟随舰失败只影响它自己（候选带「缺少已封存的移动计划」）。编队合法性仍由引擎在提交时裁决。
+- 验证：用抓到的真实载荷复跑 —— 冲波 `1S3P1` → MF `[0,1,2,3,4,5]`；`1S3` → `[0,1,2,3,4]`；`3` → `[0,1,2,3]`；且 `_validate_pending_batch` 对该席位含航路批次**校验通过**（可正常提交）。
+- 其余：顺手把玩家端"无 MF"提示改成按情况可操作（旗舰未写/航路为 0/已写但无 MF/跟随舰等待），面板对 `0` 航路显示 ⚠。临时 nginx 探针在定位后已移除。
+- 本批次提交：`33d444d`。
