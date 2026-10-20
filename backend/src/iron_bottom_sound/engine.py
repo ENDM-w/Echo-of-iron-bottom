@@ -1102,6 +1102,42 @@ class IronBottomEngine:
                 })
         return {"trajectories": trajectories}
 
+    def _torpedo_launch_points(
+        self, state: GameState, ship, plan: str, commands,
+    ) -> list[dict[str, Any]]:
+        """列出某条移动计划下全部合法鱼雷释放点（按 MF 展开）。
+
+        转向发生在该 MF 的**起点**（先转向、再按新航向移动这一 MF，见 movement_trajectory）：
+        所以转向那一 MF 有三个释放时机——
+          after_move  该 MF 移动完成后（历史口径，也是默认值）
+          before_turn 转向之前：转向格 + 旧航向
+          after_turn  转向之后：转向格 + 新航向
+        2026-10-20 用户裁决三种都要能区分，故候选点与校验口径统一走这里，避免两处分叉。
+        """
+        trajectory, _ = self.movement_trajectory(
+            ship, plan, commands, columns=state.map_columns, rows=state.map_rows,
+        )
+        points: list[dict[str, Any]] = [{
+            "mf": 0,
+            "hex": ship.position.model_dump(mode="json"),
+            "heading": ship.heading,
+            "timing": "after_move",
+        }]
+        previous_position, previous_heading = ship.position, ship.heading
+        for index, (position, heading) in enumerate(trajectory, start=1):
+            if heading != previous_heading and previous_position is not None:
+                turn_hex = previous_position.model_dump(mode="json")
+                points.append({"mf": index, "hex": turn_hex, "heading": previous_heading, "timing": "before_turn"})
+                points.append({"mf": index, "hex": turn_hex, "heading": heading, "timing": "after_turn"})
+            points.append({
+                "mf": index,
+                "hex": position.model_dump(mode="json"),
+                "heading": heading,
+                "timing": "after_move",
+            })
+            previous_position, previous_heading = position, heading
+        return points
+
     def _torpedo_candidates(
         self,
         state: GameState,
@@ -1136,18 +1172,9 @@ class IronBottomEngine:
             )
             launch_positions: list[dict[str, Any]] = []
             if movement:
-                trajectory, _ = self.movement_trajectory(
-                    ship, movement.plan, self.movement_commands(movement),
-                    columns=state.map_columns, rows=state.map_rows,
+                launch_positions = self._torpedo_launch_points(
+                    state, ship, movement.plan, self.movement_commands(movement),
                 )
-                launch_positions = [{
-                    "mf": 0,
-                    "hex": ship.position.model_dump(mode="json"),
-                    "heading": ship.heading,
-                }] + [
-                    {"mf": index, "hex": position.model_dump(mode="json"), "heading": heading}
-                    for index, (position, heading) in enumerate(trajectory, start=1)
-                ]
             launchers = [] if blocked_reason else [
                 {
                     "launcher_id": launcher.id,
@@ -1376,8 +1403,13 @@ class IronBottomEngine:
         if not launcher:
             return None
         launch_at_mf = int(launch.get("launch_at_mf", 0))
+        launch_timing = str(launch.get("launch_timing") or "after_move")
         position = next(
-            (item for item in candidate["launch_positions"] if item["mf"] == launch_at_mf), None
+            (
+                item for item in candidate["launch_positions"]
+                if item["mf"] == launch_at_mf and item.get("timing", "after_move") == launch_timing
+            ),
+            None,
         )
         if not position:
             return None
@@ -1788,21 +1820,28 @@ class IronBottomEngine:
                 errors.append(f"{order.ship_id}: missing sealed movement plan")
                 continue
             commands = self.movement_commands(movement)
-            trajectory, _ = self.movement_trajectory(
-                ship, movement.plan, commands,
-                columns=state.map_columns, rows=state.map_rows,
+            points = self._torpedo_launch_points(state, ship, movement.plan, commands)
+            timing = order.launch_timing or "after_move"
+            max_mf = max(point["mf"] for point in points)
+            point = next(
+                (item for item in points if item["mf"] == order.launch_at_mf and item["timing"] == timing),
+                None,
             )
-            if order.launch_at_mf > len(trajectory):
+            if order.launch_at_mf > max_mf:
                 errors.append(f"{order.ship_id}: launch MF exceeds movement plan")
+            elif point is None:
+                errors.append(
+                    f"{order.ship_id}: no {timing} release point at launch MF {order.launch_at_mf}"
+                )
             else:
-                expected_hex = ship.position if order.launch_at_mf == 0 else trajectory[order.launch_at_mf - 1][0]
+                expected_hex = HexCoord(q=point["hex"]["q"], r=point["hex"]["r"])
                 if not order.launch_hex or order.launch_hex != expected_hex:
                     errors.append(f"{order.ship_id}: launch_hex does not match its MF position")
-                expected_heading = ship.heading if order.launch_at_mf == 0 else trajectory[order.launch_at_mf - 1][1]
+                expected_heading = point["heading"]
                 if order.bearing is not None and order.bearing != expected_heading:
                     errors.append(
                         f"{order.ship_id}: bearing {order.bearing} does not match ship heading "
-                        f"{expected_heading} at launch MF {order.launch_at_mf}"
+                        f"{expected_heading} at launch MF {order.launch_at_mf} ({timing})"
                     )
         if state.phase == Phase.TORPEDO_PLANNING:
             requested_by_launcher: dict[tuple[str, str], int] = {}

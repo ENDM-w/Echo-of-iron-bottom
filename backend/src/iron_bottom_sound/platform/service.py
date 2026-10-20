@@ -1293,7 +1293,10 @@ class PlatformService:
                     {key: value for key, value in launcher.items() if key != "loaded"}
                     for launcher in candidate["launchers"]
                 ]
-                candidate["launch_positions"] = [{"mf": position["mf"]} for position in candidate["launch_positions"]]
+                candidate["launch_positions"] = [
+                    {"mf": position["mf"], "timing": position.get("timing", "after_move")}
+                    for position in candidate["launch_positions"]
+                ]
             return candidates
         movement = OrderBatch(side=seat.side, phase=Phase.MOVEMENT_PLANNING, movement=movement_orders)
         if state.options.realistic_command:

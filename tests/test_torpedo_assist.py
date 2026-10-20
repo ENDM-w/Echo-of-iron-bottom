@@ -324,3 +324,59 @@ def test_torpedo_assist_api_wrong_phase_rejected() -> None:
         json={},
     )
     assert response.status_code == 409
+
+
+def test_torpedo_launch_timing_distinguishes_before_and_after_turn() -> None:
+    """转向前 / 转向后 / 移动后 是同一 MF 的三个不同发射点（2026-10-20 用户裁决）。
+
+    转向发生在该 MF 起点（先转向、再按新航向移动），所以转向那一 MF 里：
+    转向前＝转向格+旧航向，转向后＝同一格+新航向，移动后＝移动完成后的格+新航向。
+    """
+    engine = IronBottomEngine()
+    state = engine.reset("IBS-S-03", seed=3, game_id="launch-timing-test")
+    ship = state.ships["IBS-U-RN-JAVELIN"]
+    plan = "2P3"  # 命令：前进、前进、左转 60°、前进×3 —— 转向发生在 MF3 起点
+    points = engine._torpedo_launch_points(
+        state, ship, plan, engine.movement_commands(MovementOrder(ship_id=ship.id, plan=plan))
+    )
+    turn = {point["timing"]: point for point in points if point["mf"] == 3}
+    assert set(turn) == {"before_turn", "after_turn", "after_move"}
+    assert turn["before_turn"]["hex"] == turn["after_turn"]["hex"]           # 同在转向格
+    assert turn["before_turn"]["heading"] != turn["after_turn"]["heading"]   # 旧航向 / 新航向
+    assert turn["after_move"]["hex"] != turn["before_turn"]["hex"]           # 移动后已离开转向格
+
+    state.phase = Phase.TORPEDO_PLANNING
+    sealed_movement(state, {ship.id: plan})
+    launcher = ship.torpedo_launchers[0]
+
+    def validate(point: dict, timing: str):
+        verifier = IronBottomEngine()
+        verifier.games = {state.game_id: state.model_copy(deep=True)}
+        order = TorpedoOrder(
+            ship_id=ship.id,
+            launcher_id=launcher.id,
+            count=1,
+            speed="fast",
+            launch_at_mf=3,
+            launch_timing=timing,
+            launch_hex=HexCoord(q=point["hex"]["q"], r=point["hex"]["r"]),
+            bearing=point["heading"],
+            launch_side=launcher.arcs[0].value,
+            launch_angle="A",
+            setting_index=0,
+        )
+        batch = OrderBatch(side=Side.ALLIES, phase=Phase.TORPEDO_PLANNING, torpedoes=[order])
+        return verifier.validate_orders(state.game_id, batch)
+
+    for timing in ("before_turn", "after_turn", "after_move"):
+        result = validate(turn[timing], timing)
+        assert result.valid, (timing, result.errors)
+
+    # 时点与航向错配必须被拒（转向前的位置配 after_turn 会报 bearing 不符）
+    mismatch = validate(turn["before_turn"], "after_turn")
+    assert not mismatch.valid
+    assert any("bearing" in error for error in mismatch.errors)
+
+    # 没有转向的 MF 不提供转向前/后两个额外时点
+    plain = next(point for point in points if point["mf"] == 1)
+    assert plain["timing"] == "after_move"

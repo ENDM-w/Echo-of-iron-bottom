@@ -481,6 +481,11 @@ class TorpedoOrder(BaseModel):
     speed: Literal["fast", "medium", "slow"] = "fast"
     launcher_id: str | None = None
     launch_at_mf: int = Field(default=1, ge=0, le=8)
+    # 同一 MF 内可能有三种释放时机（2026-10-20 用户裁决）：
+    #   after_move  该 MF 移动完成后（默认/历史口径）
+    #   before_turn 转向机动的这一 MF 里、转向之前（转向格 + 旧航向）
+    #   after_turn  同一 MF 转向之后（转向格 + 新航向）
+    launch_timing: Literal["after_move", "before_turn", "after_turn"] = "after_move"
     launch_hex: HexCoord | None = None
     bearing: int | None = Field(default=None, ge=1, le=6)
     launch_side: Literal["port", "starboard"] | None = None

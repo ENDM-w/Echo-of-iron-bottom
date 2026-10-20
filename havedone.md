@@ -1494,3 +1494,11 @@
 - 验证：用抓到的真实载荷复跑 —— 冲波 `1S3P1` → MF `[0,1,2,3,4,5]`；`1S3` → `[0,1,2,3,4]`；`3` → `[0,1,2,3]`；且 `_validate_pending_batch` 对该席位含航路批次**校验通过**（可正常提交）。
 - 其余：顺手把玩家端"无 MF"提示改成按情况可操作（旗舰未写/航路为 0/已写但无 MF/跟随舰等待），面板对 `0` 航路显示 ⚠。临时 nginx 探针在定位后已移除。
 - 本批次提交：`33d444d`。
+
+# 2026-10-20 鱼雷发射时点区分（转向前 / 转向后 / 移动后）
+
+- 需求：同一 MF 内可能存在"转向前释放"与"转向后释放"，旧控件只能选一种。
+- 实现：`TorpedoOrder.launch_timing`（`after_move` 默认）＋ 引擎 `_torpedo_launch_points()`（候选与校验共用）；`_torpedo_candidates`/`validate_orders`/`_assist_launch_from_dict` 全部改用该口径；平台预览透传 `timing`；玩家与裁判 MF 下拉改为 `mf:timing` 复合键并显示时点标签，写入 `launch_timing`；草稿行显示时点。
+- 验证：新增 `test_torpedo_launch_timing_distinguishes_before_and_after_turn`（标枪航路 `2P3`：MF3 三个时点格/航向符合预期；三种时点分别通过校验；时点与航向错配被拒；无转向的 MF 不产生额外时点）。线上真实席位复跑：冲波航路 `1S3` → MF2 给出 `before_turn(35,1,航向1)` / `after_turn(35,1,航向2)` / `after_move(36,1,航向2)`。
+- 测试：`tests/test_torpedo_assist.py` 13 项全通过；`tests/test_engine.py` 仅剩 `test_ship_and_torpedo_exchanging_hexes_detects_contact_at_ship_start_hex` **一个既有失败**——已用 `git archive HEAD` 基线对照确认它在提交版上就失败，与本次改动无关（疑似近期引擎手改引入，`engine.py.bak-20261019/20261020` 可参考）。
+- 运维教训：为做基线对照执行 `git archive HEAD | tar -x -C /tmp/pristine` 把仓库大素材（RAR/PDF/VMD/PNG）解包到根分区，**写满磁盘**（ENOSPC，工具链一度全部无法执行）。清理后 `integrity: ok`、`tiedi` 日志 0 条 ENOSPC、数据无损。**今后不得把整仓解包到服务器**；对照基线只取 `backend/src tests` 或直接 `git diff`，资源用软链借 `/opt/tiedi/resources`。

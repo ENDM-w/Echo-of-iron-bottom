@@ -1366,6 +1366,7 @@ def test_stationary_ship_launches_from_its_current_hex_at_mf_zero() -> None:
         "mf": 0,
         "hex": attacker.position.model_dump(mode="json"),
         "heading": attacker.heading,
+        "timing": "after_move",
     }]
     wrong_hex = attacker.position.neighbor(attacker.heading)
     invalid = TorpedoOrder(
@@ -1553,7 +1554,11 @@ def test_torpedo_bearing_mismatch_rejected_and_correct_bearing_accepted() -> Non
     engine.advance(state.game_id)
     hints = engine.legal_actions(state.game_id, Side.AXIS)[0].schema_hint["torpedo_candidates"]
     karl = next(item for item in hints if item["ship_id"] == attacker.id)
-    position = next(item for item in karl["launch_positions"] if item["mf"] == 2)
+    # 2026-10-20：转向 MF 现在有三条发射点（转向前/转向后/移动后），这里取历史口径的"移动后"。
+    position = next(
+        item for item in karl["launch_positions"]
+        if item["mf"] == 2 and item.get("timing", "after_move") == "after_move"
+    )
     assert position["heading"] == 4
     base = dict(
         ship_id=attacker.id, launcher_id="TT1", count=1, launch_at_mf=2,

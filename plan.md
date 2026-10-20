@@ -1731,3 +1731,13 @@ nginx 日志证据：该对局席位提交接口当天 8 次 422（进取号 15:
 3. 切换舰船时既有的联动保持不变（炮击重建 mounts、鱼雷重建 launcher/count/launch_hex、照明弹重建 mount）。
 
 验证计划：`tsc -b` + `vite build` 通过；`dist` 原子切换、`tiedi` MainPID 不变；线上首页/接口 200。
+
+## 2026-10-20 鱼雷发射时点区分：转向前 / 转向后 / 移动后
+
+状态：完成（引擎 + 平台透传 + 玩家与裁判控件，已部署）。
+
+规则口径（用户裁决）：转向发生在该 MF 的**起点**（先转向、再按新航向移动这一 MF），因此转向那一 MF 存在三个合法释放时点——`before_turn`（转向格 + 旧航向）、`after_turn`（同一格 + 新航向）、`after_move`（移动完成后的格 + 新航向，历史口径与默认值）。
+
+1. `models.TorpedoOrder` 新增 `launch_timing`（默认 `after_move`，向后兼容）。
+2. 引擎新增 `_torpedo_launch_points()`，把"计划 → 全部发射点"集中一处；`_torpedo_candidates`、`validate_orders`、`_assist_launch_from_dict` 统一走它，避免候选与校验口径分叉（agent.md：引擎是唯一规则权威）。
+3. 平台预览为编队随旗舰舰透传 `timing`；玩家/裁判的 MF 下拉改为按 `mf:timing` 复合键，标签显示「MF n · 转向前/转向后/移动后 · 航向 m」，写入 `launch_timing`。

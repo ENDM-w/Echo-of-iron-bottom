@@ -60,6 +60,7 @@ function FormationRow({ formation, command, ships, phase, disabled, onWrite }: O
         <label>舰间距<select value={spacing} onChange={(event) => setSpacing(Number(event.target.value) as 1 | 2)}><option value={1}>1 格</option><option value={2}>2 格</option></select></label>
       </div>
       {!setup && <p className="field-hint">鱼贯模式沿领舰航迹自动跟进；未作加减速准备时，每艘队员航速与紧邻前舰相差最多 2 MF，并遵守自身合法速度与舰间距。同步模式全队执行相同舵令。航路：数字为直航 MF，P/S 为左/右转 60°，PP/SS 为左/右转 120°。领舰合法速度 {flagship?.min_legal_speed ?? "?"}–{flagship?.max_legal_speed ?? "?"} MF。</p>}
+      {!setup && plan.trim() === "0" && <p className="field-hint">⚠ 航路填 0 = 本回合原地不动：本席位与跟随舰都不会有鱼雷发射 MF。要打鱼雷请改成有实际机动的航路（例如 3、2P）再写入。</p>}
       <button type="button" disabled={disabled || flagship?.captain_command_lost || (!setup && !plan.trim())}
         onClick={() => onWrite({ formation_id: formation.formation_id, leader_plan: plan, spacing, heading, turn_mode: turnMode, reduce_speed: reduceSpeed === "" ? null : Number(reduceSpeed) })}>
         {setup ? "写入编队设置" : "写入本回合编队移动"}
