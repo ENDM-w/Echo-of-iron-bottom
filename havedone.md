@@ -1502,3 +1502,9 @@
 - 验证：新增 `test_torpedo_launch_timing_distinguishes_before_and_after_turn`（标枪航路 `2P3`：MF3 三个时点格/航向符合预期；三种时点分别通过校验；时点与航向错配被拒；无转向的 MF 不产生额外时点）。线上真实席位复跑：冲波航路 `1S3` → MF2 给出 `before_turn(35,1,航向1)` / `after_turn(35,1,航向2)` / `after_move(36,1,航向2)`。
 - 测试：`tests/test_torpedo_assist.py` 13 项全通过；`tests/test_engine.py` 仅剩 `test_ship_and_torpedo_exchanging_hexes_detects_contact_at_ship_start_hex` **一个既有失败**——已用 `git archive HEAD` 基线对照确认它在提交版上就失败，与本次改动无关（疑似近期引擎手改引入，`engine.py.bak-20261019/20261020` 可参考）。
 - 运维教训：为做基线对照执行 `git archive HEAD | tar -x -C /tmp/pristine` 把仓库大素材（RAR/PDF/VMD/PNG）解包到根分区，**写满磁盘**（ENOSPC，工具链一度全部无法执行）。清理后 `integrity: ok`、`tiedi` 日志 0 条 ENOSPC、数据无损。**今后不得把整仓解包到服务器**；对照基线只取 `backend/src tests` 或直接 `git diff`，资源用软链借 `/opt/tiedi/resources`。
+
+# 2026-10-20 能代鱼雷发射器改为中线（双舷可发射）
+
+- 需求：能代（`IBS-U-IJN-NOSHIRO`）的两具鱼雷发射器原本被拆成左/右各一具（`TT-P1` 仅 port、`TT-S1` 仅 starboard），应改为**中轴线双舷**发射器。
+- 改动：① `resources/derived/structured/ships/import-bundle.yaml` 中能代改为 `TT-M1`/`TT-M2`，均 `position: midships` + `arcs: [port, starboard]`（各 2 管）；② 重跑 `import_ship_bundle.py` 更新导入记录（102 条、`integrity: ok`）；③ 直接修正正在进行对局 `8f21772e` 的状态（该局 `GameState` 冻结了旧定义），改前备份 `state-pre-noshiro-centerline-*.sqlite3`；④ 以 `tiedi` 身份执行，避免 WAL 属主问题。
+- 验证：库内原始 JSON、服务加载后、玩家端候选三处均为 `TT-M1/TT-M2 · midships · [port, starboard] · 载 2`，聚合 ammo=4；新增测试 `test_leyte_light_cruiser_torpedo_launchers_are_centerline`；`pytest tests/test_ship_records.py` 全通过。

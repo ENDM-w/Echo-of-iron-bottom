@@ -156,8 +156,7 @@ def test_every_mount_and_launcher_has_a_legal_source_arc() -> None:
 def test_workbook_centerline_torpedo_launchers_are_not_split_by_firing_side() -> None:
     bundle = yaml.safe_load(
         (STRUCTURED / "ships" / "import-bundle.yaml").read_text(encoding="utf-8")
-    )
-    records = bundle["records"]
+    )    records = bundle["records"]
     both_sides = [FiringArc.PORT.value, FiringArc.STARBOARD.value]
     one_centerline_pair = {
         ship_id: [
@@ -249,3 +248,16 @@ def test_engine_initial_state_uses_individual_records_not_generic_templates() ->
     scenario_three = IronBottomEngine().reset("IBS-S-03", seed=11)
     assert scenario_three.ships["IBS-U-KM-KARL-GALSTER"].max_hull == 6
     assert scenario_three.ships["IBS-U-RN-JAVELIN"].max_hull == 5
+
+
+def test_leyte_light_cruiser_torpedo_launchers_are_centerline() -> None:
+    """能代（阿贺野级）两具鱼雷发射器在中轴线上、左右舷都能发射（2026-10-20 用户裁决）。"""
+    bundle = yaml.safe_load(
+        (STRUCTURED / "ships" / "import-bundle.yaml").read_text(encoding="utf-8")
+    )
+    launchers = bundle["records"]["IBS-U-IJN-NOSHIRO"]["torpedo_launchers"]
+    both_sides = [FiringArc.PORT.value, FiringArc.STARBOARD.value]
+    assert [(item["id"], item["position"], item["arcs"], item["torpedoes"]) for item in launchers] == [
+        ("TT-M1", "midships", both_sides, 2),
+        ("TT-M2", "midships", both_sides, 2),
+    ]

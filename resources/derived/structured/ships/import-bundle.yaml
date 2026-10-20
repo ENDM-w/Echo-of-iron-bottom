@@ -11048,15 +11048,17 @@ records:
       vp: 8
       source_page: 3
       torpedo_launchers:
-      - id: TT-P1
-        position: port
+      - id: TT-M1
+        position: midships
         arcs:
         - port
+        - starboard
         torpedoes: 2
         reloads: 0
-      - id: TT-S1
-        position: starboard
+      - id: TT-M2
+        position: midships
         arcs:
+        - port
         - starboard
         torpedoes: 2
         reloads: 0
