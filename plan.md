@@ -1,3 +1,7 @@
+# 当前问题：移动结算后队员航向对齐航迹（2026-10-20）
+
+状态：完成。`after_movement` 在重建 `guide_trail` 后，把 attached 队员的航向改为"当前航迹格指向下一格"的方向，避免下回合展开报 `cannot follow guide trail before advancing` 导致队员拿不到移动计划/鱼雷 MF 预览为空。新增测试 `test_after_movement_aligns_follower_headings_with_guide_trail`。
+
 # 当前问题：没有编队机动草稿时鱼雷发射 MF 预览为空（2026-10-20）
 
 状态：完成。`torpedo_candidates_for_movement_draft` 在 `formation_commands` 为空时，用编队当前状态补一条原地机动（leader_plan="0"），避免 `缺少已封存的移动计划` 导致发射 MF 下拉为空。以真实席位账号验证：矢矧席位 MF 0、纳普席位 MF 0-2 可选。

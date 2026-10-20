@@ -706,3 +706,19 @@ def test_straggler_advances_toward_tail_when_tail_is_out_of_reach() -> None:
     order = _straggler_order(engine, state, formation, straggler, tail)
     assert order.speed > 0, order
     assert order.plan != "0"
+
+
+def test_after_movement_aligns_follower_headings_with_guide_trail() -> None:
+    """移动结算后把队员航向对齐航迹，避免下回合 "cannot follow guide trail before advancing"。"""
+    engine, game_id = realistic_game()
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if item.side == Side.AXIS)
+    follower = state.ships[formation.ship_ids[1]]
+    follower.heading = (follower.heading % 6) + 1
+    after_movement(engine, state)
+    trail = state.formations[formation.id].guide_trail
+    indices = [index for index, position in enumerate(trail) if position == follower.position]
+    assert indices, "队员应停在航迹上"
+    index = max(indices)
+    if index + 1 < len(trail):
+        assert follower.heading == engine._bearing_between(trail[index], trail[index + 1])

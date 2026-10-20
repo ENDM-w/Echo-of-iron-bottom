@@ -964,6 +964,23 @@ def after_movement(engine: "IronBottomEngine", state: GameState) -> None:
             formation.heading = leader.heading
             formation.speed = leader.current_speed
             formation.guide_trail = rebuild_guide_trail(state, formation)
+            # 2026-10-20 裁判反馈：移动结算后队员航向常常偏离航迹，下回合展开时
+            # 会报 "cannot follow guide trail before advancing"（首条指令必须是 advance），
+            # 导致队员拿不到移动计划、鱼雷发射 MF 预览为空。这里按航迹方向把队员航向摆正。
+            trail = formation.guide_trail
+            for ship_id in formation.ship_ids:
+                ship = state.ships.get(ship_id)
+                if not ship or not ship.position or ship.sunk or ship.command_status != "attached":
+                    continue
+                indices = [index for index, position in enumerate(trail) if position == ship.position]
+                if not indices:
+                    continue
+                index = max(indices)
+                if index + 1 >= len(trail):
+                    continue
+                heading = engine._bearing_between(trail[index], trail[index + 1])
+                if heading:
+                    ship.heading = heading
             if formation.disruption_turn == state.turn:
                 formation.status = "formed"
                 formation.disruption_turn = None
