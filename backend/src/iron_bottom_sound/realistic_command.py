@@ -625,8 +625,17 @@ def expand_movement_orders(
         emergency_stop = bool(decision and decision.emergency_stop and leader_cost == 0)
         if turn_mode == "synchronized" and incompatible and not emergency_stop:
             if decision is None:
-                errors.append(f"{formation.id}: speed {leader_cost} is outside member limits; reduce or detach")
-                continue
+                # 2026-10-20 裁判裁决：编队不降速（没有 reduce 决策）时，
+                # 跟不上计划的队员自动掉队，由下面的掉队逻辑生成追队尾航路，
+                # 不再让整条编队的展开失败（那样全队都拿不到移动计划/鱼雷 MF）。
+                for lagging in incompatible:
+                    if lagging.command_status == "attached":
+                        lagging.command_status = "straggling"
+                dropped = {ship.id for ship in incompatible}
+                members = [ship for ship in members if ship.id not in dropped]
+                incompatible = []
+                if not members:
+                    continue
             if decision.action == "reduce":
                 if decision.speed is None:
                     errors.append(f"{formation.id}: reduce decision requires speed")
