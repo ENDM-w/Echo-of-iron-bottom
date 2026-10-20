@@ -200,10 +200,23 @@ def _shortest_hex_path(
     raise ValueError(f"No map path {start.label} -> {end.label}")
 
 
-def _straggler_order(engine: "IronBottomEngine", state: GameState, formation: FormationState, ship: ShipState, tail: ShipState | None) -> MovementOrder:
+def _straggler_order(
+    engine: "IronBottomEngine", state: GameState, formation: FormationState,
+    ship: ShipState, tail: ShipState | None, target_hex: HexCoord | None = None,
+) -> MovementOrder:
     if not ship.position:
         return MovementOrder(ship_id=ship.id, plan="0")
-    if tail and tail.position:
+    if target_hex is not None:
+        # 队尾当回合的计划终点：掉队舰追"队尾打完这一回合之后"的位置，
+        # 而不是它本回合的起点，否则会朝队伍后方跑。
+        target = target_hex
+        heading = tail.heading if tail else formation.heading
+        for _ in range(formation.spacing):
+            try:
+                target = target.neighbor(_opposite(heading), columns=state.map_columns, rows=state.map_rows)
+            except ValueError:
+                break
+    elif tail and tail.position:
         target = tail.position
         for _ in range(formation.spacing):
             try:
@@ -717,10 +730,23 @@ def expand_movement_orders(
             previous_ship_speed = follower_cost
             previous_final_index = final_index
         attached_tail = members[-1]
+        # 队尾这一回合会走到哪：掉队舰要追的是队尾的计划终点，而不是它的起点。
+        tail_target: HexCoord | None = None
+        tail_order = next((order for order in generated if order.ship_id == attached_tail.id), None)
+        if tail_order is not None and attached_tail.position:
+            try:
+                tail_trajectory, _tail_heading = engine.movement_trajectory(
+                    attached_tail, tail_order.plan,
+                    columns=state.map_columns, rows=state.map_rows,
+                )
+            except ValueError:
+                tail_trajectory = []
+            if tail_trajectory:
+                tail_target = tail_trajectory[-1][0]
         for ship_id in formation.ship_ids:
             ship = state.ships[ship_id]
             if ship.position and not ship.sunk and ship.command_status == "straggling":
-                generated.append(_straggler_order(engine, state, formation, ship, attached_tail))
+                generated.append(_straggler_order(engine, state, formation, ship, attached_tail, target_hex=tail_target))
     for ship in state.ships.values():
         if ship.side == batch.side and ship.position and not ship.sunk and ship.command_status == "retreating":
             generated.append(_withdrawal_order(engine, state, ship))

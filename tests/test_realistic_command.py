@@ -239,7 +239,9 @@ def test_straggler_gets_automatic_legal_chase_order_and_rejoins_at_tail() -> Non
     ), _prepared=True).valid
 
     tail = [state.ships[item] for item in formation.ship_ids if item != straggler.id and state.ships[item].command_status == "attached"][-1]
-    target = tail.position.neighbor(((tail.heading + 2) % 6) + 1)
+    target = tail.position
+    for _ in range(formation.spacing):
+        target = target.neighbor(((tail.heading + 2) % 6) + 1)
     straggler.position = target
     before = len(state.events)
     after_movement(engine, state)

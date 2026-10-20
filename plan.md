@@ -1,3 +1,7 @@
+# 当前问题：掉队舰追队尾应追"队尾的计划终点"（2026-10-20）
+
+状态：完成。`_straggler_order` 新增 `target_hex` 参数，展开时传入队尾当回合轨迹的终点，避免掉队舰朝队伍后方跑（此前用队尾起点，出现"阿拉巴马在 OO38、掉队舰却跑去 SS43"）。修正 `test_straggler_gets_automatic_legal_chase_order_and_rejoins_at_tail` 中按 spacing 计算队尾位置的偏移。
+
 # 当前问题：掉队舰不继承旗舰鱼雷意图（2026-10-20）
 
 状态：完成。`_inherit_formation_actions` 在鱼雷继承时跳过 `command_status != "attached"` 的舰，避免 `detached ships may not receive torpedo orders` 卡住批准；快照上 dry-run `approve` 通过。
