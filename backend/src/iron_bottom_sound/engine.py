@@ -3899,7 +3899,8 @@ class IronBottomEngine:
                         kind="searchlight",
                         ship_id=ship.id,
                         target_ship_id=order.target_id,
-                        expires_turn=state.turn,
+                        # 2026-10-20 裁判裁决：探照灯标记多保留一个回合。
+                        expires_turn=state.turn + 1,
                     )
                 )
                 self._event(

@@ -1,3 +1,7 @@
+# 当前问题：探照灯标记多保留一个回合（2026-10-20）
+
+状态：完成。探照灯 MarkerState 的 `expires_turn` 由 `state.turn` 改为 `state.turn + 1`，标记在本回合结束后仍保留一回合（回合切换时按 `expires_turn > turn` 清理）。仅改 searchlight 标记，烟幕/星弹不变。
+
 # 当前问题：120° 转向可在中间 60° 释放鱼雷（2026-10-20）
 
 状态：完成。`_torpedo_launch_points` 对一次转 120°（delta=2/4）额外生成 `mid_turn` 释放点（转向格 + 中间 60° 航向）；`TorpedoOrder.launch_timing` 增加 `mid_turn`；前端增加"转向中 60°"标签。实测 `1PP3` 在 MF2 得到 before_turn(3)/mid_turn(2)/after_turn(1)。
