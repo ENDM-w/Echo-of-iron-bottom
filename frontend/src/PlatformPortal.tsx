@@ -1230,7 +1230,19 @@ export function PlatformPortal({ onClose }: Props) {
     try {
       const batch = JSON.parse(orderText) as JsonRecord;
       movement = Array.isArray(batch.movement) ? batch.movement : [];
-      formationCommands = Array.isArray(batch.formation_commands) ? batch.formation_commands : [];
+      const explicitCommands = Array.isArray(batch.formation_commands) ? batch.formation_commands : [];
+      // 2026-10-20：玩家常用「编队移动」草稿写航路，此时 formation_commands 为空，
+      // 鱼雷预览就拿不到移动计划、MF 下拉为空。这里回退到草稿里的 formation_movement 行。
+      const movementRows = Array.isArray(batch.formation_movement) ? (batch.formation_movement as JsonRecord[]) : [];
+      formationCommands = explicitCommands.length > 0
+        ? explicitCommands
+        : movementRows.map((row) => ({
+            formation_id: String(row.formation_id ?? ""),
+            leader_plan: String(row.leader_plan ?? "0"),
+            spacing: row.spacing ?? 1,
+            turn_mode: row.turn_mode ?? "column_follow",
+            reduce_speed: (row.speed_decision as JsonRecord | undefined)?.speed,
+          }));
     } catch {
       setTorpedoDraftCandidates([]);
       setTorpedoPreviewError("当前订单草稿不是合法 JSON，无法预览鱼雷发射 MF；请先在高级 JSON 里修复。");

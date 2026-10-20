@@ -1,3 +1,7 @@
+# 当前问题：鱼雷预览读不到草稿里的编队航路（2026-10-20）
+
+状态：完成。前端鱼雷预览只读 `formation_commands`，玩家用「编队移动」草稿写航路时该字段为空，预览拿不到移动计划、发射 MF 下拉为空。现在 `formation_commands` 为空时改为从草稿的 `formation_movement` 行推导编队指令；已重建 `frontend/dist`。
+
 # 当前问题：取消队员"速度差 ≤2 MF"限制（2026-10-20）
 
 状态：完成。`expand_movement_orders` 不再把队员速度限制在"前舰 ±2 MF"，队员只受自身合法速度范围约束；同时删除 `differs from preceding ship by more than 2 MF` 报错。ERMA 回归种子失败数与改动前一致（14，均为既有失败）。
