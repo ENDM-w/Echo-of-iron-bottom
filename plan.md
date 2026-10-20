@@ -1,3 +1,7 @@
+# 当前问题：掉队舰够不到队尾时应继续前进（2026-10-20）
+
+状态：完成。`_straggler_order` 在队尾一回合内不可达时，改为沿与队尾的直线按最大合法速度前进（原来回退到最小速度，等于原地停船）。新增测试 `test_straggler_advances_toward_tail_when_tail_is_out_of_reach`；`tests/test_realistic_command.py` 中 ERMA/S01 回归种子为既有失败（stash 后同样失败）。
+
 # 当前问题：探照灯射程改到移动后结算时判定（2026-10-19）
 
 状态：进行中。

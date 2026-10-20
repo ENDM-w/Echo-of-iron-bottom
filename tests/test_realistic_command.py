@@ -18,6 +18,7 @@ from iron_bottom_sound.realistic_command import (
     MAX_FORMATIONS_PER_SIDE,
     RealisticCommander,
     _best_formation_cohort,
+    _straggler_order,
     _withdrawal_order,
     after_movement,
     default_setup_orders,
@@ -689,3 +690,17 @@ def test_realistic_s01_reinforcement_formations_remain_commanded(
         and event.payload.get("attacker_side") == event.payload.get("target_side")
         for event in state.events
     )
+
+
+def test_straggler_advances_toward_tail_when_tail_is_out_of_reach() -> None:
+    """掉队舰一回合够不到队尾时，也应按合法速度朝队尾前进，而不是原地停船。"""
+    engine, game_id = realistic_game()
+    state = engine.get(game_id)
+    formation = next(item for item in state.formations.values() if len(item.ship_ids) >= 3)
+    straggler = state.ships[formation.ship_ids[1]]
+    tail = state.ships[formation.ship_ids[-1]]
+    tail.position = HexCoord.from_label("C1")
+    tail.heading = 1
+    order = _straggler_order(engine, state, formation, straggler, tail)
+    assert order.speed > 0, order
+    assert order.plan != "0"

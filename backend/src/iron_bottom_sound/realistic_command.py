@@ -247,6 +247,17 @@ def _straggler_order(engine: "IronBottomEngine", state: GameState, formation: Fo
                 plan = "1" + (f"{token[side]}1" * max(0, speed - 1))
                 if engine.movement_preview(state, ship, plan=plan)["commitable"]:
                     return MovementOrder(ship_id=ship.id, plan=plan, speed=speed)
+    # 队尾一回合内够不着时不要原地不动：沿与队尾的直线尽可能前进，
+    # 让掉队舰逐回合向队尾靠拢。
+    if ship.position and tail and tail.position and ship.position != tail.position:
+        line = engine._hex_line(ship.position, tail.position)
+        for step in range(min(maximum, len(line) - 1), 0, -1):
+            cell = line[step]
+            if cell in occupied or engine._terrain_impassable(state, cell):
+                continue
+            route = engine.movement_path(state, ship, cell)
+            if route["valid"]:
+                return MovementOrder(ship_id=ship.id, plan=route["plan"], speed=route["cost"])
     speed = max(0, min(maximum, minimum))
     return MovementOrder(ship_id=ship.id, plan=str(speed) if speed else "0", speed=speed)
 
