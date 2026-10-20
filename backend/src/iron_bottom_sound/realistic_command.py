@@ -636,7 +636,7 @@ def expand_movement_orders(
                 incompatible = []
                 if not members:
                     continue
-            if decision.action == "reduce":
+            elif decision.action == "reduce":
                 if decision.speed is None:
                     errors.append(f"{formation.id}: reduce decision requires speed")
                     continue
