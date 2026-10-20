@@ -331,6 +331,9 @@ class PlatformService:
 
     def _inherit_formation_actions(self, state: GameState, batch: OrderBatch) -> OrderBatch:
         """Copy flagship combat/utility intent to followers with explicit hull overrides winning."""
+        # 2026-10-20 裁判裁决：只有订单里明确列出的舰才开火 / 放雷 / 照明，
+        # 旗舰不再把鱼雷、炮击、探照灯、发烟、照明意图下传给队员。
+        return batch
         if not state.options.realistic_command or state.phase == Phase.FORMATION_SETUP:
             return batch
         expanded = batch.model_copy(deep=True)

@@ -227,12 +227,16 @@ def test_judge_can_override_flagship_setup_and_player_preview_uses_formation_rou
     follower_id = next(ship_id for ship_id in formation.ship_ids if ship_id != formation.flagship_id)
     leader_order = GunneryOrder(ship_id=formation.flagship_id, primary_target="primary-contact")
     inherited = service._inherit_formation_actions(state, OrderBatch(side=flagship[0]["side"], gunnery=[leader_order]))
-    assert next(item for item in inherited.gunnery if item.ship_id == follower_id).primary_target == "primary-contact"
+    # 2026-10-20 裁判裁决：旗舰不再把炮击意图下传给队员。
+    assert {item.ship_id for item in inherited.gunnery} == {formation.flagship_id}
     override_order = GunneryOrder(ship_id=follower_id, primary_target="independent-contact")
     overridden = service._inherit_formation_actions(
         state, OrderBatch(side=flagship[0]["side"], gunnery=[leader_order, override_order]),
     )
-    assert next(item for item in overridden.gunnery if item.ship_id == follower_id).primary_target == "independent-contact"
+    assert {item.ship_id: item.primary_target for item in overridden.gunnery} == {
+        formation.flagship_id: "primary-contact",
+        follower_id: "independent-contact",
+    }
 
 
 def test_formation_light_orders_keep_the_selected_emitter_and_explicit_member_override(online_formation):
@@ -254,8 +258,9 @@ def test_formation_light_orders_keep_the_selected_emitter_and_explicit_member_ov
         illumination=[IlluminationOrder(ship_id=leader_id, target_hex=HexCoord(q=4, r=7))],
         searchlights=[SearchlightOrder(ship_id=leader_id, target_id="contact-a")],
     ))
-    assert {item.ship_id for item in inherited.illumination} == {leader_id, follower_id}
-    assert {item.ship_id for item in inherited.searchlights} == {leader_id, follower_id}
+    # 2026-10-20 裁判裁决：照明/探照灯不再下传给队员。
+    assert {item.ship_id for item in inherited.illumination} == {leader_id}
+    assert {item.ship_id for item in inherited.searchlights} == {leader_id}
 
     explicit = service._inherit_formation_actions(state, OrderBatch(
         side=Side.AXIS,
