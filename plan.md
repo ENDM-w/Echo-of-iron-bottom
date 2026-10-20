@@ -1,3 +1,7 @@
+# 当前问题：逐舰模式下仍禁止编队舰单独下移动单（2026-10-20）
+
+状态：完成。`_assert_order_ownership` 中"编队舰只移动由旗舰航路统一生成"的限制改为仅在 `realistic_command=True` 时生效；逐舰模式允许每舰单独提交移动订单。
+
 # 当前问题：鱼雷发射 MF 下拉永远显示 MF0（2026-10-20）
 
 状态：完成。玩家鱼雷面板 `<select>` 的 `value` 用的是 `mf` 数字，而 `<option value>` 用的是 `mf:timing` 键，二者永不匹配，浏览器于是永远显示第一个选项（MF0）。改为 `value={launchPositionKey(selectedLaunchPosition)}` 后与选项一致，转向前/转向后/移动后三个时点均可正确显示与选择。
