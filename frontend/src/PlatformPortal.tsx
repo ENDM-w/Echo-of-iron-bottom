@@ -2826,9 +2826,8 @@ export function PlatformPortal({ onClose }: Props) {
                 <PlatformFormationPanel formations={playerFormations} commands={formationDrafts}
                   ships={ownShips} phase={view.phase} turn={view.turn} disabled={busy || view.stage === "awaiting_publication"}
                   onWrite={writeFormationCommand} />
-                {(view.phase === "movement_planning" || view.phase === "reinforcement")
-                  && !playerFormations.some((formation) => formation.own_ship_ids?.includes(selectedActionShip?.id ?? ""))
-                  && !formationCommandedShipIds.has(selectedActionShip?.id ?? "") && (
+                {/* 2026-10-20：编队模式下移动也由玩家逐舰填写，因此不再因为"属于编队"而隐藏逐舰移动卡。 */}
+                {(view.phase === "movement_planning" || view.phase === "reinforcement") && (
                   <section className="player-action-builder">
                     <div className="action-card">
                       <h3>{ownShips.length === 1 ? "本舰移动计划" : "舰船移动计划"}</h3>
