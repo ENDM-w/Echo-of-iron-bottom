@@ -156,7 +156,8 @@ def test_every_mount_and_launcher_has_a_legal_source_arc() -> None:
 def test_workbook_centerline_torpedo_launchers_are_not_split_by_firing_side() -> None:
     bundle = yaml.safe_load(
         (STRUCTURED / "ships" / "import-bundle.yaml").read_text(encoding="utf-8")
-    )    records = bundle["records"]
+    )
+    records = bundle["records"]
     both_sides = [FiringArc.PORT.value, FiringArc.STARBOARD.value]
     one_centerline_pair = {
         ship_id: [
