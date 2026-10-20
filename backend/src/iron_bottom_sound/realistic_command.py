@@ -671,8 +671,10 @@ def expand_movement_orders(
                 generated.append(chase.model_copy(update={"formation_straggler": True}))
                 continue
             minimum, maximum = engine._legal_speed_range(ship, state.turn)
-            response_minimum = max(minimum, previous_ship_speed - 2)
-            response_maximum = min(maximum, previous_ship_speed + 2)
+            # 2026-10-20 裁判裁决：取消"队员与前舰速度差 ≤2 MF"的限制，
+            # 队员只受自身合法速度范围约束（跟不上就自然拉开距离/掉队）。
+            response_minimum = minimum
+            response_maximum = maximum
             candidates: list[tuple[tuple[int, int], int, int, str]] = []
             blocked_reason: str | None = None
             for final_index in range(start_index, maximum_final_index + 1):
@@ -721,11 +723,6 @@ def expand_movement_orders(
                     )
                 continue
             _score, final_index, follower_cost, follower_plan = min(candidates, key=lambda item: item[0])
-            if abs(follower_cost - previous_ship_speed) > 2:
-                errors.append(
-                    f"{formation.id}: {ship.id} ({ship.name}) speed {follower_cost} differs from preceding ship by more than 2 MF"
-                )
-                continue
             generated.append(MovementOrder(ship_id=ship.id, plan=follower_plan, speed=follower_cost, formation_emergency_stop=emergency_stop and follower_cost == 0))
             previous_ship_speed = follower_cost
             previous_final_index = final_index
