@@ -256,7 +256,7 @@ def test_leyte_light_cruiser_torpedo_launchers_are_centerline() -> None:
     bundle = yaml.safe_load(
         (STRUCTURED / "ships" / "import-bundle.yaml").read_text(encoding="utf-8")
     )
-    launchers = bundle["records"]["IBS-U-IJN-NOSHIRO"]["torpedo_launchers"]
+    launchers = bundle["records"]["IBS-U-IJN-NOSHIRO"]["record"]["torpedo_launchers"]
     both_sides = [FiringArc.PORT.value, FiringArc.STARBOARD.value]
     assert [(item["id"], item["position"], item["arcs"], item["torpedoes"]) for item in launchers] == [
         ("TT-M1", "midships", both_sides, 2),
