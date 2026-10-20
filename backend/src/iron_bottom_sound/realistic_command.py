@@ -745,12 +745,11 @@ def expand_movement_orders(
                         final_index, follower_cost, follower_plan,
                     ))
             if not candidates:
-                if blocked_reason:
-                    errors.append(f"{formation.id}: {ship.id} {blocked_reason}")
-                else:
-                    errors.append(
-                        f"{formation.id}: {ship.id} ({ship.name}) follower speed cannot respond within ±2 MF of preceding ship speed"
-                    )
+                # 2026-10-20 裁判裁决：跟不上的队员不再让整条编队报错（也不再靠改写舰首朝向
+                # 来"修好"航迹），直接转为掉队追击，保持真实航向。
+                fallback_tail = next((item for item in reversed(members) if item.id != ship.id), None)
+                chase = _straggler_order(engine, state, formation, ship, fallback_tail)
+                generated.append(chase.model_copy(update={"formation_straggler": True}))
                 continue
             _score, final_index, follower_cost, follower_plan = min(candidates, key=lambda item: item[0])
             generated.append(MovementOrder(ship_id=ship.id, plan=follower_plan, speed=follower_cost, formation_emergency_stop=emergency_stop and follower_cost == 0))
@@ -1012,24 +1011,8 @@ def after_movement(engine: "IronBottomEngine", state: GameState) -> None:
             # 2026-10-20 裁判反馈：移动结算后队员航向常常偏离航迹，下回合展开时
             # 会报 "cannot follow guide trail before advancing"（首条指令必须是 advance），
             # 导致队员拿不到移动计划、鱼雷发射 MF 预览为空。这里按航迹方向把队员航向摆正。
-            # 只有鱼贯（column_follow）编队才按航迹方向对齐队员航向；
-            # 同步（synchronized）编队要全队保持同一航向，不能按局部航迹改。
-            trail = formation.guide_trail if formation.turn_mode == "column_follow" else []
-            for ship_id in formation.ship_ids:
-                if not trail:
-                    break
-                ship = state.ships.get(ship_id)
-                if not ship or not ship.position or ship.sunk or ship.command_status != "attached":
-                    continue
-                indices = [index for index, position in enumerate(trail) if position == ship.position]
-                if not indices:
-                    continue
-                index = max(indices)
-                if index + 1 >= len(trail):
-                    continue
-                heading = engine._bearing_between(trail[index], trail[index + 1])
-                if heading:
-                    ship.heading = heading
+            # 2026-10-20 裁判裁决：移动结算后**不再改写舰首朝向**，保持真实航向
+            # （跟不上的队员改由掉队追击兜底，见 expand_movement_orders）。
             if formation.disruption_turn == state.turn:
                 formation.status = "formed"
                 formation.disruption_turn = None
