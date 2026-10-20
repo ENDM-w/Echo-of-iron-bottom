@@ -1787,7 +1787,9 @@ class IronBottomEngine:
             if not ship or not ship.torpedo or ship.torpedo.destroyed:
                 errors.append(f"{order.ship_id} cannot fire torpedoes")
                 continue
-            if state.options.realistic_command and ship.command_status != "attached":
+            # 2026-10-20 裁判裁决：掉队舰（straggling）仍在编队序列里，只是落在队尾后方，
+            # 允许接受鱼雷订单；真正脱队/撤退的舰仍然禁止。
+            if state.options.realistic_command and ship.command_status not in {"attached", "straggling"}:
                 errors.append(f"{order.ship_id}: detached ships may not receive torpedo orders")
                 continue
             if state.scenario_id == "IBS-S-01" and state.turn < 4 and batch.side == Side.AXIS:

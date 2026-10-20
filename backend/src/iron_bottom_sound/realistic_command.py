@@ -531,15 +531,22 @@ def expand_movement_orders(
     if independent_formation_orders:
         errors.append(f"Formation ships cannot receive independent movement orders: {sorted(independent_formation_orders)}")
         return prepared, errors, detach_ids
-    expected = {
-        formation.id for formation in owned_formations
-        if any(
+    # 2026-10-20：旗舰舰长失能的编队由引擎自动按原速直航，不接受玩家/裁判订单；
+    # 这类编队不能计入"必须提交编队机动"的覆盖要求，否则永远批不了。
+    def _commandable(formation) -> bool:
+        flagship = state.ships.get(formation.flagship_id)
+        if not flagship or not flagship.position or flagship.sunk:
+            return False
+        if flagship.command_status != "attached" or engine.captain_command_lost(state, flagship):
+            return False
+        return any(
             state.ships[item].position and not state.ships[item].sunk
             and state.ships[item].command_status == "attached"
             and not engine.captain_command_lost(state, state.ships[item])
             for item in formation.ship_ids
         )
-    }
+
+    expected = {formation.id for formation in owned_formations if _commandable(formation)}
     if set(orders) != expected:
         errors.append(f"Formation movement must cover active formations; missing={sorted(expected-set(orders))}, extra={sorted(set(orders)-expected)}")
         return prepared, errors, detach_ids
@@ -744,6 +751,20 @@ def expand_movement_orders(
             ship = state.ships[ship_id]
             if ship.position and not ship.sunk and ship.command_status == "straggling":
                 generated.append(_straggler_order(engine, state, formation, ship, attached_tail, target_hex=tail_target))
+    # 旗舰舰长失能的编队不接受订单，但它的队员仍需移动计划（否则批准时报
+    # "Movement plans must cover every active ship"）。按规则由引擎自动按原速直航。
+    for formation in owned_formations:
+        if formation.id in expected:
+            continue
+        for ship_id in formation.ship_ids:
+            ship = state.ships.get(ship_id)
+            if not ship or not ship.position or ship.sunk or ship.command_status != "attached":
+                continue
+            if any(order.ship_id == ship.id for order in generated):
+                continue
+            minimum, maximum = engine._legal_speed_range(ship, state.turn)
+            speed = max(minimum, min(ship.current_speed or 0, maximum))
+            generated.append(MovementOrder(ship_id=ship.id, plan=str(speed) if speed else "0", speed=speed))
     for ship in state.ships.values():
         if ship.side == batch.side and ship.position and not ship.sunk and ship.command_status == "retreating":
             generated.append(_withdrawal_order(engine, state, ship))
