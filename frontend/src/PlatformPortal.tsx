@@ -3127,7 +3127,7 @@ export function PlatformPortal({ onClose }: Props) {
                         <label>
                           发射 MF
                           <select
-                            value={selectedLaunchPosition?.mf ?? ""}
+                            value={selectedLaunchPosition ? launchPositionKey(selectedLaunchPosition) : ""}
                             disabled={launchPositions.length === 0}
                             onChange={(event) => setTorpedoLaunchAtMf(event.target.value)}
                           >
