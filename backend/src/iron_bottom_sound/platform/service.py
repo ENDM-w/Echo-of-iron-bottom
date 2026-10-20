@@ -1316,7 +1316,12 @@ class PlatformService:
                                                    if order.formation_id in relevant)
                 state.formations = relevant
                 movement, errors, _detach = expand_movement_orders(self.engine, state, movement)
-                if errors:
+                # 2026-10-20 修复：编队展开报错（典型是"某个跟随舰跟不上领舰航迹"）时，
+                # 以前会清空整条编队的航路，导致旗舰自己的航路也被一起丢掉、拿不到鱼雷发射 MF
+                # （玩家反馈"写了旗舰航路也没用"）。这里保留成功生成的航路：跟随舰失败只影响
+                # 它自己（该舰候选会带"缺少已封存的移动计划"），旗舰仍能正常投影发射点。
+                # 编队合法性仍由引擎在提交时完整校验，预览不做裁决。
+                if errors and not movement.movement:
                     movement.movement = []
                 movement_orders = movement.movement
         projected_orders = []
