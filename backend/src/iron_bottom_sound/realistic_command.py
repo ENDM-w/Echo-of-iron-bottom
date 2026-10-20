@@ -618,6 +618,9 @@ def expand_movement_orders(
             plan = str(min(forced_speed, engine._legal_speed_range(leader, state.turn)[1]))
         leader_cost = engine.movement_cost(plan, engine.movement_commands(MovementOrder(ship_id=leader.id, plan=plan)))
         turn_mode = order.turn_mode or formation.turn_mode
+        # 记下本回合实际使用的队形模式：移动结算后的航向对齐要据此判断
+        # （同步编队全队同向、鱼贯编队才按航迹对齐）。
+        formation.turn_mode = turn_mode
         incompatible = [ship for ship in members if not (engine._legal_speed_range(ship, state.turn)[0] <= leader_cost <= engine._legal_speed_range(ship, state.turn)[1])]
         emergency_stop = bool(decision and decision.emergency_stop and leader_cost == 0)
         if turn_mode == "synchronized" and incompatible and not emergency_stop:
