@@ -2453,6 +2453,17 @@ class PlatformService:
         self.repository.save_match(match)
         return match
 
+    def _inactive_seat_ids(self, match: MatchRecord, state: GameState) -> set[str]:
+        """没有可指挥舰船的席位：其所有受控舰都已沉没或不在场。"""
+        inactive: set[str] = set()
+        for seat in self.repository.seats(match.match_id):
+            ship_ids = [item for item in seat.controlled_ship_ids if item in state.ships]
+            if not ship_ids:
+                continue
+            if all(state.ships[item].sunk or state.ships[item].position is None for item in ship_ids):
+                inactive.add(seat.seat_id)
+        return inactive
+
     def approve(self, match_id: str, user: AuthenticatedUser, expected_version: int, note: str | None = None) -> ApprovalResult:
         match = self.repository.match(match_id)
         self._authorize_judge(match, user)
@@ -2460,7 +2471,10 @@ class PlatformService:
         if match.stage != MatchStage.READY_FOR_REVIEW:
             raise ValueError("The phase is not ready for referee approval")
         current_orders = self.repository.orders(match_id, match.phase)
-        if set(current_orders) < set(match.required_seat_ids):
+        # 2026-10-20：逐舰模式下，席位所属舰船全部沉没/离场的席位自动视为已交
+        # （无人需要为沉船下单），不再阻塞批准。
+        required_seats = set(match.required_seat_ids) - self._inactive_seat_ids(match, self._ensure_loaded(match.game_id))
+        if set(current_orders) < required_seats:
             raise ValueError("All required seats must submit before approval")
         state = self._ensure_loaded(match.game_id)
         assigned_ship_ids = {
