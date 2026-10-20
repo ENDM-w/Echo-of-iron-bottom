@@ -985,8 +985,12 @@ def after_movement(engine: "IronBottomEngine", state: GameState) -> None:
             # 2026-10-20 裁判反馈：移动结算后队员航向常常偏离航迹，下回合展开时
             # 会报 "cannot follow guide trail before advancing"（首条指令必须是 advance），
             # 导致队员拿不到移动计划、鱼雷发射 MF 预览为空。这里按航迹方向把队员航向摆正。
-            trail = formation.guide_trail
+            # 只有鱼贯（column_follow）编队才按航迹方向对齐队员航向；
+            # 同步（synchronized）编队要全队保持同一航向，不能按局部航迹改。
+            trail = formation.guide_trail if formation.turn_mode == "column_follow" else []
             for ship_id in formation.ship_ids:
+                if not trail:
+                    break
                 ship = state.ships.get(ship_id)
                 if not ship or not ship.position or ship.sunk or ship.command_status != "attached":
                     continue
