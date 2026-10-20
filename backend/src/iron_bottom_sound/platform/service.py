@@ -1374,7 +1374,8 @@ class PlatformService:
         for candidate in candidates:
             if candidate["ship_id"] in seat.controlled_ship_ids:
                 continue
-            candidate.pop("blocked_reason", None)
+            # 2026-10-20 裁判反馈：队员的 blocked_reason 被吞掉后，玩家只看到空白的 MF 下拉，
+            # 不知道是"跟不上领舰"。保留原因，前端会显示在鱼雷名册里。
             candidate["launchers"] = [
                 {key: value for key, value in launcher.items() if key != "loaded"}
                 for launcher in candidate["launchers"]
