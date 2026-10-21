@@ -628,6 +628,16 @@ class PlatformService:
     def _telegram_char_count(message: str) -> int:
         return sum(not character.isspace() for character in message)
 
+    def _telegram_recipient_ships(self, state, seat) -> list[str]:
+        """接收电报时用于计算"被命中次数"的舰船：编队旗舰优先，否则本席位舰船。"""
+        controlled = list(seat.controlled_ship_ids)
+        for formation in state.formations.values():
+            if getattr(formation, "status", None) == "dissolved":
+                continue
+            if formation.flagship_id in controlled:
+                return [formation.flagship_id]
+        return controlled
+
     def _resolve_due_telegrams(self, match_id: str, state) -> None:
         if state.phase == Phase.COMPLETE:
             return
@@ -642,8 +652,10 @@ class PlatformService:
                 if recipient.side != sender_side or recipient.seat_id == telegram["sender_seat_id"]:
                     continue
                 roll = secrets.randbelow(die_sides) + 1
+                # 2026-10-20 裁判裁决：命中减骰只看接收席位的"代表舰"（编队旗舰），
+                # 不再把整个编队所有舰的挨打都计入同一席位。
                 hit_count = self.engine.telegram_receiver_hit_count(
-                    state, recipient.controlled_ship_ids, int(telegram["sent_turn"])
+                    state, self._telegram_recipient_ships(state, recipient), int(telegram["sent_turn"])
                 )
                 adjusted_roll = self.engine.adjust_telegram_roll(roll, hit_count)
                 deliveries.append({
