@@ -2120,8 +2120,12 @@ class IronBottomEngine:
                 raise ValueError(f"Unknown movement command {command}")
             if command in turn_actions:
                 if index == len(commands) - 1:
-                    if command not in {"turn_port_60", "turn_starboard_60"}:
-                        raise ValueError("Only a free 60-degree turn is allowed after the final MF")
+                    # 2026-10-20 裁判裁决：允许以 120° 转向收尾（不限 60°）。
+                    if command not in {
+                        "turn_port_60", "turn_starboard_60",
+                        "turn_port_120", "turn_starboard_120",
+                    }:
+                        raise ValueError("Only a free turn is allowed after the final MF")
                 elif commands[index + 1] != "advance":
                     raise ValueError("A ship must advance one MF after turning")
 
