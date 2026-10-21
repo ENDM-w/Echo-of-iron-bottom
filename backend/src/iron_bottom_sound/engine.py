@@ -1881,15 +1881,12 @@ class IronBottomEngine:
 
     @staticmethod
     def _legal_speed_range(ship: ShipState, turn: int) -> tuple[int, int]:
-        maximum = min(ship.max_speed_for_turn(turn), ship.previous_speed + 2)
-        deceleration = 3 if ship.ship_type in {"BB", "BC"} else 5
-        minimum = max(0, ship.previous_speed - deceleration)
+        # 2026-10-20 裁判裁决：忽略上回合航速限制（加速/减速约束），
+        # 每舰直接按自身速度表上限机动，最低 0。
+        maximum = ship.max_speed_for_turn(turn)
+        minimum = 0
         if ship.forced_straight_turns and ship.forced_speed is not None:
             return ship.forced_speed, ship.forced_speed
-        if minimum > maximum:
-            # 损伤把最大航速压到减速下限之下：损伤覆盖减速规则，舰可以（被迫）停到受损航速。
-            # 否则合法速度区间为空 → 该舰不存在任何合法移动订单（对局死锁）。
-            minimum = 0
         return minimum, maximum
 
     def submit_orders(self, game_id: str, batch: OrderBatch) -> ValidationResult:
