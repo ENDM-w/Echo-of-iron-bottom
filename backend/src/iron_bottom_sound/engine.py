@@ -228,6 +228,23 @@ class RuleData:
         return 0 if value == "-" else float(value)
 
 
+# 规则书「移动阶段」表：一回合固定 9 个移动节，速度 N 的算子只在下列节
+# （1 起算）各走 1 格，用来模拟同时运动。慢速舰在靠后的节动，快速舰穿插行动，
+# 8 速在第 5 节停一次。2026-10-20 用户提供规则书原表并确认按此实现。
+MOVEMENT_IMPULSES: dict[int, tuple[int, ...]] = {
+    0: (),
+    1: (5,),
+    2: (3, 7),
+    3: (3, 5, 7),
+    4: (2, 4, 6, 8),
+    5: (1, 3, 5, 7, 9),
+    6: (1, 2, 4, 6, 8, 9),
+    7: (1, 2, 3, 5, 7, 8, 9),
+    8: (1, 2, 3, 4, 6, 7, 8, 9),
+}
+MOVEMENT_IMPULSE_COUNT = 9
+
+
 class IronBottomEngine:
     TELEGRAM_HIT_PENALTY = 8
     TELEGRAM_HIT_EVENT_TYPES = frozenset({"gunnery_result", "torpedo_result", "collision_result"})
@@ -3107,8 +3124,9 @@ class IronBottomEngine:
         state.torpedo_tracks.append(track)
         launcher.loaded -= order.count
         if launcher.loaded == 0 and launcher.reloads_remaining:
+            # 2026-10-20 裁判裁决：DD/APD 再装填 3 回合，CA/CL 2 回合（不再 +1）。
             reload_duration = 3 if ship.ship_type in {"DD", "APD"} else 2
-            launcher.reload_turns_remaining = reload_duration + 1
+            launcher.reload_turns_remaining = reload_duration
         if ship.torpedo:
             ship.torpedo.ammo = sum(item.loaded for item in ship.torpedo_launchers)
         self._event(
@@ -3323,13 +3341,13 @@ class IronBottomEngine:
             self.rules.torpedoes[state.ships[order.ship_id].torpedo_type or ""]["settings"][order.setting_index]["speed"][0]
             for order in torpedo_orders
         ]
-        maximum_impulses = max(
-            [len(path) for path in paths.values()]
-            + [len(path) for path in contact_paths.values()]
-            + list(track_allowance.values())
-            + planned_torpedo_allowance
-            + [0]
-        )
+        # 规则书「移动阶段」表：一回合 9 节，速度 N 只在表中固定几节各走 1 格。
+        maximum_impulses = MOVEMENT_IMPULSE_COUNT
+        # 每个 MF（含 120° 转向占用的那一节）落在哪个移动节上。
+        ship_step_at: dict[str, dict[int, int]] = {}
+        for ship_id, path in paths.items():
+            schedule = MOVEMENT_IMPULSES.get(min(len(path), 8), ())
+            ship_step_at[ship_id] = {impulse - 1: index for index, impulse in enumerate(schedule)}
         stopped: set[str] = set()
         # 同一机动回合内，同一对舰船最多只会发生一次碰撞（6.4）：
         # 已经撞出结果的一对后续再共格/互换格时不再重掷，避免一回合内反复掉血。
@@ -3392,10 +3410,11 @@ class IronBottomEngine:
                 ship = state.ships[ship_id]
                 if not ship.position:
                     continue  # 上一脉冲沉没：不再参与移动/碰撞结算
-                if ship_id in stopped or impulse >= len(path):
+                step_index = ship_step_at.get(ship_id, {}).get(impulse)
+                if ship_id in stopped or step_index is None or step_index >= len(path):
                     destinations[ship_id] = ship.position  # type: ignore[assignment]
                 else:
-                    destinations[ship_id] = path[impulse][0]
+                    destinations[ship_id] = path[step_index][0]
             for ship_id, destination in list(destinations.items()):
                 if ship_id not in stopped and self._terrain_impassable(state, destination):
                     destinations[ship_id] = state.ships[ship_id].position  # type: ignore[assignment]
@@ -3492,11 +3511,16 @@ class IronBottomEngine:
                 if not track.contact_ship_ids
             }
             for track in list(state.torpedo_tracks):
+                allowance = track_allowance.get(track.id, 0)
+                # 鱼雷与舰船共用同一张「移动阶段」表：本回合允许速度决定它在该回合
+                # 哪几个移动节各走 1 格（2026-10-20 用户裁决「鱼雷也按这个」）。
+                scheduled = (impulse + 1) in MOVEMENT_IMPULSES.get(min(allowance, 8), ())
                 if (
                     track.id in launched_this_impulse
                     or track.contact_ship_ids
                     or track.range_remaining == 0
-                    or moved_tracks.get(track.id, 0) >= track_allowance.get(track.id, 0)
+                    or not scheduled
+                    or moved_tracks.get(track.id, 0) >= allowance
                 ):
                     continue
                 try:
