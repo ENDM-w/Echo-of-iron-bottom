@@ -810,6 +810,15 @@ export function PlatformPortal({ onClose }: Props) {
       }
     });
   };
+  // 2026-10-20：载入对局或切换席位后自动拉取收件箱，否则玩家必须先点"刷新"才看得到电报。
+  useEffect(() => {
+    if (!session || session.is_referee || !summary || !selectedSeatId) return;
+    void run(async () => {
+      const inbox = await platformTelegramInbox(session.token, summary.match.match_id, selectedSeatId);
+      setTelegramInbox(inbox);
+      setTelegramDraft(inbox.sent_message ?? "");
+    });
+  }, [selectedSeatId, summary?.match.match_id, summary?.match.version]);
   const submitTelegram = () => {
     if (!session || !summary || !selectedSeatId) return;
     void run(async () => {
