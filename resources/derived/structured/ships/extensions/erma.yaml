@@ -91,9 +91,9 @@ families:
       - {id: S-S2, kind: secondary, position: starboard, firepower: 2, caliber: 3.9, arcs: [starboard]}
     torpedo_launchers:
       - {id: TT-P1, position: port, arcs: [port], torpedoes: 2, reloads: 2}
-      - {id: TT-P2, position: port, arcs: [port], torpedoes: 1, reloads: 1}
+      - {id: TT-P2, position: port, arcs: [port], torpedoes: 2, reloads: 2}
       - {id: TT-S1, position: starboard, arcs: [starboard], torpedoes: 2, reloads: 2}
-      - {id: TT-S2, position: starboard, arcs: [starboard], torpedoes: 1, reloads: 1}
+      - {id: TT-S2, position: starboard, arcs: [starboard], torpedoes: 2, reloads: 2}
     torpedo_type: jp-24-type93
     armour: {primary: 1, secondary: 0, belt: 4, bridge: 4}
     radar: true
@@ -105,10 +105,10 @@ families:
     guns: *ibuki_guns
     torpedo_launchers:
       - {id: TT-P1, position: port, arcs: [port], torpedoes: 3, reloads: 3}
-      - {id: TT-P2, position: port, arcs: [port], torpedoes: 1, reloads: 1}
+      - {id: TT-P2, position: port, arcs: [port], torpedoes: 2, reloads: 2}
       - {id: TT-C, position: midships, arcs: [port, starboard], torpedoes: 3, reloads: 3}
       - {id: TT-S1, position: starboard, arcs: [starboard], torpedoes: 3, reloads: 3}
-      - {id: TT-S2, position: starboard, arcs: [starboard], torpedoes: 1, reloads: 1}
+      - {id: TT-S2, position: starboard, arcs: [starboard], torpedoes: 2, reloads: 2}
     torpedo_type: jp-24-type93
     armour: {primary: 1, secondary: 0, belt: 4, bridge: 4}
     radar: true
@@ -125,8 +125,8 @@ families:
       - {id: S-P, kind: secondary, position: port, firepower: 2, caliber: 3, arcs: [port]}
       - {id: S-S, kind: secondary, position: starboard, firepower: 2, caliber: 3, arcs: [starboard]}
     torpedo_launchers:
-      - {id: TT-P, position: port, arcs: [port], torpedoes: 2, reloads: 2}
-      - {id: TT-S, position: starboard, arcs: [starboard], torpedoes: 2, reloads: 2}
+      - {id: TT-C1, position: midships, arcs: [port, starboard], torpedoes: 2, reloads: 1}
+      - {id: TT-C2, position: midships, arcs: [port, starboard], torpedoes: 2, reloads: 1}
     torpedo_type: jp-24-type93
     armour: {primary: 1, secondary: 0, belt: 2, bridge: 2}
     radar: true
@@ -142,7 +142,7 @@ families:
     torpedo_launchers:
       - {id: TT1, position: midships, arcs: [port, starboard], torpedoes: 3, reloads: 0}
       - {id: TT2, position: midships, arcs: [port, starboard], torpedoes: 3, reloads: 0}
-      - {id: TT3, position: midships, arcs: [port, starboard], torpedoes: 3, reloads: 0}
+      - {id: TT3, position: midships, arcs: [port, starboard], torpedoes: 2, reloads: 0}
     torpedo_type: jp-24-type93
     radar: true
   erma-ijn-yugumo-dd:
