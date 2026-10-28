@@ -1,0 +1,1646 @@
+{
+ "generated_from_match": "8f21772e-58e1-4728-9c82-4cc17912dfc4",
+ "turn": 24,
+ "ships": [
+  {
+   "name": "华盛顿-1944",
+   "ship_type": "BB",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "南达科他-1944",
+   "ship_type": "BB",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "新泽西",
+   "ship_type": "BB",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "衣阿华",
+   "ship_type": "BB",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "阿拉巴马",
+   "ship_type": "BB",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "马萨诸塞",
+   "ship_type": "BB",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "威奇塔",
+   "ship_type": "CA",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "新奥尔良-1944",
+   "ship_type": "CA",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "圣菲",
+   "ship_type": "CL",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "文森斯-1944",
+   "ship_type": "CL",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "比洛克西",
+   "ship_type": "CL",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "莫比尔",
+   "ship_type": "CL",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "迈阿密",
+   "ship_type": "CL",
+   "side": "allies",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "亨特",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "克拉伦斯·K·布朗森",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "刘易斯·汉考克",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "卡珀顿",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "多奇",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "巴格利-1944",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "希利",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "希科克斯",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "帕特森-1944",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "廷吉",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "欧文",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "沙利文兄弟",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "科格斯·韦尔",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "科滕",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "米勒",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "纳普",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "英格索尔",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "马歇尔",
+   "ship_type": "DD",
+   "side": "allies",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "大和-1944",
+   "ship_type": "BB",
+   "side": "axis",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "榛名",
+   "ship_type": "BB",
+   "side": "axis",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "武藏",
+   "ship_type": "BB",
+   "side": "axis",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "金刚",
+   "ship_type": "BB",
+   "side": "axis",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "长门-1944",
+   "ship_type": "BB",
+   "side": "axis",
+   "torpedo_launchers": []
+  },
+  {
+   "name": "利根",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "妙高-1944",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "摩耶",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "熊野",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "爱宕-1944",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "筑摩",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "羽黑-1944",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "铃谷",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "高雄-1944",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 1,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "鸟海-1944",
+   "ship_type": "CA",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-P1",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-P2",
+     "position": "port",
+     "arcs": [
+      "port"
+     ],
+     "torpedoes": 1,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S1",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-S2",
+     "position": "starboard",
+     "arcs": [
+      "starboard"
+     ],
+     "torpedoes": 1,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "矢矧",
+   "ship_type": "CL",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 1,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "能代",
+   "ship_type": "CL",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-M1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-M2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "冲波",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    }
+   ]
+  },
+  {
+   "name": "岛风",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 3,
+     "reloads": 0,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C3",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 0,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "岸波",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "早霜",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "朝霜",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "浦风",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    }
+   ]
+  },
+  {
+   "name": "清霜",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "滨波",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    }
+   ]
+  },
+  {
+   "name": "滨风-1944",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    }
+   ]
+  },
+  {
+   "name": "矶风-1944",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "秋霜",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    }
+   ]
+  },
+  {
+   "name": "藤波",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 1,
+     "reloads_remaining": 0
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "野分",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  },
+  {
+   "name": "长波-1944",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 2
+    }
+   ]
+  },
+  {
+   "name": "雪风-1944",
+   "ship_type": "DD",
+   "side": "axis",
+   "torpedo_launchers": [
+    {
+     "id": "TT-C1",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    },
+    {
+     "id": "TT-C2",
+     "position": "midships",
+     "arcs": [
+      "port",
+      "starboard"
+     ],
+     "torpedoes": 2,
+     "reloads": 2,
+     "reloads_remaining": 1
+    }
+   ]
+  }
+ ]
+}
