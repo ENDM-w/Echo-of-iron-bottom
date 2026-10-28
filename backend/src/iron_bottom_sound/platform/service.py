@@ -2019,7 +2019,8 @@ class PlatformService:
             before=before,
             after=batch.model_dump(mode="json"),
         )
-        orders = self.repository.orders(match_id, match.phase)
+        # 用 review_orders（含沉船席位自动补空单）判断是否集齐，否则全灭席位会一直卡在 collecting。
+        orders = self.review_orders(match_id)
         match.stage = MatchStage.READY_FOR_REVIEW if set(orders) >= set(match.required_seat_ids) else MatchStage.COLLECTING
         match.version += 1
         self.repository.save_match(match)
